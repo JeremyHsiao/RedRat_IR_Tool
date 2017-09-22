@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // 組件的一般資訊是由下列的屬性集控制。
 // 變更這些屬性的值即可修改組件的相關
 // 資訊。
-[assembly: AssemblyTitle("RedRat Database Viewer")]
+[assembly: AssemblyTitle("RedRatDBViewer")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("RedRat IR Tool")]
-[assembly: AssemblyCopyright("")] // Copyright ©  2017
+[assembly: AssemblyProduct("RedRatDBViewer")]
+[assembly: AssemblyCopyright("Copyright ©  2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // 下列 GUID 為專案公開 (Expose) 至 COM 時所要使用的 typelib ID
-[assembly: Guid("e1fc507f-1b45-4d87-816a-804f59f7ae19")]
+[assembly: Guid("a601ac4f-2a1d-4db8-b7da-5b4a5268ed41")]
 
 // 組件的版本資訊由下列四個值所組成: 
 //
