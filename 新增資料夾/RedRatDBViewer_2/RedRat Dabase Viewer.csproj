@@ -33,7 +33,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="RedRat">
-      <HintPath>..\..\RedRat IR Tool\RedRatDBViewer\RedRat.dll</HintPath>
+      <HintPath>..\dependencies\RedRat.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

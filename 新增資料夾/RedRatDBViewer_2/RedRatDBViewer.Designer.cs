@@ -1,4 +1,4 @@
-﻿namespace RedRatDatabaseViewer
+﻿namespace WindowsFormsApp1
 {
     partial class RedRatDBViewer
     {

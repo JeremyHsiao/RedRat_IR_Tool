@@ -16,7 +16,7 @@ using RedRat.RedRat3;
 using RedRat.Util;
 using RedRat.AVDeviceMngmt;
 
-namespace RedRatDatabaseViewer
+namespace WindowsFormsApp1
 {
     public partial class RedRatDBViewer : Form
     {
