@@ -166,6 +166,51 @@ namespace RedRatDatabaseViewer
             SetupPulseView();
         }
 
+        private void UpdateRCDataOnForm()
+        {
+            txtFreq.Text = RC_ModutationFreq.ToString();
+        }
+
+        private void ClearRCData()
+        {
+            RC_ModutationFreq = 0;
+            RC_Lengths = new double[1];
+            RC_SigData = new byte[1];
+            RC_NoRepeats = 0;
+            RC_IntraSigPause = 0;
+            RC_MainSignal = new byte[1];
+            RC_RepeatSignal = new byte[1];
+            RC_ToggleData = new ToggleBit[1];
+            RC_MainRepeatIdentical = false;
+
+        }
+
+        private void GetRCData(ModulatedSignal sig)
+        {
+            RC_ModutationFreq = sig.ModulationFreq;
+            RC_Lengths = sig.Lengths;
+            RC_SigData = sig.SigData;
+            RC_NoRepeats = sig.NoRepeats;
+            RC_IntraSigPause = sig.IntraSigPause;
+            RC_MainSignal = sig.MainSignal;
+            RC_RepeatSignal = sig.RepeatSignal;
+            RC_ToggleData = sig.ToggleData;
+            RC_MainRepeatIdentical = ModulatedSignal.MainRepeatIdentical(sig);
+        }
+
+        private void GetRCData(RedRat3ModulatedSignal sig)
+        {
+            RC_ModutationFreq = sig.ModulationFreq;
+            RC_Lengths = sig.Lengths;
+            RC_SigData = sig.SigData;
+            RC_NoRepeats = sig.NoRepeats;
+            RC_IntraSigPause = sig.IntraSigPause;
+            RC_MainSignal = sig.MainSignal;
+            RC_RepeatSignal = sig.RepeatSignal;
+            RC_ToggleData = sig.ToggleData;
+            RC_MainRepeatIdentical = RedRat3ModulatedSignal.MainRepeatIdentical(sig);
+        }
+
         private void listboxRCKey_SelectedIndexChanged(object sender, EventArgs e)
         {
             var Signal = SelectedDevice.Signals[listboxRCKey.SelectedIndex];
@@ -174,12 +219,15 @@ namespace RedRatDatabaseViewer
             {
                 ModulatedSignal sig = (ModulatedSignal)Signal;
                 rtbSignalData.Text = sig.ToString();
-                RC_ModutationFreq = sig.ModulationFreq;
-                txtFreq.Text = RC_ModutationFreq.ToString();
+                GetRCData(sig);
+                UpdateRCDataOnForm();
             }
             else if (Signal.GetType() == typeof(RedRat3ModulatedSignal))
             {
                 RedRat3ModulatedSignal sig = (RedRat3ModulatedSignal)Signal;
+                rtbSignalData.Text = sig.ToString();
+                GetRCData(sig);
+                UpdateRCDataOnForm();
             }
             //else if (Signal.GetType() == typeof(DoubleSignal))
             //{
@@ -212,10 +260,17 @@ namespace RedRatDatabaseViewer
             else
             {
                 rtbSignalData.Text = Signal.ToString();
+                ClearRCData();
+                UpdateRCDataOnForm();
             }
         }
 
         private void dgvPulseData_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void rtbSignalData_TextChanged(object sender, EventArgs e)
         {
 
         }

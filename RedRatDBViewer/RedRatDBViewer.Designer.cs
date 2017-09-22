@@ -107,6 +107,7 @@
             this.rtbSignalData.Size = new System.Drawing.Size(564, 148);
             this.rtbSignalData.TabIndex = 7;
             this.rtbSignalData.Text = "";
+            this.rtbSignalData.TextChanged += new System.EventHandler(this.rtbSignalData_TextChanged);
             // 
             // dgvPulseData
             // 
@@ -129,7 +130,7 @@
             this.txtFreq.Size = new System.Drawing.Size(211, 22);
             this.txtFreq.TabIndex = 9;
             // 
-            // Form1
+            // RedRatDBViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -143,7 +144,7 @@
             this.Controls.Add(this.listboxAVDeviceList);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.button1);
-            this.Name = "Form1";
+            this.Name = "RedRatDBViewer";
             this.Text = "RedRat Database Viewer";
             this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvPulseData)).EndInit();
