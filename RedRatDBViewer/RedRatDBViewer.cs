@@ -31,7 +31,8 @@ namespace RedRatDatabaseViewer
         private byte[] RC_MainSignal;
         private byte[] RC_RepeatSignal;
         private ToggleBit[] RC_ToggleData;
-        private bool RC_MainRepeatIdentical;        // result of calling bool MainRepeatIdentical(ModulatedSignal sig)  
+        private bool RC_MainRepeatIdentical;        // result of calling bool MainRepeatIdentical(ModulatedSignal sig) 
+        private bool RC_Select2ndSignalForDoubleSignal = false;
 
         public RedRatDBViewer()
         {
@@ -169,6 +170,21 @@ namespace RedRatDatabaseViewer
         private void UpdateRCDataOnForm()
         {
             txtFreq.Text = RC_ModutationFreq.ToString();
+
+            dgvPulseData.Rows.Clear();
+            int index = 0;
+            foreach (var len in RC_Lengths)
+            {
+                string[] str = { index.ToString(), len.ToString() };
+                index++;
+                dgvPulseData.Rows.Add(str);
+            }
+        }
+
+        private void UpdateRCDoubleSignalCheckBoxValue(bool if_checked)
+        {
+            RC_Select2ndSignalForDoubleSignal = if_checked;
+            chkSelectDoubleSignal.Checked = if_checked;
         }
 
         private void ClearRCData()
@@ -182,7 +198,6 @@ namespace RedRatDatabaseViewer
             RC_RepeatSignal = new byte[1];
             RC_ToggleData = new ToggleBit[1];
             RC_MainRepeatIdentical = false;
-
         }
 
         private void GetRCData(ModulatedSignal sig)
@@ -196,7 +211,7 @@ namespace RedRatDatabaseViewer
             RC_RepeatSignal = sig.RepeatSignal;
             RC_ToggleData = sig.ToggleData;
             RC_MainRepeatIdentical = ModulatedSignal.MainRepeatIdentical(sig);
-        }
+         }
 
         private void GetRCData(RedRat3ModulatedSignal sig)
         {
@@ -211,12 +226,50 @@ namespace RedRatDatabaseViewer
             RC_MainRepeatIdentical = RedRat3ModulatedSignal.MainRepeatIdentical(sig);
         }
 
+        private void ProcessDoubleSignalData(DoubleSignal dbl_signal)
+        {
+            IRPacket tempSingleSignal;
+
+            if (RC_Select2ndSignalForDoubleSignal == false)
+            {
+                tempSingleSignal = dbl_signal.Signal1;
+            }
+            else
+            {
+                tempSingleSignal = dbl_signal.Signal2;
+            }
+
+            //var tempSignal = typeof()
+            if (tempSingleSignal.GetType() == typeof(ModulatedSignal))
+            {
+                ModulatedSignal tempsig = (ModulatedSignal)tempSingleSignal;
+                rtbSignalData.Text = "DoubleSignal " + ((RC_Select2ndSignalForDoubleSignal==false)?"1":"2") + " \n" + tempsig.ToString();
+                GetRCData(tempsig);
+                UpdateRCDataOnForm();
+            }
+            else if (tempSingleSignal.GetType() == typeof(RedRat3ModulatedSignal))
+            {
+                RedRat3ModulatedSignal tempsig = (RedRat3ModulatedSignal)tempSingleSignal;
+                rtbSignalData.Text = "DoubleSignal " + ((RC_Select2ndSignalForDoubleSignal == false) ? "1" : "2") + " \n" + tempsig.ToString();
+                GetRCData(tempsig);
+                UpdateRCDataOnForm();
+            }
+            else
+            {
+                rtbSignalData.Text = "DoubleSignal\n Other Format\n";
+                ClearRCData();
+                UpdateRCDataOnForm();
+            }
+
+        }
+
         private void listboxRCKey_SelectedIndexChanged(object sender, EventArgs e)
         {
             var Signal = SelectedDevice.Signals[listboxRCKey.SelectedIndex];
 
             if (Signal.GetType()==typeof(ModulatedSignal))
             {
+                chkSelectDoubleSignal.Enabled = false;
                 ModulatedSignal sig = (ModulatedSignal)Signal;
                 rtbSignalData.Text = sig.ToString();
                 GetRCData(sig);
@@ -224,15 +277,18 @@ namespace RedRatDatabaseViewer
             }
             else if (Signal.GetType() == typeof(RedRat3ModulatedSignal))
             {
+                chkSelectDoubleSignal.Enabled = false;
                 RedRat3ModulatedSignal sig = (RedRat3ModulatedSignal)Signal;
                 rtbSignalData.Text = sig.ToString();
                 GetRCData(sig);
                 UpdateRCDataOnForm();
             }
-            //else if (Signal.GetType() == typeof(DoubleSignal))
-            //{
-            //    rtbSignalData.Text = Signal.ToString();
-            //}
+            else if (Signal.GetType() == typeof(DoubleSignal))
+            {
+                DoubleSignal tempDoubleSignal= (DoubleSignal)Signal;
+                chkSelectDoubleSignal.Enabled = true;
+                ProcessDoubleSignalData(tempDoubleSignal);
+            }
             //else if (Signal.GetType() == typeof(FlashCodeSignal))
             //{
             //    rtbSignalData.Text = Signal.ToString();
@@ -259,6 +315,7 @@ namespace RedRatDatabaseViewer
             //}
             else
             {
+                chkSelectDoubleSignal.Enabled = false;
                 rtbSignalData.Text = Signal.ToString();
                 ClearRCData();
                 UpdateRCDataOnForm();
@@ -273,6 +330,16 @@ namespace RedRatDatabaseViewer
         private void rtbSignalData_TextChanged(object sender, EventArgs e)
         {
 
+        }
+
+        private void chkSelectDoubleSignal_CheckedChanged(object sender, EventArgs e)
+        {
+            RC_Select2ndSignalForDoubleSignal = chkSelectDoubleSignal.Checked;
+            var Signal = SelectedDevice.Signals[listboxRCKey.SelectedIndex];
+            if (Signal.GetType() == typeof(DoubleSignal))
+            {
+                ProcessDoubleSignalData((DoubleSignal)Signal);
+            }
         }
     }
 

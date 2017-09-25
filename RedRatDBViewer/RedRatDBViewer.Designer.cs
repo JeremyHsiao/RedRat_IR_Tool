@@ -37,6 +37,7 @@
             this.rtbSignalData = new System.Windows.Forms.RichTextBox();
             this.dgvPulseData = new System.Windows.Forms.DataGridView();
             this.txtFreq = new System.Windows.Forms.TextBox();
+            this.chkSelectDoubleSignal = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.dgvPulseData)).BeginInit();
             this.SuspendLayout();
             // 
@@ -116,25 +117,38 @@
             this.dgvPulseData.AllowUserToOrderColumns = true;
             this.dgvPulseData.AllowUserToResizeRows = false;
             this.dgvPulseData.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvPulseData.Location = new System.Drawing.Point(12, 291);
+            this.dgvPulseData.Location = new System.Drawing.Point(12, 297);
             this.dgvPulseData.Name = "dgvPulseData";
             this.dgvPulseData.RowTemplate.Height = 24;
-            this.dgvPulseData.Size = new System.Drawing.Size(317, 206);
+            this.dgvPulseData.Size = new System.Drawing.Size(317, 200);
             this.dgvPulseData.TabIndex = 8;
             this.dgvPulseData.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvPulseData_CellContentClick);
             // 
             // txtFreq
             // 
-            this.txtFreq.Location = new System.Drawing.Point(364, 89);
+            this.txtFreq.Location = new System.Drawing.Point(361, 89);
             this.txtFreq.Name = "txtFreq";
-            this.txtFreq.Size = new System.Drawing.Size(211, 22);
+            this.txtFreq.Size = new System.Drawing.Size(214, 22);
             this.txtFreq.TabIndex = 9;
+            // 
+            // chkSelectDoubleSignal
+            // 
+            this.chkSelectDoubleSignal.AutoSize = true;
+            this.chkSelectDoubleSignal.Enabled = false;
+            this.chkSelectDoubleSignal.Location = new System.Drawing.Point(12, 275);
+            this.chkSelectDoubleSignal.Name = "chkSelectDoubleSignal";
+            this.chkSelectDoubleSignal.Size = new System.Drawing.Size(191, 16);
+            this.chkSelectDoubleSignal.TabIndex = 10;
+            this.chkSelectDoubleSignal.Text = "Select 2nd Signal of Double Signal?";
+            this.chkSelectDoubleSignal.UseVisualStyleBackColor = true;
+            this.chkSelectDoubleSignal.CheckedChanged += new System.EventHandler(this.chkSelectDoubleSignal_CheckedChanged);
             // 
             // RedRatDBViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(587, 663);
+            this.Controls.Add(this.chkSelectDoubleSignal);
             this.Controls.Add(this.txtFreq);
             this.Controls.Add(this.dgvPulseData);
             this.Controls.Add(this.rtbSignalData);
@@ -164,6 +178,7 @@
         private System.Windows.Forms.RichTextBox rtbSignalData;
         private System.Windows.Forms.DataGridView dgvPulseData;
         private System.Windows.Forms.TextBox txtFreq;
+        private System.Windows.Forms.CheckBox chkSelectDoubleSignal;
     }
 }
 
