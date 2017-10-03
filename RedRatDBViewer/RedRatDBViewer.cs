@@ -31,6 +31,11 @@ namespace RedRatDatabaseViewer
         private byte[] RC_MainSignal;
         private byte[] RC_RepeatSignal;
         private ToggleBit[] RC_ToggleData;
+        private string RC_Description;
+        private string RC_Name;
+        private ModulatedSignal.PauseRepeatType RC_PauseRepeatMode;
+        private double RC_RepeatPause;
+        //private 
         private bool RC_MainRepeatIdentical;        // result of calling bool MainRepeatIdentical(ModulatedSignal sig) 
         private bool RC_Select2ndSignalForDoubleSignal = false;
 
@@ -137,12 +142,29 @@ namespace RedRatDatabaseViewer
             dgvPulseData.Rows.Add(row3);
         }
 
+        private void Displaying_RC_Signal_Array(double[] rc_length, byte[] rc_sig_array, int rc_prepeat, double rc_intra_sig_pause)
+        {
+            int repeat_cnt = rc_prepeat;
+            do
+            {
+                int pulse_high = 1;
+                foreach (var sig in rc_sig_array)
+                {
+                    rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + rc_length[sig].ToString() + "\n");
+                    pulse_high = (pulse_high != 0) ? 0 : 1;
+                }
+                rtbDecodeRCSignal.AppendText("0" + ":" + rc_intra_sig_pause.ToString() + "\n");
+            }
+            while (repeat_cnt-- > 0);
+        }
+
         //
         // Form Events
         //
         private void button2_Click(object sender, EventArgs e)
         {
-            
+            rtbDecodeRCSignal.Text = "Modulation Frequency: " + RC_ModutationFreq.ToString() + "\n";
+            Displaying_RC_Signal_Array(RC_Lengths, RC_MainSignal, RC_NoRepeats, RC_IntraSigPause);
         }
 
         private void listboxAVDeviceList_SelectedIndexChanged(object sender, EventArgs e)
@@ -197,6 +219,10 @@ namespace RedRatDatabaseViewer
             RC_MainSignal = new byte[1];
             RC_RepeatSignal = new byte[1];
             RC_ToggleData = new ToggleBit[1];
+            RC_Description = "";
+            RC_Name = "";
+            // RC_PauseRepeatMode = ;
+            RC_RepeatPause = 0;
             RC_MainRepeatIdentical = false;
         }
 
@@ -210,6 +236,10 @@ namespace RedRatDatabaseViewer
             RC_MainSignal = sig.MainSignal;
             RC_RepeatSignal = sig.RepeatSignal;
             RC_ToggleData = sig.ToggleData;
+            RC_Description = sig.Description;
+            RC_Name = sig.Name;
+            RC_PauseRepeatMode = sig.PauseRepeatMode;
+            RC_RepeatPause = sig.RepeatPause;
             RC_MainRepeatIdentical = ModulatedSignal.MainRepeatIdentical(sig);
          }
 
@@ -223,6 +253,10 @@ namespace RedRatDatabaseViewer
             RC_MainSignal = sig.MainSignal;
             RC_RepeatSignal = sig.RepeatSignal;
             RC_ToggleData = sig.ToggleData;
+            RC_Description = sig.Description;
+            RC_Name = sig.Name;
+            RC_PauseRepeatMode = sig.PauseRepeatMode;
+            RC_RepeatPause = sig.RepeatPause;
             RC_MainRepeatIdentical = RedRat3ModulatedSignal.MainRepeatIdentical(sig);
         }
 
@@ -316,11 +350,6 @@ namespace RedRatDatabaseViewer
             }
         }
 
-        private void rtbSignalData_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
         private void chkSelectDoubleSignal_CheckedChanged(object sender, EventArgs e)
         {
             RC_Select2ndSignalForDoubleSignal = chkSelectDoubleSignal.Checked;
@@ -329,6 +358,23 @@ namespace RedRatDatabaseViewer
             {
                 ProcessDoubleSignalData((DoubleSignal)Signal);
             }
+        }
+
+        private void rbDoubleSignalLED_CheckedChanged(object sender, EventArgs e)
+        {
+            if(rbDoubleSignalLED.Checked==true)
+            {
+                rbDoubleSignalLED.ForeColor = System.Drawing.Color.Blue;
+             }
+            else
+            {
+                rbDoubleSignalLED.ForeColor = System.Drawing.Color.Black;
+            }
+         }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+
         }
     }
 
