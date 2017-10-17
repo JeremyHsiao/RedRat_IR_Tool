@@ -145,25 +145,26 @@ namespace RedRatDatabaseViewer
         private void Displaying_RC_Signal_Array(double[] rc_length, byte[] rc_main_sig_array, byte[] rc_repeat_sig_array, int rc_prepeat, double rc_intra_sig_pause, int Repeat_Tx_Times=0)
         {
             int repeat_cnt = rc_prepeat, pulse_high;
+            const int time_ratio = 1000;
             
             // Main signal
             pulse_high = 1;
             foreach (var sig in rc_main_sig_array)
             {
-                rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + rc_length[sig].ToString() + "\n");
+                rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + (rc_length[sig]* time_ratio).ToString() + "\n");
                 pulse_high = (pulse_high != 0) ? 0 : 1;
             }
-            rtbDecodeRCSignal.AppendText("0" + ":" + rc_intra_sig_pause.ToString() + "\n");
+            rtbDecodeRCSignal.AppendText("0" + ":" + (rc_intra_sig_pause* time_ratio).ToString() + "\n");
 
             while (repeat_cnt-- > 0) 
             {
                 pulse_high = 1;
                 foreach (var sig in rc_repeat_sig_array)
                 {
-                    rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + rc_length[sig].ToString() + "\n");
+                    rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + (rc_length[sig]* time_ratio).ToString() + "\n");
                     pulse_high = (pulse_high != 0) ? 0 : 1;
                 }
-                rtbDecodeRCSignal.AppendText("0" + ":" + rc_intra_sig_pause.ToString() + "\n");
+                rtbDecodeRCSignal.AppendText("0" + ":" + (rc_intra_sig_pause* time_ratio).ToString() + "\n");
             }
             //
             // To be implemented: make use of Repeat_Tx_Times
