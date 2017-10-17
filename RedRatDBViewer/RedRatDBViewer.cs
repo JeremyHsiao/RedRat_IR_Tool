@@ -278,6 +278,21 @@ namespace RedRatDatabaseViewer
             RC_MainRepeatIdentical = RedRat3ModulatedSignal.MainRepeatIdentical(sig);
         }
 
+        private void GetRCData(FlashCodeSignal sig)
+        {
+            RC_ModutationFreq = 0;
+            RC_Lengths = sig.Lengths;
+            RC_SigData = sig.SigData;
+            RC_NoRepeats = sig.NoRepeats;
+            RC_IntraSigPause = sig.IntraSigPause;
+            RC_MainSignal = sig.MainSignal;
+            RC_RepeatSignal = sig.RepeatSignal;
+            RC_ToggleData = new ToggleBit[1];
+            RC_Description = sig.Description;
+            RC_Name = sig.Name;
+            RC_MainRepeatIdentical = false; // No such function, need to compare
+        }
+
         private void ProcessSingleSignalData(IRPacket sgl_signal)
         {
             if (sgl_signal.GetType() == typeof(ModulatedSignal))
@@ -294,16 +309,13 @@ namespace RedRatDatabaseViewer
                 GetRCData(sig);
                 UpdateRCDataOnForm();
             }
-            else if (sgl_signal.GetType() == typeof(DoubleSignal))
+            else if (sgl_signal.GetType() == typeof(FlashCodeSignal))
             {
-                rtbSignalData.Text = sgl_signal.ToString() + "\nNot supported in this funciton\n";
-                ClearRCData();
+                FlashCodeSignal sig = (FlashCodeSignal)sgl_signal;
+                rtbSignalData.Text = sgl_signal.ToString();
+                GetRCData(sig);
                 UpdateRCDataOnForm();
             }
-            //else if (Signal.GetType() == typeof(FlashCodeSignal))
-            //{
-            //    rtbSignalData.Text = Signal.ToString();
-            //}
             //else if (Signal.GetType() == typeof(RedRat3FlashCodeSignal))
             //{
             //    rtbSignalData.Text = Signal.ToString();
@@ -324,6 +336,12 @@ namespace RedRatDatabaseViewer
             //{
             //    rtbSignalData.Text = Signal.ToString();
             //}
+            else if (sgl_signal.GetType() == typeof(DoubleSignal))
+            {
+                rtbSignalData.Text = sgl_signal.ToString() + "\nNot supported in this funciton\n";
+                ClearRCData();
+                UpdateRCDataOnForm();
+            }
             else
             {
                 rtbSignalData.Text = sgl_signal.ToString();
