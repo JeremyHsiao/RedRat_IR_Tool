@@ -142,20 +142,32 @@ namespace RedRatDatabaseViewer
             dgvPulseData.Rows.Add(row3);
         }
 
-        private void Displaying_RC_Signal_Array(double[] rc_length, byte[] rc_sig_array, int rc_prepeat, double rc_intra_sig_pause)
+        private void Displaying_RC_Signal_Array(double[] rc_length, byte[] rc_main_sig_array, byte[] rc_repeat_sig_array, int rc_prepeat, double rc_intra_sig_pause, int Repeat_Tx_Times=0)
         {
-            int repeat_cnt = rc_prepeat;
-            do
+            int repeat_cnt = rc_prepeat, pulse_high;
+            
+            // Main signal
+            pulse_high = 1;
+            foreach (var sig in rc_main_sig_array)
             {
-                int pulse_high = 1;
-                foreach (var sig in rc_sig_array)
+                rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + rc_length[sig].ToString() + "\n");
+                pulse_high = (pulse_high != 0) ? 0 : 1;
+            }
+            rtbDecodeRCSignal.AppendText("0" + ":" + rc_intra_sig_pause.ToString() + "\n");
+
+            while (repeat_cnt-- > 0) 
+            {
+                pulse_high = 1;
+                foreach (var sig in rc_repeat_sig_array)
                 {
                     rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + rc_length[sig].ToString() + "\n");
                     pulse_high = (pulse_high != 0) ? 0 : 1;
                 }
                 rtbDecodeRCSignal.AppendText("0" + ":" + rc_intra_sig_pause.ToString() + "\n");
             }
-            while (repeat_cnt-- > 0);
+            //
+            // To be implemented: make use of Repeat_Tx_Times
+            //
         }
 
         //
@@ -164,7 +176,13 @@ namespace RedRatDatabaseViewer
         private void button2_Click(object sender, EventArgs e)
         {
             rtbDecodeRCSignal.Text = "Modulation Frequency: " + RC_ModutationFreq.ToString() + "\n";
-            Displaying_RC_Signal_Array(RC_Lengths, RC_MainSignal, RC_NoRepeats, RC_IntraSigPause);
+            Displaying_RC_Signal_Array(RC_Lengths, RC_MainSignal, RC_RepeatSignal, RC_NoRepeats, RC_IntraSigPause, 0);
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            rtbDecodeRCSignal.Text = "Modulation Frequency: " + RC_ModutationFreq.ToString() + "\n";
+            Displaying_RC_Signal_Array(RC_Lengths, RC_MainSignal, RC_RepeatSignal, RC_NoRepeats, RC_IntraSigPause, 0);
         }
 
         private void listboxAVDeviceList_SelectedIndexChanged(object sender, EventArgs e)
@@ -372,10 +390,6 @@ namespace RedRatDatabaseViewer
             }
          }
 
-        private void button3_Click(object sender, EventArgs e)
-        {
-
-        }
     }
 
 

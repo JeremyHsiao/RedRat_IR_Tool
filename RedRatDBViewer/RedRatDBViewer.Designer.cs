@@ -41,7 +41,7 @@
             this.rbDoubleSignalLED = new System.Windows.Forms.RadioButton();
             this.label3 = new System.Windows.Forms.Label();
             this.rtbDecodeRCSignal = new System.Windows.Forms.RichTextBox();
-            this.button3 = new System.Windows.Forms.Button();
+            this.btnRepeatOnce = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvPulseData)).BeginInit();
             this.SuspendLayout();
             // 
@@ -178,22 +178,22 @@
             this.rtbDecodeRCSignal.TabIndex = 13;
             this.rtbDecodeRCSignal.Text = "";
             // 
-            // button3
+            // btnRepeatOnce
             // 
-            this.button3.Location = new System.Drawing.Point(473, 13);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(102, 41);
-            this.button3.TabIndex = 14;
-            this.button3.Text = "Repeated Press (x1)";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
+            this.btnRepeatOnce.Location = new System.Drawing.Point(473, 13);
+            this.btnRepeatOnce.Name = "btnRepeatOnce";
+            this.btnRepeatOnce.Size = new System.Drawing.Size(102, 41);
+            this.btnRepeatOnce.TabIndex = 14;
+            this.btnRepeatOnce.Text = "Repeated Press (x1)";
+            this.btnRepeatOnce.UseVisualStyleBackColor = true;
+            this.btnRepeatOnce.Click += new System.EventHandler(this.button3_Click);
             // 
             // RedRatDBViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(587, 663);
-            this.Controls.Add(this.button3);
+            this.Controls.Add(this.btnRepeatOnce);
             this.Controls.Add(this.rtbDecodeRCSignal);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.rbDoubleSignalLED);
@@ -231,7 +231,7 @@
         private System.Windows.Forms.RadioButton rbDoubleSignalLED;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.RichTextBox rtbDecodeRCSignal;
-        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Button btnRepeatOnce;
     }
 }
 
