@@ -72,7 +72,7 @@
             this.listboxAVDeviceList.ItemHeight = 12;
             this.listboxAVDeviceList.Location = new System.Drawing.Point(12, 85);
             this.listboxAVDeviceList.Name = "listboxAVDeviceList";
-            this.listboxAVDeviceList.Size = new System.Drawing.Size(141, 184);
+            this.listboxAVDeviceList.Size = new System.Drawing.Size(150, 196);
             this.listboxAVDeviceList.TabIndex = 2;
             this.listboxAVDeviceList.SelectedIndexChanged += new System.EventHandler(this.listboxAVDeviceList_SelectedIndexChanged);
             // 
@@ -83,7 +83,7 @@
             this.listboxRCKey.ItemHeight = 12;
             this.listboxRCKey.Location = new System.Drawing.Point(168, 85);
             this.listboxRCKey.Name = "listboxRCKey";
-            this.listboxRCKey.Size = new System.Drawing.Size(161, 184);
+            this.listboxRCKey.Size = new System.Drawing.Size(161, 196);
             this.listboxRCKey.TabIndex = 3;
             this.listboxRCKey.SelectedIndexChanged += new System.EventHandler(this.listboxRCKey_SelectedIndexChanged);
             // 
@@ -121,28 +121,28 @@
             this.dgvPulseData.AllowUserToOrderColumns = true;
             this.dgvPulseData.AllowUserToResizeRows = false;
             this.dgvPulseData.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvPulseData.Location = new System.Drawing.Point(12, 297);
+            this.dgvPulseData.Location = new System.Drawing.Point(12, 285);
             this.dgvPulseData.Name = "dgvPulseData";
             this.dgvPulseData.RowTemplate.Height = 24;
-            this.dgvPulseData.Size = new System.Drawing.Size(317, 200);
+            this.dgvPulseData.Size = new System.Drawing.Size(317, 212);
             this.dgvPulseData.TabIndex = 8;
             // 
             // txtFreq
             // 
-            this.txtFreq.Location = new System.Drawing.Point(346, 85);
+            this.txtFreq.Location = new System.Drawing.Point(335, 85);
             this.txtFreq.Name = "txtFreq";
-            this.txtFreq.Size = new System.Drawing.Size(170, 22);
+            this.txtFreq.Size = new System.Drawing.Size(200, 22);
             this.txtFreq.TabIndex = 9;
             // 
             // chkSelectDoubleSignal
             // 
             this.chkSelectDoubleSignal.AutoSize = true;
             this.chkSelectDoubleSignal.Enabled = false;
-            this.chkSelectDoubleSignal.Location = new System.Drawing.Point(12, 275);
+            this.chkSelectDoubleSignal.Location = new System.Drawing.Point(113, 38);
             this.chkSelectDoubleSignal.Name = "chkSelectDoubleSignal";
-            this.chkSelectDoubleSignal.Size = new System.Drawing.Size(159, 16);
+            this.chkSelectDoubleSignal.Size = new System.Drawing.Size(218, 16);
             this.chkSelectDoubleSignal.TabIndex = 10;
-            this.chkSelectDoubleSignal.Text = "Select 2nd of Double Signal?";
+            this.chkSelectDoubleSignal.Text = "Select 2nd of Double Signal / Toogle Bit?";
             this.chkSelectDoubleSignal.UseVisualStyleBackColor = true;
             this.chkSelectDoubleSignal.CheckedChanged += new System.EventHandler(this.chkSelectDoubleSignal_CheckedChanged);
             // 
@@ -150,12 +150,12 @@
             // 
             this.rbDoubleSignalLED.AutoCheck = false;
             this.rbDoubleSignalLED.AutoSize = true;
-            this.rbDoubleSignalLED.Location = new System.Drawing.Point(195, 275);
+            this.rbDoubleSignalLED.Location = new System.Drawing.Point(113, 12);
             this.rbDoubleSignalLED.Name = "rbDoubleSignalLED";
-            this.rbDoubleSignalLED.Size = new System.Drawing.Size(134, 16);
+            this.rbDoubleSignalLED.Size = new System.Drawing.Size(193, 16);
             this.rbDoubleSignalLED.TabIndex = 11;
             this.rbDoubleSignalLED.TabStop = true;
-            this.rbDoubleSignalLED.Text = "Double Signal Indicator";
+            this.rbDoubleSignalLED.Text = "Double Signal / Toogle Bit Indicator";
             this.rbDoubleSignalLED.UseVisualStyleBackColor = true;
             this.rbDoubleSignalLED.CheckedChanged += new System.EventHandler(this.rbDoubleSignalLED_CheckedChanged);
             // 
@@ -163,7 +163,7 @@
             // 
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("微軟正黑體", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.label3.Location = new System.Drawing.Point(522, 86);
+            this.label3.Location = new System.Drawing.Point(534, 86);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(41, 21);
             this.label3.TabIndex = 12;
@@ -171,10 +171,10 @@
             // 
             // rtbDecodeRCSignal
             // 
-            this.rtbDecodeRCSignal.Location = new System.Drawing.Point(346, 113);
+            this.rtbDecodeRCSignal.Location = new System.Drawing.Point(335, 113);
             this.rtbDecodeRCSignal.Name = "rtbDecodeRCSignal";
             this.rtbDecodeRCSignal.ReadOnly = true;
-            this.rtbDecodeRCSignal.Size = new System.Drawing.Size(229, 384);
+            this.rtbDecodeRCSignal.Size = new System.Drawing.Size(240, 384);
             this.rtbDecodeRCSignal.TabIndex = 13;
             this.rtbDecodeRCSignal.Text = "";
             // 
