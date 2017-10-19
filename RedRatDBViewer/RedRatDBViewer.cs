@@ -130,22 +130,6 @@ namespace RedRatDatabaseViewer
             return signal;
         }
 
-        private void SetupPulseView()
-        {
-            dgvPulseData.ColumnCount = 2;
-            dgvPulseData.Columns[0].Name = "Pulse";
-            dgvPulseData.Columns[1].Name = "Duration";
-
-            string[] row0 = { "0", "N/A" };
-            string[] row1 = { "0", "N/A" };
-            string[] row2 = { "0", "N/A" };
-            string[] row3 = { "0", "N/A" };
-            dgvPulseData.Rows.Add(row0);
-            dgvPulseData.Rows.Add(row1);
-            dgvPulseData.Rows.Add(row2);
-            dgvPulseData.Rows.Add(row3);
-        }
-
         private void Displaying_RC_Signal_Array(double[] rc_length, byte[] rc_main_sig_array, byte[] rc_repeat_sig_array, int rc_prepeat, double rc_intra_sig_pause, int Repeat_Tx_Times=0)
         {
             int repeat_cnt = rc_prepeat, pulse_high;
@@ -209,20 +193,37 @@ namespace RedRatDatabaseViewer
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            SetupPulseView();
+            
         }
 
         private void UpdateRCDataOnForm()
         {
-            lbFreq.Text = RC_ModutationFreq.ToString();
-
             dgvPulseData.Rows.Clear();
             int index = 0;
             foreach (var len in RC_Lengths)
             {
-                string[] str = { index.ToString(), len.ToString() };
-                index++;
+                string []str = { len.ToString() };
                 dgvPulseData.Rows.Add(str);
+                dgvPulseData.Rows[index].HeaderCell.Value = String.Format("{0}", index);
+                index++;
+            }
+            dgvToggleBits.Rows.Clear();
+            index = 0;
+            foreach (var toggle_bit in RC_ToggleData)
+            {
+                string[] str = { RC_Lengths[toggle_bit.len1].ToString(), RC_Lengths[toggle_bit.len2].ToString() };
+                int bit_no = toggle_bit.bitNo;
+                if ( (index>0) && (bit_no<Convert.ToInt64(dgvToggleBits.Rows[index-1].HeaderCell.Value)) )
+                {
+                    dgvToggleBits.Rows.Insert(index - 1, str);
+                    dgvToggleBits.Rows[index-1].HeaderCell.Value = String.Format("{0}", bit_no);
+                }
+                else
+                {
+                    dgvToggleBits.Rows.Add(str);
+                    dgvToggleBits.Rows[index].HeaderCell.Value = String.Format("{0}", bit_no);
+                }
+                index++;
             }
         }
 
@@ -414,6 +415,7 @@ namespace RedRatDatabaseViewer
             }
 
             rtbDecodeRCSignal.Text = "Modulation Frequency: " + RC_ModutationFreq.ToString() + "\n";
+            lbFreq.Text = RC_ModutationFreq.ToString() + " Hz";
             Displaying_RC_Signal_Array(RC_Lengths, RC_MainSignal, RC_RepeatSignal, RC_NoRepeats, RC_IntraSigPause, 0);
         }
 
@@ -426,6 +428,7 @@ namespace RedRatDatabaseViewer
                 ProcessDoubleSignalData((DoubleSignal)Signal);
             }
             rtbDecodeRCSignal.Text = "Modulation Frequency: " + RC_ModutationFreq.ToString() + "\n";
+            lbFreq.Text = RC_ModutationFreq.ToString() + " Hz";
             Displaying_RC_Signal_Array(RC_Lengths, RC_MainSignal, RC_RepeatSignal, RC_NoRepeats, RC_IntraSigPause, 0);
         }
 
@@ -447,6 +450,16 @@ namespace RedRatDatabaseViewer
         }
 
         private void label3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void lbFreq_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void dgvToggleBits_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
 
         }
