@@ -23,6 +23,7 @@ namespace RedRatDatabaseViewer
     {
         private AVDeviceDB SignalDB;
         private AVDevice SelectedDevice;
+        private IRPacket SelectedSignal;
 
         private double RC_ModutationFreq;
         private double[] RC_Lengths;
@@ -41,6 +42,9 @@ namespace RedRatDatabaseViewer
         private bool RC_Select2ndSignalForDoubleSignal = false;
         //private for Double Signal or Toggle Bit
         private bool RC_DoubleSignal_ToggleBit_Use_1st;
+
+        private int Previous_Device = -1;
+        private int Previous_Key = -1;
 
         public RedRatDBViewer()
         {
@@ -158,32 +162,88 @@ namespace RedRatDatabaseViewer
             //
         }
 
+        private void SendSingleRC()
+        {
+            SelectedSignal = SelectedDevice.Signals[listboxRCKey.SelectedIndex];
+            lbModulationType.Text = SelectedSignal.GetType().ToString();
+
+            if (SelectedSignal.GetType() == typeof(DoubleSignal))
+            {
+                DoubleSignal tempDoubleSignal = (DoubleSignal)SelectedSignal;
+                chkSelectDoubleSignal.Enabled = true;
+                rbDoubleSignalLED.Checked = true;
+                ProcessDoubleSignalData(tempDoubleSignal);
+            }
+            else
+            {
+                chkSelectDoubleSignal.Enabled = false;
+                rbDoubleSignalLED.Checked = false;
+                ProcessSingleSignalData(SelectedSignal);
+            }
+
+        }
+
+
         //
         // Form Events
         //
         private void SingleOutput_Click(object sender, EventArgs e)
         {
-
-            rtbDecodeRCSignal.Text = "Modulation Frequency: " + RC_ModutationFreq.ToString() + "\n";
-            Displaying_RC_Signal_Array(RC_Lengths, RC_MainSignal, RC_RepeatSignal, RC_NoRepeats, RC_IntraSigPause, 0);
+            // To be implemented
         }
 
         private void button3_Click(object sender, EventArgs e)
         {
-            rtbDecodeRCSignal.Text = "Modulation Frequency: " + RC_ModutationFreq.ToString() + "\n";
-            Displaying_RC_Signal_Array(RC_Lengths, RC_MainSignal, RC_RepeatSignal, RC_NoRepeats, RC_IntraSigPause, 0);
+            // To be implemented
         }
 
         private void listboxAVDeviceList_SelectedIndexChanged(object sender, EventArgs e)
         {
-            string devicename = listboxAVDeviceList.SelectedItem.ToString();
-            SelectedDevice = SignalDB.GetAVDevice(devicename);
-            listboxRCKey.Items.Clear();
-            foreach (var Signal in SelectedDevice.Signals)
+            int Current_Device = listboxAVDeviceList.SelectedIndex;
+            if (Previous_Device != Current_Device)
             {
-                listboxRCKey.Items.Add(Signal.Name);
+                string devicename = listboxAVDeviceList.SelectedItem.ToString();
+                SelectedDevice = SignalDB.GetAVDevice(devicename);
+                listboxRCKey.Items.Clear();
+                foreach (var Signal in SelectedDevice.Signals)
+                {
+                    listboxRCKey.Items.Add(Signal.Name);
+                }
+                listboxRCKey.SelectedIndex = 0;
+                Previous_Device = Current_Device;
+                Previous_Key = -1;
             }
-            listboxRCKey.SelectedIndex = 0;
+        }
+
+        private void listboxRCKey_SelectedIndexChanged(object sender, EventArgs ev)
+        {
+            int Current_Key = listboxRCKey.SelectedIndex;
+
+            if( Previous_Key != Current_Key)
+            {
+                SelectedSignal = SelectedDevice.Signals[Current_Key];
+                lbModulationType.Text = SelectedSignal.GetType().ToString();
+
+                if (SelectedSignal.GetType() == typeof(DoubleSignal))
+                {
+                    DoubleSignal tempDoubleSignal = (DoubleSignal)SelectedSignal;
+                    chkSelectDoubleSignal.Enabled = true;
+                    rbDoubleSignalLED.Checked = true;
+                    ProcessDoubleSignalData(tempDoubleSignal);
+                }
+                else
+                {
+                    chkSelectDoubleSignal.Enabled = false;
+                    rbDoubleSignalLED.Checked = false;
+                    ProcessSingleSignalData(SelectedSignal);
+                }
+
+                rtbDecodeRCSignal.Text = "Modulation Frequency: " + RC_ModutationFreq.ToString() + "\n";
+                lbFreq.Text = RC_ModutationFreq.ToString() + " Hz";
+                Displaying_RC_Signal_Array(RC_Lengths, RC_MainSignal, RC_RepeatSignal, RC_NoRepeats, RC_IntraSigPause, 0);
+
+                Previous_Key = Current_Key;
+            }
         }
 
         private void UpdateRCDataOnForm()
@@ -380,33 +440,6 @@ namespace RedRatDatabaseViewer
 
             //var tempSignal = typeof()
             ProcessSingleSignalData(tempSingleSignal);
-        }
-
-        private void listboxRCKey_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            var Signal = SelectedDevice.Signals[listboxRCKey.SelectedIndex];
-            //            UpdateRCDoubleSignalCheckBoxValue(false);
-            //            RC_DoubleSignal_ToggleBit_Use_1st = true;
-
-            lbModulationType.Text = Signal.GetType().ToString();
-
-            if (Signal.GetType() == typeof(DoubleSignal))
-            {
-                DoubleSignal tempDoubleSignal= (DoubleSignal)Signal;
-                chkSelectDoubleSignal.Enabled = true;
-                rbDoubleSignalLED.Checked = true;
-                ProcessDoubleSignalData(tempDoubleSignal);
-            }
-            else
-            {
-                chkSelectDoubleSignal.Enabled = false;
-                rbDoubleSignalLED.Checked = false;
-                ProcessSingleSignalData(Signal);
-            }
-
-            rtbDecodeRCSignal.Text = "Modulation Frequency: " + RC_ModutationFreq.ToString() + "\n";
-            lbFreq.Text = RC_ModutationFreq.ToString() + " Hz";
-            Displaying_RC_Signal_Array(RC_Lengths, RC_MainSignal, RC_RepeatSignal, RC_NoRepeats, RC_IntraSigPause, 0);
         }
 
         private void chkSelectDoubleSignal_CheckedChanged(object sender, EventArgs e)
