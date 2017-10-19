@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using System.Xml.Serialization;
+using System.Threading;
 
 using RedRat;
 using RedRat.IR;
@@ -48,12 +49,13 @@ namespace RedRatDatabaseViewer
 
         private void button1_Click(object sender, EventArgs e)
         {
-            OpenFileDialog openFileDialog1 = new OpenFileDialog();
-
-            openFileDialog1.InitialDirectory = ".\\";
-            openFileDialog1.Filter = "RedRat Device files (*.xml)|*.xml|All files (*.*)|*.*";
-            openFileDialog1.FilterIndex = 2;
-            openFileDialog1.RestoreDirectory = true;
+            OpenFileDialog openFileDialog1 = new OpenFileDialog
+            {
+                InitialDirectory = ".\\",
+                Filter = "RedRat Device files (*.xml)|*.xml|All files (*.*)|*.*",
+                FilterIndex = 2,
+                RestoreDirectory = true
+            };
 
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
@@ -175,8 +177,9 @@ namespace RedRatDatabaseViewer
         //
         // Form Events
         //
-        private void button2_Click(object sender, EventArgs e)
+        private void SingleOutput_Click(object sender, EventArgs e)
         {
+
             rtbDecodeRCSignal.Text = "Modulation Frequency: " + RC_ModutationFreq.ToString() + "\n";
             Displaying_RC_Signal_Array(RC_Lengths, RC_MainSignal, RC_RepeatSignal, RC_NoRepeats, RC_IntraSigPause, 0);
         }
@@ -211,7 +214,7 @@ namespace RedRatDatabaseViewer
 
         private void UpdateRCDataOnForm()
         {
-            txtFreq.Text = RC_ModutationFreq.ToString();
+            lbFreq.Text = RC_ModutationFreq.ToString();
 
             dgvPulseData.Rows.Clear();
             int index = 0;
@@ -391,8 +394,10 @@ namespace RedRatDatabaseViewer
         private void listboxRCKey_SelectedIndexChanged(object sender, EventArgs e)
         {
             var Signal = SelectedDevice.Signals[listboxRCKey.SelectedIndex];
-            UpdateRCDoubleSignalCheckBoxValue(false);
-            RC_DoubleSignal_ToggleBit_Use_1st = true;
+            //            UpdateRCDoubleSignalCheckBoxValue(false);
+            //            RC_DoubleSignal_ToggleBit_Use_1st = true;
+
+            lbModulationType.Text = Signal.GetType().ToString();
 
             if (Signal.GetType() == typeof(DoubleSignal))
             {
@@ -410,7 +415,6 @@ namespace RedRatDatabaseViewer
 
             rtbDecodeRCSignal.Text = "Modulation Frequency: " + RC_ModutationFreq.ToString() + "\n";
             Displaying_RC_Signal_Array(RC_Lengths, RC_MainSignal, RC_RepeatSignal, RC_NoRepeats, RC_IntraSigPause, 0);
-
         }
 
         private void chkSelectDoubleSignal_CheckedChanged(object sender, EventArgs e)
@@ -437,6 +441,15 @@ namespace RedRatDatabaseViewer
             }
          }
 
+        private void dgvPulseData_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 
 
