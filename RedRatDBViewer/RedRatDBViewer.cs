@@ -186,16 +186,6 @@ namespace RedRatDatabaseViewer
             listboxRCKey.SelectedIndex = 0;
         }
 
-        private void richTextBox1_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
-            
-        }
-
         private void UpdateRCDataOnForm()
         {
             dgvPulseData.Rows.Clear();
