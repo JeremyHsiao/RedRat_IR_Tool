@@ -41,7 +41,7 @@ namespace RedRatDatabaseViewer
         private bool RC_MainRepeatIdentical;        // result of calling bool MainRepeatIdentical(ModulatedSignal sig) 
         private bool RC_Select2ndSignalForDoubleSignal = false;
         //private for Double Signal or Toggle Bit
-        private bool RC_DoubleSignal_ToggleBit_Use_1st;
+        private bool RC_SendNext_Indicator_1st_Bit_or_Signalal;
 
         private int Previous_Device = -1;
         private int Previous_Key = -1;
@@ -189,7 +189,112 @@ namespace RedRatDatabaseViewer
         //
         private void SingleOutput_Click(object sender, EventArgs e)
         {
-            // To be implemented
+            if((Previous_Device<0)||(Previous_Key<0))
+            {
+                // return immediately when No Selected Device or no Selected Signal
+                return;
+            }
+            //
+            // Display signal
+            //
+            IRPacket TxSignal;
+
+            // 
+            // Get the to-sent signal out of Double Signal
+            //
+            if (SelectedSignal.GetType() == typeof(DoubleSignal))
+            {
+                DoubleSignal tempDoubleSignal = (DoubleSignal)SelectedSignal;
+                TxSignal = (RC_SendNext_Indicator_1st_Bit_or_Signalal==true)?(tempDoubleSignal.Signal1):(tempDoubleSignal.Signal2);
+            }
+            else
+            {
+                TxSignal = SelectedSignal;
+            }
+            //
+            // Type conversion
+            //
+            if (TxSignal.GetType() == typeof(ModulatedSignal))
+            {
+                ModulatedSignal sig = (ModulatedSignal)TxSignal;
+                GetRCData(sig);
+            }
+            else if (TxSignal.GetType() == typeof(RedRat3ModulatedSignal))
+            {
+                RedRat3ModulatedSignal sig = (RedRat3ModulatedSignal)TxSignal;
+                GetRCData(sig);
+            }
+            else if (TxSignal.GetType() == typeof(FlashCodeSignal))
+            {
+                FlashCodeSignal sig = (FlashCodeSignal)TxSignal;
+                GetRCData(sig);
+            }
+            else if (TxSignal.GetType() == typeof(RedRat3FlashCodeSignal))
+            {
+                RedRat3FlashCodeSignal sig = (RedRat3FlashCodeSignal)TxSignal;
+                GetRCData(sig);
+            }
+            else
+            {
+                return; // not suppport so return immediately
+            }
+            //
+            // Pre-processing done, start to Tx
+            //
+            int repeat_cnt = RC_NoRepeats, pulse_high, pulse_index, toggle_bit_index;
+            const int time_ratio = 1000;
+            rtbDecodeRCSignal.Text = "Tx Mod-Freq: " + RC_ModutationFreq.ToString() + "\n";
+            // Tx Main signal
+            toggle_bit_index = 0;
+            pulse_index = 0;
+            pulse_high = 1;
+            foreach (var sig in RC_MainSignal)
+            {
+                double signal_width;
+                //
+                //  Update Toggle Bits
+                //
+                if ((toggle_bit_index < RC_ToggleData.Length)&&(pulse_index == RC_ToggleData[toggle_bit_index].bitNo))
+                {
+                    signal_width = RC_Lengths[(RC_SendNext_Indicator_1st_Bit_or_Signalal == true) ? (RC_ToggleData[toggle_bit_index].len1) : (RC_ToggleData[toggle_bit_index].len2)];
+                    toggle_bit_index++;
+                }
+                else
+                {
+                    signal_width = RC_Lengths[sig];
+                }
+                rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + (signal_width * time_ratio).ToString() + "\n");
+                pulse_high = (pulse_high != 0) ? 0 : 1;
+                pulse_index++;
+            }
+
+            // Tx the rest of signal (2nd/3rd/...etc)
+            while (repeat_cnt-- > 0)
+            {
+                rtbDecodeRCSignal.AppendText("0" + ":" + (RC_IntraSigPause * time_ratio).ToString() + "\n");
+                pulse_index++;
+                pulse_high = 1;
+                foreach (var sig in RC_RepeatSignal)
+                {
+                    double signal_width;
+                    //
+                    //  Update Toggle Bits
+                    //
+                    if ((toggle_bit_index < RC_ToggleData.Length) && (pulse_index == RC_ToggleData[toggle_bit_index].bitNo))
+                    {
+                        signal_width = RC_Lengths[(RC_SendNext_Indicator_1st_Bit_or_Signalal == true) ? (RC_ToggleData[toggle_bit_index].len1) : (RC_ToggleData[toggle_bit_index].len2)];
+                        toggle_bit_index++;
+                    }
+                    else
+                    {
+                        signal_width = RC_Lengths[sig];
+                    }
+                    rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + (signal_width * time_ratio).ToString() + "\n");
+                    pulse_high = (pulse_high != 0) ? 0 : 1;
+                    pulse_index++;
+                }
+            }
+            RC_SendNext_Indicator_1st_Bit_or_Signalal = !RC_SendNext_Indicator_1st_Bit_or_Signalal;
         }
 
         private void button3_Click(object sender, EventArgs e)
@@ -209,9 +314,10 @@ namespace RedRatDatabaseViewer
                 {
                     listboxRCKey.Items.Add(Signal.Name);
                 }
-                listboxRCKey.SelectedIndex = 0;
                 Previous_Device = Current_Device;
                 Previous_Key = -1;
+                listboxRCKey.SelectedIndex = 0;  // Make sure (Previous_Key!= listboxRCKey.SelectedIndex) at next SelectedIndexChanged event
+                RC_SendNext_Indicator_1st_Bit_or_Signalal = true;
             }
         }
 
@@ -243,6 +349,7 @@ namespace RedRatDatabaseViewer
                 Displaying_RC_Signal_Array(RC_Lengths, RC_MainSignal, RC_RepeatSignal, RC_NoRepeats, RC_IntraSigPause, 0);
 
                 Previous_Key = Current_Key;
+                RC_SendNext_Indicator_1st_Bit_or_Signalal = true;
             }
         }
 
