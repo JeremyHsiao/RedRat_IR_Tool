@@ -71,13 +71,16 @@ namespace RedRatDatabaseViewer
                         Console.WriteLine("RedRat Found. Loading DB file...");
                         SignalDB = LoadSignalDB(openFileDialog1.FileName);
                         Console.WriteLine("DB file is OK.");
+                        listboxAVDeviceList.Items.Clear();
                         foreach (var AVDevice in SignalDB.AVDevices)
                         {
                             listboxAVDeviceList.Items.Add(AVDevice.Name);
                         }
                         listboxAVDeviceList.Enabled = true;
-                        listboxAVDeviceList.SelectedIndex = 0;
                         listboxRCKey.Enabled = true;
+                        Previous_Device = -1;
+                        Previous_Key = -1;
+                        listboxAVDeviceList.SelectedIndex = 0;
                     }
                 }
                 catch (Exception ex)
