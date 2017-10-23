@@ -244,13 +244,15 @@ namespace RedRatDatabaseViewer
             //
             // Pre-processing done, start to Tx
             //
-            int repeat_cnt = RC_NoRepeats, pulse_high, pulse_index, toggle_bit_index;
+            List<uint> pulse_width = new List<uint>();
+            int repeat_cnt = RC_NoRepeats, pulse_index, toggle_bit_index;
+            //int pulse_high;
             const int time_ratio = 1000;
-            rtbDecodeRCSignal.Text = "Tx Mod-Freq: " + RC_ModutationFreq.ToString() + "\n";
+            //rtbDecodeRCSignal.Text = "Tx Mod-Freq: " + RC_ModutationFreq.ToString() + "\n";
             // Tx Main signal
             toggle_bit_index = 0;
             pulse_index = 0;
-            pulse_high = 1;
+            //pulse_high = 1;
             foreach (var sig in RC_MainSignal)
             {
                 double signal_width;
@@ -266,17 +268,20 @@ namespace RedRatDatabaseViewer
                 {
                     signal_width = RC_Lengths[sig];
                 }
-                rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + (signal_width * time_ratio).ToString() + "\n");
-                pulse_high = (pulse_high != 0) ? 0 : 1;
+                //rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + (signal_width * time_ratio).ToString() + "\n");
+                //pulse_high = (pulse_high != 0) ? 0 : 1;
+                signal_width *= time_ratio;
+                pulse_width.Add(Convert.ToUInt32(signal_width));
                 pulse_index++;
             }
 
             // Tx the rest of signal (2nd/3rd/...etc)
             while (repeat_cnt-- > 0)
             {
-                rtbDecodeRCSignal.AppendText("0" + ":" + (RC_IntraSigPause * time_ratio).ToString() + "\n");
+                //rtbDecodeRCSignal.AppendText("0" + ":" + (RC_IntraSigPause * time_ratio).ToString() + "\n");
+                pulse_width.Add(Convert.ToUInt32(RC_IntraSigPause * time_ratio));
                 pulse_index++;
-                pulse_high = 1;
+                //pulse_high = 1;
                 foreach (var sig in RC_RepeatSignal)
                 {
                     double signal_width;
@@ -292,12 +297,28 @@ namespace RedRatDatabaseViewer
                     {
                         signal_width = RC_Lengths[sig];
                     }
-                    rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + (signal_width * time_ratio).ToString() + "\n");
-                    pulse_high = (pulse_high != 0) ? 0 : 1;
+                    //rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + (signal_width * time_ratio).ToString() + "\n");
+                    //pulse_high = (pulse_high != 0) ? 0 : 1;
+                    signal_width *= time_ratio;
+                    pulse_width.Add(Convert.ToUInt32(signal_width));
                     pulse_index++;
                 }
             }
             RC_SendNext_Indicator_1st_Bit_or_Signalal = !RC_SendNext_Indicator_1st_Bit_or_Signalal;
+            //
+            // End of Tx preprocessing
+            //
+
+            //
+            // Print out result
+            //
+            int pulse_high = 1;
+            rtbDecodeRCSignal.Text = "Tx Mod-Freq: " + RC_ModutationFreq.ToString() + "\n";
+            foreach(var width_value in pulse_width)
+            {
+                rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + width_value.ToString() + "\n");
+                pulse_high = (pulse_high != 0) ? 0 : 1;
+            }
         }
 
         private void button3_Click(object sender, EventArgs e)
