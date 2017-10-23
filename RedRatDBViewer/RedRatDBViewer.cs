@@ -319,6 +319,38 @@ namespace RedRatDatabaseViewer
                 rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + width_value.ToString() + "\n");
                 pulse_high = (pulse_high != 0) ? 0 : 1;
             }
+            //
+            // Convert to UART byte format
+            //
+            List<byte> data_to_sent = new List<byte>();
+            UInt16 period = (RC_ModutationFreq==0)?(UInt16)0:(Convert.ToUInt16(8000000 / RC_ModutationFreq));
+            data_to_sent.Add(Convert.ToByte(period / 256));
+            data_to_sent.Add(Convert.ToByte(period % 256));
+            foreach (var width_value in pulse_width)
+            {
+                if(width_value>0x7fff)
+                {
+                    UInt32 value = width_value | 0x80000000;
+                    data_to_sent.Add(Convert.ToByte((value&0x7f000000) >> 24));
+                    data_to_sent.Add(Convert.ToByte((value&0x00ff0000) >> 16));
+                    data_to_sent.Add(Convert.ToByte((value&0x0000ff00) >> 8));
+                    data_to_sent.Add(Convert.ToByte(value & 0x000000ff));
+                }
+                else
+                {
+                    data_to_sent.Add(Convert.ToByte((width_value & 0xff00) >> 8));
+                    data_to_sent.Add(Convert.ToByte(width_value & 0x00ff));
+                }
+            }
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            byte [] byte_to_sent = new byte[data_to_sent.Count];
+            data_to_sent.CopyTo(byte_to_sent);
+            //
+            //
+            //
         }
 
         private void button3_Click(object sender, EventArgs e)
