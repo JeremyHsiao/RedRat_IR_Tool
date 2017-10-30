@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using System.IO;
 using System.Xml.Serialization;
 using System.Threading;
+using System.IO.Ports;
 
 using RedRat;
 using RedRat.IR;
@@ -186,6 +187,28 @@ namespace RedRatDatabaseViewer
 
         }
 
+        private void SendToSerial(byte [] byte_to_sent)
+        {
+            // Create a new SerialPort object with default settings.
+            SerialPort _serialPort = new SerialPort();
+
+            // Allow the user to set the appropriate properties.
+            _serialPort.PortName = "COM14";
+            _serialPort.BaudRate = 115200;
+            _serialPort.Parity = Parity.None;
+            _serialPort.DataBits = 8;
+            _serialPort.StopBits = StopBits.One;
+            _serialPort.Handshake = Handshake.None;
+            _serialPort.Encoding = Encoding.UTF8;
+
+            // Set the read/write timeouts
+            _serialPort.ReadTimeout = 500;
+            _serialPort.WriteTimeout = 500;
+
+            _serialPort.Open();
+            _serialPort.Write(byte_to_sent, 0, byte_to_sent.Length);
+            _serialPort.Close();
+        }
 
         //
         // Form Events
@@ -323,6 +346,12 @@ namespace RedRatDatabaseViewer
             // Convert to UART byte format
             //
             List<byte> data_to_sent = new List<byte>();
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
             UInt16 period = (RC_ModutationFreq==0)?(UInt16)0:(Convert.ToUInt16(8000000 / RC_ModutationFreq));
             data_to_sent.Add(Convert.ToByte(period / 256));
             data_to_sent.Add(Convert.ToByte(period % 256));
@@ -342,12 +371,10 @@ namespace RedRatDatabaseViewer
                     data_to_sent.Add(Convert.ToByte(width_value & 0x00ff));
                 }
             }
-            data_to_sent.Add(0xff);
-            data_to_sent.Add(0xff);
-            data_to_sent.Add(0xff);
-            data_to_sent.Add(0xff);
             byte [] byte_to_sent = new byte[data_to_sent.Count];
             data_to_sent.CopyTo(byte_to_sent);
+
+            SendToSerial(byte_to_sent);
             //
             //
             //
