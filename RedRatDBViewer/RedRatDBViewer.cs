@@ -777,44 +777,6 @@ namespace RedRatDatabaseViewer
             Serial_UpdatePortName();
         }
 
-        Boolean btnIsConnectionButton = true;
-        private void ConnectionButton_Click(object sender, System.EventArgs e)
-        {
-            if (btnIsConnectionButton == true)
-            {   // User to connect
-                if (_serialPort.IsOpen == false)
-                {
-                    string curItem = listBox1.SelectedItem.ToString();
-                    if (Serial_OpenPort(curItem) == true)
-                    {
-                        UpdateToDisconnectButton();
-                        DisableRefreshCOMButton();
-                        //Start_SerialReadThread();
-                    }
-                    else
-                    {
-                        //richTextBox1.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " - Cannot connect to RS232.\n");
-                    }
-                }
-            }
-            else
-            {   // User to disconnect
-                if (_serialPort.IsOpen == true)
-                {
-                    //Stop_SerialReadThread();
-                    if (Serial_ClosePort() == true)
-                    {
-                        UpdateToConnectButton();
-                        EnableRefreshCOMButton();
-                    }
-                    else
-                    {
-                        //richTextBox1.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " - Cannot disconnect from RS232.\n");
-                    }
-                }
-            }
-        }
-
         private void btnConnectionControl_Click(object sender, EventArgs e)
         {
             if (btnConnectionControl.Text.Equals(CONNECT_UART_STRING_ON_BUTTON, StringComparison.Ordinal)) // Check if button is showing "Connect" at this moment.
