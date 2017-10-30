@@ -187,30 +187,6 @@ namespace RedRatDatabaseViewer
 
         }
 
-        private void SendToSerial(byte [] byte_to_sent)
-        {
-            // Create a new SerialPort object with default settings.
-            SerialPort _serialPort = new SerialPort();
-
-            // Allow the user to set the appropriate properties.
-            //    _serialPort.PortName = "COM14";
-            //    _serialPort.BaudRate = 115200;
-            //    _serialPort.Parity = Parity.None;
-            //    _serialPort.DataBits = 8;
-            //    _serialPort.StopBits = StopBits.One;
-            //    _serialPort.Handshake = Handshake.None;
-            //    _serialPort.Encoding = Encoding.UTF8;
-
-            //    // Set the read/write timeouts
-            //    _serialPort.ReadTimeout = 500;
-            //    _serialPort.WriteTimeout = 500;
-
-            //    _serialPort.Open();
-            //    _serialPort.Write(byte_to_sent, 0, byte_to_sent.Length);
-            //    _serialPort.Close();
-            //
-        }
-
         //
         // Form Events
         //
@@ -683,8 +659,8 @@ namespace RedRatDatabaseViewer
             _serialPort.Encoding = Encoding.UTF8;
 
             // Set the read/write timeouts
-            _serialPort.ReadTimeout = 500;
-            _serialPort.WriteTimeout = 500;
+            _serialPort.ReadTimeout = 1000;
+            _serialPort.WriteTimeout = 1000;
         }
 
         private void Serial_UpdatePortName()
@@ -739,6 +715,67 @@ namespace RedRatDatabaseViewer
             return ret;
         }
 
+        static bool _continue_serial_read_write = false;
+        static Thread readThread = null;
+        private Queue<string> UART_READ_MSG_QUEUE = new Queue<string>();
+
+        private void Start_SerialReadThread()
+        {
+            _continue_serial_read_write = true;
+            readThread = new Thread(ReadSerialPortThread);
+            readThread.Start();
+        }
+        private void Stop_SerialReadThread()
+        {
+            _continue_serial_read_write = false;
+            if (readThread != null)
+            {
+                if (readThread.IsAlive)
+                {
+                    readThread.Join();
+                }
+            }
+        }
+
+        public void ReadSerialPortThread()
+        {
+            while (_continue_serial_read_write)
+            {
+                try
+                {
+                    string message = _serialPort.ReadLine();
+                    {
+                        //UART_READ_MSG_QUEUE.Enqueue(message);
+                        AppendSerialMessageLog(message);
+                    }
+                }
+                catch (TimeoutException)
+                {
+                    //
+                }
+            }
+        }
+
+        private void SendToSerial(byte[] byte_to_sent)
+        {
+            if (_serialPort.IsOpen == true)
+            {
+                try
+                {
+                   // _serialPort.Write("This is a Test\n");
+                   _serialPort.Write(byte_to_sent, 0, byte_to_sent.Length);
+                }
+                catch (TimeoutException timeout)
+                {
+                    //MessageBox.Show(timeout.ToString());
+                }
+            }
+            else
+            {
+                //AppendSerialMessageLog("COM is closed and cannot send byte data\n");
+            }
+        }
+
         private void EnableRefreshCOMButton()
         {
             btnFreshCOMNo.Enabled = true;
@@ -777,6 +814,25 @@ namespace RedRatDatabaseViewer
             Serial_UpdatePortName();
         }
 
+        //
+        // Print Serial Port Message on RichTextBox
+        //
+        delegate void AppendSerialMessageCallback(string text);
+        public void AppendSerialMessageLog(string my_str)
+        {
+            if (this.rtbSignalData.InvokeRequired)
+            {
+                AppendSerialMessageCallback d = new AppendSerialMessageCallback(AppendSerialMessageLog);
+                this.Invoke(d, new object[] { my_str });
+            }
+            else
+            {
+                this.rtbSignalData.AppendText(my_str);
+                this.rtbSignalData.ScrollToCaret();
+            }
+        }
+
+
         private void btnConnectionControl_Click(object sender, EventArgs e)
         {
             if (btnConnectionControl.Text.Equals(CONNECT_UART_STRING_ON_BUTTON, StringComparison.Ordinal)) // Check if button is showing "Connect" at this moment.
@@ -788,11 +844,11 @@ namespace RedRatDatabaseViewer
                     {
                         UpdateToDisconnectButton();
                         DisableRefreshCOMButton();
-                        //Start_SerialReadThread();
+                        Start_SerialReadThread();
                     }
                     else
                     {
-                        //richTextBox1.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " - Cannot connect to RS232.\n");
+                        rtbSignalData.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " - Cannot connect to RS232.\n");
                     }
                 }
             }
@@ -800,7 +856,7 @@ namespace RedRatDatabaseViewer
             {   // User to disconnect
                 if (_serialPort.IsOpen == true)
                 {
-                    //Stop_SerialReadThread();
+                    Stop_SerialReadThread();
                     if (Serial_ClosePort() == true)
                     {
                         UpdateToConnectButton();
@@ -808,11 +864,12 @@ namespace RedRatDatabaseViewer
                     }
                     else
                     {
-                        //richTextBox1.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " - Cannot disconnect from RS232.\n");
+                        rtbSignalData.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " - Cannot disconnect from RS232.\n");
                     }
                 }
             }
         }
+
     }
 
 
