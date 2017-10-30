@@ -193,21 +193,22 @@ namespace RedRatDatabaseViewer
             SerialPort _serialPort = new SerialPort();
 
             // Allow the user to set the appropriate properties.
-            _serialPort.PortName = "COM14";
-            _serialPort.BaudRate = 115200;
-            _serialPort.Parity = Parity.None;
-            _serialPort.DataBits = 8;
-            _serialPort.StopBits = StopBits.One;
-            _serialPort.Handshake = Handshake.None;
-            _serialPort.Encoding = Encoding.UTF8;
+            //    _serialPort.PortName = "COM14";
+            //    _serialPort.BaudRate = 115200;
+            //    _serialPort.Parity = Parity.None;
+            //    _serialPort.DataBits = 8;
+            //    _serialPort.StopBits = StopBits.One;
+            //    _serialPort.Handshake = Handshake.None;
+            //    _serialPort.Encoding = Encoding.UTF8;
 
-            // Set the read/write timeouts
-            _serialPort.ReadTimeout = 500;
-            _serialPort.WriteTimeout = 500;
+            //    // Set the read/write timeouts
+            //    _serialPort.ReadTimeout = 500;
+            //    _serialPort.WriteTimeout = 500;
 
-            _serialPort.Open();
-            _serialPort.Write(byte_to_sent, 0, byte_to_sent.Length);
-            _serialPort.Close();
+            //    _serialPort.Open();
+            //    _serialPort.Write(byte_to_sent, 0, byte_to_sent.Length);
+            //    _serialPort.Close();
+            //
         }
 
         //
@@ -657,24 +658,198 @@ namespace RedRatDatabaseViewer
             }
          }
 
-        private void dgvPulseData_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private void RedRatDBViewer_Load(object sender, EventArgs e)
         {
-
+            _serialPort = new SerialPort();
+            Serial_InitialSetting();
+            Serial_UpdatePortName();
         }
 
-        private void label3_Click(object sender, EventArgs e)
-        {
+        //
+        // Add UART Part
+        //
 
+        static SerialPort _serialPort;
+
+        private void Serial_InitialSetting()
+        {
+            // Allow the user to set the appropriate properties.
+            _serialPort.PortName = "COM14";
+            _serialPort.BaudRate = 115200; // as default;
+            _serialPort.Parity = Parity.None;
+            _serialPort.DataBits = 8;
+            _serialPort.StopBits = StopBits.One;
+            _serialPort.Handshake = Handshake.None;
+            _serialPort.Encoding = Encoding.UTF8;
+
+            // Set the read/write timeouts
+            _serialPort.ReadTimeout = 500;
+            _serialPort.WriteTimeout = 500;
         }
 
-        private void lbFreq_Click(object sender, EventArgs e)
+        private void Serial_UpdatePortName()
         {
-
+            listBox1.Items.Clear();
+            foreach (string comport_s in SerialPort.GetPortNames())
+            {
+                listBox1.Items.Add(comport_s);
+            }
+            if (listBox1.Items.Count > 0)
+            {
+                // listBox1.SelectedIndex = listBox1.Items.Count - 1;
+                listBox1.SelectedIndex = 0;     // this can be modified to preferred default
+                EnableConnectButton();
+                UpdateToConnectButton();
+            }
+            else
+            {
+                DisableConnectButton();
+                UpdateToConnectButton();
+            }
         }
 
-        private void dgvToggleBits_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private Boolean Serial_OpenPort(string PortName)
         {
+            Boolean ret = false;
+            try
+            {
+                _serialPort.PortName = PortName;
+                _serialPort.Open();
+                ret = true;
+            }
+            catch (Exception ex232)
+            {
+                ret = false;
+            }
+            return ret;
+        }
 
+        private Boolean Serial_ClosePort()
+        {
+            Boolean ret = false;
+            try
+            {
+                _serialPort.Close();
+                ret = true;
+            }
+            catch (Exception ex232)
+            {
+                ret = false;
+            }
+            return ret;
+        }
+
+        private void EnableRefreshCOMButton()
+        {
+            btnFreshCOMNo.Enabled = true;
+        }
+
+        private void DisableRefreshCOMButton()
+        {
+            btnFreshCOMNo.Enabled = false;
+        }
+
+        private void EnableConnectButton()
+        {
+            btnConnectionControl.Enabled = true;
+        }
+
+        private void DisableConnectButton()
+        {
+            btnConnectionControl.Enabled = false;
+        }
+
+        const string CONNECT_UART_STRING_ON_BUTTON = "Connect UART";
+        const string DISCONNECT_UART_STRING_ON_BUTTON = "Disconnect UART";
+
+        private void UpdateToConnectButton()
+        {
+            btnConnectionControl.Text = CONNECT_UART_STRING_ON_BUTTON;
+        }
+
+        private void UpdateToDisconnectButton()
+        {
+            btnConnectionControl.Text = DISCONNECT_UART_STRING_ON_BUTTON;
+        }
+
+        private void btnFreshCOMNo_Click(object sender, System.EventArgs e)
+        {
+            Serial_UpdatePortName();
+        }
+
+        Boolean btnIsConnectionButton = true;
+        private void ConnectionButton_Click(object sender, System.EventArgs e)
+        {
+            if (btnIsConnectionButton == true)
+            {   // User to connect
+                if (_serialPort.IsOpen == false)
+                {
+                    string curItem = listBox1.SelectedItem.ToString();
+                    if (Serial_OpenPort(curItem) == true)
+                    {
+                        UpdateToDisconnectButton();
+                        DisableRefreshCOMButton();
+                        //Start_SerialReadThread();
+                    }
+                    else
+                    {
+                        //richTextBox1.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " - Cannot connect to RS232.\n");
+                    }
+                }
+            }
+            else
+            {   // User to disconnect
+                if (_serialPort.IsOpen == true)
+                {
+                    //Stop_SerialReadThread();
+                    if (Serial_ClosePort() == true)
+                    {
+                        UpdateToConnectButton();
+                        EnableRefreshCOMButton();
+                    }
+                    else
+                    {
+                        //richTextBox1.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " - Cannot disconnect from RS232.\n");
+                    }
+                }
+            }
+        }
+
+        private void btnConnectionControl_Click(object sender, EventArgs e)
+        {
+            if (btnConnectionControl.Text.Equals(CONNECT_UART_STRING_ON_BUTTON, StringComparison.Ordinal)) // Check if button is showing "Connect" at this moment.
+            {   // User to connect
+                if (_serialPort.IsOpen == false)
+                {
+                    string curItem = listBox1.SelectedItem.ToString();
+                    if (Serial_OpenPort(curItem) == true)
+                    {
+                        UpdateToDisconnectButton();
+                        DisableRefreshCOMButton();
+                        //Start_SerialReadThread();
+                    }
+                    else
+                    {
+                        //richTextBox1.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " - Cannot connect to RS232.\n");
+                    }
+                }
+            }
+            else
+            {   // User to disconnect
+                if (_serialPort.IsOpen == true)
+                {
+                    //Stop_SerialReadThread();
+                    if (Serial_ClosePort() == true)
+                    {
+                        UpdateToConnectButton();
+                        EnableRefreshCOMButton();
+                    }
+                    else
+                    {
+                        //richTextBox1.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " - Cannot disconnect from RS232.\n");
+                    }
+                }
+            }
         }
     }
 
