@@ -327,28 +327,40 @@ namespace RedRatDatabaseViewer
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
-            data_to_sent.Add(0xff);
-            data_to_sent.Add(0xff);
             UInt16 period = (RC_ModutationFreq==0)?(UInt16)0:(Convert.ToUInt16(8000000 / RC_ModutationFreq));
             data_to_sent.Add(Convert.ToByte(period / 256));
             data_to_sent.Add(Convert.ToByte(period % 256));
             foreach (var width_value in pulse_width)
             {
-                if(width_value>0x7fff)
+                Stack<Byte> byte_data = new Stack<Byte>();
+                if (width_value>0x7fff)
                 {
                     UInt32 value = width_value | 0x80000000;
-                    data_to_sent.Add(Convert.ToByte((value&0x7f000000) >> 24));
-                    data_to_sent.Add(Convert.ToByte((value&0x00ff0000) >> 16));
-                    data_to_sent.Add(Convert.ToByte((value&0x0000ff00) >> 8));
-                    data_to_sent.Add(Convert.ToByte(value & 0x000000ff));
+                    byte_data.Push(Convert.ToByte(value & 0xff));
+                    value >>= 8;
+                    byte_data.Push(Convert.ToByte(value & 0xff));
+                    value >>= 8;
+                    byte_data.Push(Convert.ToByte(value & 0xff));
+                    value >>= 8;
+                    byte_data.Push(Convert.ToByte(value & 0xff));
                 }
                 else
                 {
-                    data_to_sent.Add(Convert.ToByte((width_value & 0xff00) >> 8));
-                    data_to_sent.Add(Convert.ToByte(width_value & 0x00ff));
+                    UInt32 value = width_value;
+                    byte_data.Push(Convert.ToByte(value & 0xff));
+                    value >>= 8;
+                    byte_data.Push(Convert.ToByte(value & 0xff));
+                }
+                foreach(var single_byte in byte_data)
+                {
+                    data_to_sent.Add(single_byte);
                 }
             }
-            byte [] byte_to_sent = new byte[data_to_sent.Count];
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            byte[] byte_to_sent = new byte[data_to_sent.Count];
             data_to_sent.CopyTo(byte_to_sent);
 
             SendToSerial(byte_to_sent);
@@ -659,8 +671,8 @@ namespace RedRatDatabaseViewer
             _serialPort.Encoding = Encoding.UTF8;
 
             // Set the read/write timeouts
-            _serialPort.ReadTimeout = 1000;
-            _serialPort.WriteTimeout = 1000;
+            _serialPort.ReadTimeout = 2000;
+            _serialPort.WriteTimeout = 2000;
         }
 
         private void Serial_UpdatePortName()
@@ -760,6 +772,7 @@ namespace RedRatDatabaseViewer
         {
             if (_serialPort.IsOpen == true)
             {
+                AppendSerialMessageLog("Start Tx\n");
                 try
                 {
                    // _serialPort.Write("This is a Test\n");
