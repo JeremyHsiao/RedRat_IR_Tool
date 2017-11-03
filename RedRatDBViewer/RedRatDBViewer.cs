@@ -197,6 +197,9 @@ namespace RedRatDatabaseViewer
                 // return immediately when No Selected Device or no Selected Signal
                 return;
             }
+
+            btnSingleRCPressed.Enabled = false;
+
             //
             // Display signal
             //
@@ -304,6 +307,16 @@ namespace RedRatDatabaseViewer
                     pulse_index++;
                 }
             }
+            if (RC_RepeatPause > 0)
+            {
+                pulse_width.Add(Convert.ToUInt32(RC_RepeatPause * time_ratio));
+            }
+            else if (RC_IntraSigPause > 0)
+            {
+
+                pulse_width.Add(Convert.ToUInt32(RC_IntraSigPause * time_ratio));
+            }
+            pulse_index++;
             RC_SendNext_Indicator_1st_Bit_or_Signalal = !RC_SendNext_Indicator_1st_Bit_or_Signalal;
             //
             // End of Tx preprocessing
@@ -323,8 +336,6 @@ namespace RedRatDatabaseViewer
             // Convert to UART byte format
             //
             List<byte> data_to_sent = new List<byte>();
-            data_to_sent.Add(0xff);
-            data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
             UInt16 period = (RC_ModutationFreq==0)?(UInt16)0:(Convert.ToUInt16(8000000 / RC_ModutationFreq));
@@ -357,16 +368,32 @@ namespace RedRatDatabaseViewer
                 }
             }
             data_to_sent.Add(0xff);
-            data_to_sent.Add(0xff);
-            data_to_sent.Add(0xff);
-            data_to_sent.Add(0xff);
+            //data_to_sent.Add(0xff);
             byte[] byte_to_sent = new byte[data_to_sent.Count];
             data_to_sent.CopyTo(byte_to_sent);
 
-            SendToSerial(byte_to_sent);
+            SendToSerial_v2(byte_to_sent);
+
+            if(UART_READ_MSG_QUEUE.Count>0)
+            {
+                string temp_str = UART_READ_MSG_QUEUE.Dequeue();
+                int value_in = Convert.ToInt16(temp_str);
+                temp_str = UART_READ_MSG_QUEUE.Dequeue();
+                int value_out = Convert.ToInt16(temp_str);
+                if(value_in<value_out)
+                {
+                    value_in += 250;
+                }
+                if((value_in-value_out)== pulse_width.Count)
+                {
+                    AppendSerialMessageLog("OK\n");
+                }
+            }
+
             //
             //
             //
+            btnSingleRCPressed.Enabled = true;
         }
 
         private void button3_Click(object sender, EventArgs e)
@@ -757,13 +784,13 @@ namespace RedRatDatabaseViewer
                 {
                     string message = _serialPort.ReadLine();
                     {
-                        //UART_READ_MSG_QUEUE.Enqueue(message);
+                        UART_READ_MSG_QUEUE.Enqueue(message);
                         AppendSerialMessageLog(message);
                     }
                 }
-                catch (TimeoutException)
+                catch (Exception ex)
                 {
-                    //
+                    //AppendSerialMessageLog(ex.ToString());
                 }
             }
         }
@@ -773,14 +800,54 @@ namespace RedRatDatabaseViewer
             if (_serialPort.IsOpen == true)
             {
                 AppendSerialMessageLog("Start Tx\n");
+                Application.DoEvents();
                 try
                 {
                    // _serialPort.Write("This is a Test\n");
                    _serialPort.Write(byte_to_sent, 0, byte_to_sent.Length);
                 }
-                catch (TimeoutException timeout)
+                catch (Exception ex)
                 {
-                    //MessageBox.Show(timeout.ToString());
+                    AppendSerialMessageLog(ex.ToString());
+                }
+            }
+            else
+            {
+                //AppendSerialMessageLog("COM is closed and cannot send byte data\n");
+            }
+        }
+
+        private int Tx_CNT = 0;
+
+        private void SendToSerial_v2(byte[] byte_to_sent)
+        {
+            if (_serialPort.IsOpen == true)
+            {
+                AppendSerialMessageLog("========Tx:"+ Tx_CNT.ToString()+"\n");
+                Tx_CNT++;
+                Application.DoEvents();
+                try
+                {
+                    int         temp_index = 0;
+                    const int  fixed_length = 16;
+
+                    while( temp_index < byte_to_sent.Length)
+                    {
+                        if ((temp_index + fixed_length) < byte_to_sent.Length)
+                        {
+                            _serialPort.Write(byte_to_sent, temp_index, fixed_length);
+                            temp_index += fixed_length;
+                        }
+                        else
+                        {
+                            _serialPort.Write(byte_to_sent, temp_index, (byte_to_sent.Length- temp_index));
+                            temp_index = byte_to_sent.Length;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AppendSerialMessageLog(ex.ToString()+" ");
                 }
             }
             else
