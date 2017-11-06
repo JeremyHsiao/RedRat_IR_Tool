@@ -264,7 +264,8 @@ namespace RedRatDatabaseViewer
                 //
                 if ((toggle_bit_index < RC_ToggleData.Length)&&(pulse_index == RC_ToggleData[toggle_bit_index].bitNo))
                 {
-                    signal_width = RC_Lengths[(RC_SendNext_Indicator_1st_Bit_or_Signalal == true) ? (RC_ToggleData[toggle_bit_index].len1) : (RC_ToggleData[toggle_bit_index].len2)];
+                    int toggle_bit_no = (RC_SendNext_Indicator_1st_Bit_or_Signalal == true) ? (RC_ToggleData[toggle_bit_index].len1) : (RC_ToggleData[toggle_bit_index].len2);
+                    signal_width = RC_Lengths[toggle_bit_no];
                     toggle_bit_index++;
                 }
                 else
@@ -492,18 +493,37 @@ namespace RedRatDatabaseViewer
         private void ClearRCData()
         {
             RC_ModutationFreq = 0;
-            RC_Lengths = new double[1];
-            RC_SigData = new byte[1];
+            RC_Lengths = null;
+            RC_SigData = null;
             RC_NoRepeats = 0;
             RC_IntraSigPause = 0;
-            RC_MainSignal = new byte[1];
-            RC_RepeatSignal = new byte[1];
-            RC_ToggleData = new ToggleBit[1];
+            RC_MainSignal = null;
+            RC_RepeatSignal = null;
+            RC_ToggleData = null;
             RC_Description = "";
             RC_Name = "";
             // RC_PauseRepeatMode = ;
             RC_RepeatPause = 0;
             RC_MainRepeatIdentical = false;
+        }
+
+        private void Verify_Toggle_Bit_Data()
+        {
+            List<ToggleBit> temp_toggle_data = new List<ToggleBit>();
+
+            foreach (var toggle_data in RC_ToggleData)
+            {
+                if ((toggle_data.len1 < RC_Lengths.Length) && (toggle_data.len2 < RC_Lengths.Length))
+                {
+                    temp_toggle_data.Add(toggle_data);
+                }
+                else
+                {
+                    Console.WriteLine("Toggle Bit Data Error at bit:" + toggle_data.bitNo + " (" + toggle_data.len1 + "," + toggle_data.len2 + ")" );
+                }
+            }
+
+            RC_ToggleData = temp_toggle_data.ToArray();
         }
 
         private void GetRCData(ModulatedSignal sig)
@@ -516,6 +536,7 @@ namespace RedRatDatabaseViewer
             RC_MainSignal = sig.MainSignal;
             RC_RepeatSignal = sig.RepeatSignal;
             RC_ToggleData = sig.ToggleData;
+            Verify_Toggle_Bit_Data();
             RC_Description = sig.Description;
             RC_Name = sig.Name;
             RC_PauseRepeatMode = sig.PauseRepeatMode;
@@ -533,6 +554,7 @@ namespace RedRatDatabaseViewer
             RC_MainSignal = sig.MainSignal;
             RC_RepeatSignal = sig.RepeatSignal;
             RC_ToggleData = sig.ToggleData;
+            Verify_Toggle_Bit_Data();
             RC_Description = sig.Description;
             RC_Name = sig.Name;
             RC_PauseRepeatMode = sig.PauseRepeatMode;
@@ -549,7 +571,7 @@ namespace RedRatDatabaseViewer
             RC_IntraSigPause = sig.IntraSigPause;
             RC_MainSignal = sig.MainSignal;
             RC_RepeatSignal = sig.RepeatSignal;
-            RC_ToggleData = new ToggleBit[1];
+            RC_ToggleData = null;
             RC_Description = sig.Description;
             RC_Name = sig.Name;
             RC_MainRepeatIdentical = false; // No such function, need to compare
@@ -564,7 +586,7 @@ namespace RedRatDatabaseViewer
             RC_IntraSigPause = sig.IntraSigPause;
             RC_MainSignal = sig.MainSignal;
             RC_RepeatSignal = sig.RepeatSignal;
-            RC_ToggleData = new ToggleBit[1];
+            RC_ToggleData = null;
             RC_Description = sig.Description;
             RC_Name = sig.Name;
             RC_MainRepeatIdentical = false; // No such function, need to compare
