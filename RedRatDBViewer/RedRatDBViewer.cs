@@ -11,6 +11,7 @@ using System.IO;
 using System.Xml.Serialization;
 using System.Threading;
 using System.IO.Ports;
+using System.Diagnostics.Contracts;
 
 using RedRat;
 using RedRat.IR;
@@ -138,19 +139,22 @@ namespace RedRatDatabaseViewer
             return signal;
         }
 
-        private void Displaying_RC_Signal_Array(double[] rc_length, byte[] rc_main_sig_array, byte[] rc_repeat_sig_array, int rc_prepeat, double rc_intra_sig_pause, int Repeat_Tx_Times=0)
+        private void Displaying_RC_Signal_Array(double[] rc_length, byte[] rc_main_sig_array, byte[] rc_repeat_sig_array, int rc_repeat, double rc_intra_sig_pause, int Repeat_Tx_Times=0)
         {
-            int repeat_cnt = rc_prepeat, pulse_high;
+            Contract.Requires(rc_main_sig_array != null);
+            Contract.Requires((rc_repeat <= 0) || ((rc_repeat > 0) && (rc_repeat_sig_array != null)));
+
+            int repeat_cnt = rc_repeat, pulse_high;
             const int time_ratio = 1000;
             
             // Main signal
             pulse_high = 1;
             foreach (var sig in rc_main_sig_array)
             {
-                rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + (rc_length[sig]* time_ratio).ToString() + "\n");
+                rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + (rc_length[sig] * time_ratio).ToString() + "\n");
                 pulse_high = (pulse_high != 0) ? 0 : 1;
             }
-            
+
             while (repeat_cnt-- > 0) 
             {
                 rtbDecodeRCSignal.AppendText("0" + ":" + (rc_intra_sig_pause * time_ratio).ToString() + "\n");
@@ -337,11 +341,21 @@ namespace RedRatDatabaseViewer
             // Convert to UART byte format
             //
             List<byte> data_to_sent = new List<byte>();
+            Byte CheckSum = 0, temp_byte;
+ 
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
-            UInt16 period = (RC_ModutationFreq==0)?(UInt16)0:(Convert.ToUInt16(8000000 / RC_ModutationFreq));
-            data_to_sent.Add(Convert.ToByte(period / 256));
-            data_to_sent.Add(Convert.ToByte(period % 256));
+            data_to_sent.Add(0);
+            CheckSum = 0;
+            data_to_sent.Add(50);
+            CheckSum ^= 50;
+            UInt16 period = (RC_ModutationFreq == 0) ? (UInt16)0 : (Convert.ToUInt16(8000000 / RC_ModutationFreq));
+            temp_byte = Convert.ToByte(period / 256);
+            data_to_sent.Add(temp_byte);
+            CheckSum ^= temp_byte;
+            temp_byte = Convert.ToByte(period % 256);
+            data_to_sent.Add(temp_byte);
+            CheckSum ^= temp_byte;
             foreach (var width_value in pulse_width)
             {
                 Stack<Byte> byte_data = new Stack<Byte>();
@@ -366,30 +380,32 @@ namespace RedRatDatabaseViewer
                 foreach(var single_byte in byte_data)
                 {
                     data_to_sent.Add(single_byte);
+                    CheckSum ^= single_byte;
                 }
             }
             data_to_sent.Add(0xff);
-            //data_to_sent.Add(0xff);
-            byte[] byte_to_sent = new byte[data_to_sent.Count];
-            data_to_sent.CopyTo(byte_to_sent);
+            CheckSum ^= 0xff;
+            data_to_sent.Add(CheckSum);
+
+            Byte[] byte_to_sent = data_to_sent.ToArray();
 
             SendToSerial_v2(byte_to_sent);
 
-            if(UART_READ_MSG_QUEUE.Count>0)
-            {
-                string temp_str = UART_READ_MSG_QUEUE.Dequeue();
-                int value_in = Convert.ToInt16(temp_str);
-                temp_str = UART_READ_MSG_QUEUE.Dequeue();
-                int value_out = Convert.ToInt16(temp_str);
-                if(value_in<value_out)
-                {
-                    value_in += 250;
-                }
-                if((value_in-value_out)== pulse_width.Count)
-                {
-                    AppendSerialMessageLog("OK\n");
-                }
-            }
+            //if(UART_READ_MSG_QUEUE.Count>0)
+            //{
+            //    string temp_str = UART_READ_MSG_QUEUE.Dequeue();
+            //    int value_in = Convert.ToInt16(temp_str);
+            //    temp_str = UART_READ_MSG_QUEUE.Dequeue();
+            //    int value_out = Convert.ToInt16(temp_str);
+            //    if(value_in<value_out)
+            //    {
+            //        value_in += 250;
+            //    }
+            //    if((value_in-value_out)== pulse_width.Count)
+            //    {
+            //        AppendSerialMessageLog("OK\n");
+            //    }
+            //}
 
             //
             //
@@ -400,6 +416,17 @@ namespace RedRatDatabaseViewer
         private void button3_Click(object sender, EventArgs e)
         {
             // To be implemented
+            List<byte> data_to_sent = new List<byte>();
+
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0x0);
+            data_to_sent.Add(0x0);
+            data_to_sent.Add(0xff);
+
+            Byte[] byte_to_sent = data_to_sent.ToArray();
+
+            SendToSerial_v2(byte_to_sent);
         }
 
         private void listboxAVDeviceList_SelectedIndexChanged(object sender, EventArgs e)
@@ -456,31 +483,38 @@ namespace RedRatDatabaseViewer
         private void UpdateRCDataOnForm()
         {
             dgvPulseData.Rows.Clear();
-            int index = 0;
-            foreach (var len in RC_Lengths)
+            if (RC_Lengths != null)
             {
-                string []str = { len.ToString() };
-                dgvPulseData.Rows.Add(str);
-                dgvPulseData.Rows[index].HeaderCell.Value = String.Format("{0}", index);
-                index++;
+                int index = 0;
+                foreach (var len in RC_Lengths)
+                {
+                    string[] str = { len.ToString() };
+                    dgvPulseData.Rows.Add(str);
+                    dgvPulseData.Rows[index].HeaderCell.Value = String.Format("{0}", index);
+                    index++;
+                }
             }
+
             dgvToggleBits.Rows.Clear();
-            index = 0;
-            foreach (var toggle_bit in RC_ToggleData)
+            if (RC_ToggleData != null)
             {
-                string[] str = { RC_Lengths[toggle_bit.len1].ToString(), RC_Lengths[toggle_bit.len2].ToString() };
-                int bit_no = toggle_bit.bitNo;
-                if ( (index>0) && (bit_no<Convert.ToInt64(dgvToggleBits.Rows[index-1].HeaderCell.Value)) )
+                int index = 0;
+                foreach (var toggle_bit in RC_ToggleData)
                 {
-                    dgvToggleBits.Rows.Insert(index - 1, str);
-                    dgvToggleBits.Rows[index-1].HeaderCell.Value = String.Format("{0}", bit_no);
+                    string[] str = { RC_Lengths[toggle_bit.len1].ToString(), RC_Lengths[toggle_bit.len2].ToString() };
+                    int bit_no = toggle_bit.bitNo;
+                    if ((index > 0) && (bit_no < Convert.ToInt64(dgvToggleBits.Rows[index - 1].HeaderCell.Value)))
+                    {
+                        dgvToggleBits.Rows.Insert(index - 1, str);
+                        dgvToggleBits.Rows[index - 1].HeaderCell.Value = String.Format("{0}", bit_no);
+                    }
+                    else
+                    {
+                        dgvToggleBits.Rows.Add(str);
+                        dgvToggleBits.Rows[index].HeaderCell.Value = String.Format("{0}", bit_no);
+                    }
+                    index++;
                 }
-                else
-                {
-                    dgvToggleBits.Rows.Add(str);
-                    dgvToggleBits.Rows[index].HeaderCell.Value = String.Format("{0}", bit_no);
-                }
-                index++;
             }
         }
 
