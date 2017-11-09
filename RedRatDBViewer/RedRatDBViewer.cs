@@ -191,38 +191,84 @@ namespace RedRatDatabaseViewer
 
         }
 
-        //
-        // Form Events
-        //
-        private void SingleOutput_Click(object sender, EventArgs e)
+        private List<byte> Convert_data_to_Byte(uint width_value)
         {
-            if((Previous_Device<0)||(Previous_Key<0))
+            Stack<Byte> byte_data = new Stack<Byte>();
+            if (width_value > 0x7fff)
             {
-                // return immediately when No Selected Device or no Selected Signal
-                return;
+                UInt32 value = width_value | 0x80000000;            // Specify this is 4 bytes data in our protocol
+                byte_data.Push(Convert.ToByte(value & 0xff));
+                value >>= 8;
+                byte_data.Push(Convert.ToByte(value & 0xff));
+                value >>= 8;
+                byte_data.Push(Convert.ToByte(value & 0xff));
+                value >>= 8;
+                byte_data.Push(Convert.ToByte(value & 0xff));
             }
+            else
+            {
+                UInt32 value = width_value;
+                byte_data.Push(Convert.ToByte(value & 0xff));
+                value >>= 8;
+                byte_data.Push(Convert.ToByte(value & 0xff));
+            }
+            List<byte> data_to_sent = new List<byte>();
+            foreach (var single_byte in byte_data)
+            {
+                data_to_sent.Add(single_byte);
+            }
+            return data_to_sent;
+        }
 
-            btnSingleRCPressed.Enabled = false;
+        private double High_Pulse_Width_Adjustment(double signal_width)
+        {
+            double high_pulse_compensation;
+            if (RC_ModutationFreq == 0)
+            {
+                const double min_width = 50;
+                if (signal_width < min_width)
+                {
+                    high_pulse_compensation = 50 - signal_width;
+                }
+                else
+                {
+                    high_pulse_compensation = 0;
+                }
+            }
+            else
+            {
+                const double min_carrier_width_ratio = 3;
+                double carrier_width = (1000000 / RC_ModutationFreq);
+                double min_width = carrier_width * (min_carrier_width_ratio);
+                if ( (signal_width+carrier_width) >= min_width)
+                {
+                    high_pulse_compensation = carrier_width;
+                }
+                else
+                {
+                    high_pulse_compensation = min_width - signal_width;
+                }
+            }
+            return high_pulse_compensation;
+        }
 
-            //
-            // Display signal
-            //
-            IRPacket TxSignal;
+        private List<byte> Prepare_RC_Data_Packet(bool IsFirstSignal)
+        {
+            List<byte> data_to_sent = new List<byte>();
+            IRPacket TxSignal = SelectedSignal;
+            double high_pulse_compensation = 0;
 
             // 
             // Get the to-sent signal out of Double Signal
             //
-            if (SelectedSignal.GetType() == typeof(DoubleSignal))
+            if (TxSignal.GetType() == typeof(DoubleSignal))
             {
-                DoubleSignal tempDoubleSignal = (DoubleSignal)SelectedSignal;
-                TxSignal = (RC_SendNext_Indicator_1st_Bit_or_Signalal==true)?(tempDoubleSignal.Signal1):(tempDoubleSignal.Signal2);
+                DoubleSignal tempDoubleSignal = (DoubleSignal)TxSignal;
+                TxSignal = (IsFirstSignal == true) ? (tempDoubleSignal.Signal1) : (tempDoubleSignal.Signal2);
             }
-            else
-            {
-                TxSignal = SelectedSignal;
-            }
+
             //
-            // Type conversion
+            // Signal Type conversion
             //
             if (TxSignal.GetType() == typeof(ModulatedSignal))
             {
@@ -246,27 +292,31 @@ namespace RedRatDatabaseViewer
             }
             else
             {
-                return; // not suppport so return immediately
+                return data_to_sent; // not suppport so return immediately
             }
+
+            // DEBUG PURPOSE ONLY
+            rtbDecodeRCSignal.Text = "Tx Mod-Freq: " + RC_ModutationFreq.ToString() + "\n";
+            // END
+
             //
-            // Pre-processing done, start to Tx
+            // Pre-processing done, start to prepare pulse-width data for a single Tx
             //
-            List<uint> pulse_width = new List<uint>();
             int repeat_cnt = RC_NoRepeats, pulse_index, toggle_bit_index;
-            //int pulse_high;
+            bool pulse_high;
             const int time_ratio = 1000;
-            //rtbDecodeRCSignal.Text = "Tx Mod-Freq: " + RC_ModutationFreq.ToString() + "\n";
+
             // Tx Main signal
             toggle_bit_index = 0;
             pulse_index = 0;
-            //pulse_high = 1;
+            pulse_high = true;
             foreach (var sig in RC_MainSignal)
             {
                 double signal_width;
                 //
                 //  Update Toggle Bits
                 //
-                if ((toggle_bit_index < RC_ToggleData.Length)&&(pulse_index == RC_ToggleData[toggle_bit_index].bitNo))
+                if ((toggle_bit_index < RC_ToggleData.Length) && (pulse_index == RC_ToggleData[toggle_bit_index].bitNo))
                 {
                     int toggle_bit_no = (RC_SendNext_Indicator_1st_Bit_or_Signalal == true) ? (RC_ToggleData[toggle_bit_index].len1) : (RC_ToggleData[toggle_bit_index].len2);
                     signal_width = RC_Lengths[toggle_bit_no];
@@ -277,19 +327,42 @@ namespace RedRatDatabaseViewer
                     signal_width = RC_Lengths[sig];
                 }
                 //rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + (signal_width * time_ratio).ToString() + "\n");
-                //pulse_high = (pulse_high != 0) ? 0 : 1;
                 signal_width *= time_ratio;
-                pulse_width.Add(Convert.ToUInt32(signal_width));
+
+                //
+                // high_pulse period must extended a bit to compensate shorted-period due to detection mechanism
+                //
+                if (pulse_high)
+                {
+                    high_pulse_compensation = High_Pulse_Width_Adjustment(signal_width);
+                    signal_width += high_pulse_compensation;
+                }
+                else
+                {
+                    signal_width -= high_pulse_compensation;
+                }
+
+                data_to_sent.AddRange(Convert_data_to_Byte(Convert.ToUInt32(signal_width)));
+                // DEBUG PURPOSE ONLY
+                rtbDecodeRCSignal.AppendText((pulse_high==true?"1":"0") + ":" + Convert.ToUInt32(signal_width).ToString() + "\n");
+                // END
+
+                pulse_high = !pulse_high;
                 pulse_index++;
             }
 
             // Tx the rest of signal (2nd/3rd/...etc)
             while (repeat_cnt-- > 0)
             {
-                //rtbDecodeRCSignal.AppendText("0" + ":" + (RC_IntraSigPause * time_ratio).ToString() + "\n");
-                pulse_width.Add(Convert.ToUInt32(RC_IntraSigPause * time_ratio));
+                uint temp_value = Convert.ToUInt32(RC_IntraSigPause * time_ratio - high_pulse_compensation);
+                data_to_sent.AddRange(Convert_data_to_Byte(temp_value));
+                // DEBUG PURPOSE ONLY
+                rtbDecodeRCSignal.AppendText((pulse_high == true ? "1" : "0") + ":" + temp_value.ToString() + "\n");
+                // END
+
                 pulse_index++;
-                //pulse_high = 1;
+                pulse_high = true;
+
                 foreach (var sig in RC_RepeatSignal)
                 {
                     double signal_width;
@@ -308,46 +381,62 @@ namespace RedRatDatabaseViewer
                     //rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + (signal_width * time_ratio).ToString() + "\n");
                     //pulse_high = (pulse_high != 0) ? 0 : 1;
                     signal_width *= time_ratio;
-                    pulse_width.Add(Convert.ToUInt32(signal_width));
+                    if (pulse_high)
+                    {
+                        high_pulse_compensation = High_Pulse_Width_Adjustment(signal_width);
+                        signal_width += high_pulse_compensation;
+                    }
+                    else
+                    {
+                        signal_width -= high_pulse_compensation;
+                    }
+                    data_to_sent.AddRange(Convert_data_to_Byte(Convert.ToUInt32(signal_width)));
+
+                    // DEBUG PURPOSE ONLY
+                    rtbDecodeRCSignal.AppendText((pulse_high == true ? "1" : "0") + ":" + Convert.ToUInt32(signal_width).ToString() + "\n");
+                    // END
+
+                    pulse_high = !pulse_high;
                     pulse_index++;
                 }
             }
             if (RC_RepeatPause > 0)
             {
-                pulse_width.Add(Convert.ToUInt32(RC_RepeatPause * time_ratio));
+                data_to_sent.AddRange(Convert_data_to_Byte(Convert.ToUInt32((RC_RepeatPause * time_ratio) - high_pulse_compensation)));
             }
             else if (RC_IntraSigPause > 0)
             {
-
-                pulse_width.Add(Convert.ToUInt32(RC_IntraSigPause * time_ratio));
+                data_to_sent.AddRange(Convert_data_to_Byte(Convert.ToUInt32((RC_IntraSigPause * time_ratio) - high_pulse_compensation)));
             }
             pulse_index++;
-            RC_SendNext_Indicator_1st_Bit_or_Signalal = !RC_SendNext_Indicator_1st_Bit_or_Signalal;
             //
             // End of Tx preprocessing
             //
 
-            //
-            // Print out result
-            //
-            int pulse_high = 1;
-            rtbDecodeRCSignal.Text = "Tx Mod-Freq: " + RC_ModutationFreq.ToString() + "\n";
-            foreach(var width_value in pulse_width)
+            return data_to_sent;
+        }
+
+        //
+        // Form Events
+        //
+        private void SingleOutput_Click(object sender, EventArgs e)
+        {
+            if((Previous_Device<0)||(Previous_Key<0))
             {
-                rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + width_value.ToString() + "\n");
-                pulse_high = (pulse_high != 0) ? 0 : 1;
+                // return immediately when No Selected Device or no Selected Signal
+                return;
             }
-            //
-            // Convert to UART byte format
-            //
+
+            btnSingleRCPressed.Enabled = false;
+
             List<byte> data_to_sent = new List<byte>();
             Byte CheckSum = 0, temp_byte;
- 
+
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
-            data_to_sent.Add(0);
+            data_to_sent.Add(0);        // Repeat_No
             CheckSum = 0;
-            data_to_sent.Add(50);
+            data_to_sent.Add(50);       // Duty-cycle
             CheckSum ^= 50;
             UInt16 period = (RC_ModutationFreq == 0) ? (UInt16)0 : (Convert.ToUInt16(8000000 / RC_ModutationFreq));
             temp_byte = Convert.ToByte(period / 256);
@@ -356,40 +445,22 @@ namespace RedRatDatabaseViewer
             temp_byte = Convert.ToByte(period % 256);
             data_to_sent.Add(temp_byte);
             CheckSum ^= temp_byte;
-            foreach (var width_value in pulse_width)
+
+            List<byte> pulse_packet = Prepare_RC_Data_Packet(RC_SendNext_Indicator_1st_Bit_or_Signalal);
+            foreach (var val in pulse_packet)
             {
-                Stack<Byte> byte_data = new Stack<Byte>();
-                if (width_value>0x7fff)
-                {
-                    UInt32 value = width_value | 0x80000000;
-                    byte_data.Push(Convert.ToByte(value & 0xff));
-                    value >>= 8;
-                    byte_data.Push(Convert.ToByte(value & 0xff));
-                    value >>= 8;
-                    byte_data.Push(Convert.ToByte(value & 0xff));
-                    value >>= 8;
-                    byte_data.Push(Convert.ToByte(value & 0xff));
-                }
-                else
-                {
-                    UInt32 value = width_value;
-                    byte_data.Push(Convert.ToByte(value & 0xff));
-                    value >>= 8;
-                    byte_data.Push(Convert.ToByte(value & 0xff));
-                }
-                foreach(var single_byte in byte_data)
-                {
-                    data_to_sent.Add(single_byte);
-                    CheckSum ^= single_byte;
-                }
+                CheckSum ^= val;
             }
+            data_to_sent.AddRange(pulse_packet);
             data_to_sent.Add(0xff);
             CheckSum ^= 0xff;
             data_to_sent.Add(CheckSum);
 
-            Byte[] byte_to_sent = data_to_sent.ToArray();
-
-            SendToSerial_v2(byte_to_sent);
+            SendToSerial_v2(data_to_sent.ToArray());
+            RC_SendNext_Indicator_1st_Bit_or_Signalal = !RC_SendNext_Indicator_1st_Bit_or_Signalal;
+            //
+            // End of Tx 
+            //
 
             //if(UART_READ_MSG_QUEUE.Count>0)
             //{
