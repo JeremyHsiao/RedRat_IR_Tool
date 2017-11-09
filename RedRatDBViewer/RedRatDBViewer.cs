@@ -83,6 +83,7 @@ namespace RedRatDatabaseViewer
                         Previous_Device = -1;
                         Previous_Key = -1;
                         listboxAVDeviceList.SelectedIndex = 0;
+                        EnableSingleRCButton();
                     }
                 }
                 catch (Exception ex)
@@ -807,10 +808,17 @@ namespace RedRatDatabaseViewer
             Serial_UpdatePortName();
         }
 
+        private void RedRatDBViewer_Closing(Object sender, FormClosingEventArgs e)
+        {
+            if (_serialPort.IsOpen == true)
+            {
+                Stop_SerialReadThread();
+            }
+        }
+ 
         //
         // Add UART Part
         //
-
         static SerialPort _serialPort;
 
         private void Serial_InitialSetting()
@@ -983,6 +991,19 @@ namespace RedRatDatabaseViewer
             }
         }
 
+        private void EnableSingleRCButton()
+        {
+            if ( (_serialPort.IsOpen == true) && (SignalDB != null) )
+            {
+                btnSingleRCPressed.Enabled = true;
+            }
+        }
+
+        private void DisableSingleRCButton()
+        {
+            btnSingleRCPressed.Enabled = false;
+        }
+
         private void EnableRefreshCOMButton()
         {
             btnFreshCOMNo.Enabled = true;
@@ -1051,6 +1072,7 @@ namespace RedRatDatabaseViewer
                     {
                         UpdateToDisconnectButton();
                         DisableRefreshCOMButton();
+                        EnableSingleRCButton();
                         Start_SerialReadThread();
                     }
                     else
@@ -1068,6 +1090,7 @@ namespace RedRatDatabaseViewer
                     {
                         UpdateToConnectButton();
                         EnableRefreshCOMButton();
+                        DisableSingleRCButton();
                     }
                     else
                     {
