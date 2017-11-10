@@ -183,9 +183,9 @@
             this.chkSelectDoubleSignal.Font = new System.Drawing.Font("微軟正黑體", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
             this.chkSelectDoubleSignal.Location = new System.Drawing.Point(62, 38);
             this.chkSelectDoubleSignal.Name = "chkSelectDoubleSignal";
-            this.chkSelectDoubleSignal.Size = new System.Drawing.Size(193, 20);
+            this.chkSelectDoubleSignal.Size = new System.Drawing.Size(137, 20);
             this.chkSelectDoubleSignal.TabIndex = 10;
-            this.chkSelectDoubleSignal.Text = "Select 2nd of Double Signal? ";
+            this.chkSelectDoubleSignal.Text = "Display 2nd Signal?";
             this.chkSelectDoubleSignal.UseVisualStyleBackColor = true;
             this.chkSelectDoubleSignal.CheckedChanged += new System.EventHandler(this.chkSelectDoubleSignal_CheckedChanged);
             // 

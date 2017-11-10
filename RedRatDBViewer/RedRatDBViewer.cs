@@ -697,7 +697,7 @@ namespace RedRatDatabaseViewer
             }
 
             // DEBUG PURPOSE ONLY
-            rtbDecodeRCSignal.Text = "Tx Mod-Freq: " + RC_ModutationFreq.ToString() + "\n";
+            //rtbDecodeRCSignal.Text = "Tx Mod-Freq: " + RC_ModutationFreq.ToString() + "\n";
             // END
 
             //
@@ -745,7 +745,7 @@ namespace RedRatDatabaseViewer
 
                 data_to_sent.AddRange(Convert_data_to_Byte(Convert.ToUInt32(signal_width)));
                 // DEBUG PURPOSE ONLY
-                rtbDecodeRCSignal.AppendText((pulse_high==true?"1":"0") + ":" + Convert.ToUInt32(signal_width).ToString() + "\n");
+                //rtbDecodeRCSignal.AppendText((pulse_high==true?"1":"0") + ":" + Convert.ToUInt32(signal_width).ToString() + "\n");
                 // END
 
                 pulse_high = !pulse_high;
@@ -758,7 +758,7 @@ namespace RedRatDatabaseViewer
                 uint temp_value = Convert.ToUInt32(RC_IntraSigPause * time_ratio - high_pulse_compensation);
                 data_to_sent.AddRange(Convert_data_to_Byte(temp_value));
                 // DEBUG PURPOSE ONLY
-                rtbDecodeRCSignal.AppendText((pulse_high == true ? "1" : "0") + ":" + temp_value.ToString() + "\n");
+                //rtbDecodeRCSignal.AppendText((pulse_high == true ? "1" : "0") + ":" + temp_value.ToString() + "\n");
                 // END
 
                 pulse_index++;
@@ -794,7 +794,7 @@ namespace RedRatDatabaseViewer
                     data_to_sent.AddRange(Convert_data_to_Byte(Convert.ToUInt32(signal_width)));
 
                     // DEBUG PURPOSE ONLY
-                    rtbDecodeRCSignal.AppendText((pulse_high == true ? "1" : "0") + ":" + Convert.ToUInt32(signal_width).ToString() + "\n");
+                    //rtbDecodeRCSignal.AppendText((pulse_high == true ? "1" : "0") + ":" + Convert.ToUInt32(signal_width).ToString() + "\n");
                     // END
 
                     pulse_high = !pulse_high;
