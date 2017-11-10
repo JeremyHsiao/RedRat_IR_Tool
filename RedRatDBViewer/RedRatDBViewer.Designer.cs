@@ -33,7 +33,7 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
-            this.button1 = new System.Windows.Forms.Button();
+            this.btnGetRCFile = new System.Windows.Forms.Button();
             this.btnSingleRCPressed = new System.Windows.Forms.Button();
             this.listboxAVDeviceList = new System.Windows.Forms.ListBox();
             this.listboxRCKey = new System.Windows.Forms.ListBox();
@@ -62,15 +62,15 @@
             ((System.ComponentModel.ISupportInitialize)(this.dgvToggleBits)).BeginInit();
             this.SuspendLayout();
             // 
-            // button1
+            // btnGetRCFile
             // 
-            this.button1.Location = new System.Drawing.Point(6, 12);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(50, 46);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "Get RC File";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.btnGetRCFile.Location = new System.Drawing.Point(6, 12);
+            this.btnGetRCFile.Name = "btnGetRCFile";
+            this.btnGetRCFile.Size = new System.Drawing.Size(50, 46);
+            this.btnGetRCFile.TabIndex = 0;
+            this.btnGetRCFile.Text = "Get RC File";
+            this.btnGetRCFile.UseVisualStyleBackColor = true;
+            this.btnGetRCFile.Click += new System.EventHandler(this.btnGetRCFile_Click);
             // 
             // btnSingleRCPressed
             // 
@@ -377,7 +377,7 @@
             this.Controls.Add(this.chkSelectDoubleSignal);
             this.Controls.Add(this.rtbSignalData);
             this.Controls.Add(this.btnSingleRCPressed);
-            this.Controls.Add(this.button1);
+            this.Controls.Add(this.btnGetRCFile);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
             this.MaximizeBox = false;
             this.Name = "RedRatDBViewer";
@@ -395,7 +395,7 @@
 
         #endregion
 
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button btnGetRCFile;
         private System.Windows.Forms.Button btnSingleRCPressed;
         private System.Windows.Forms.ListBox listboxAVDeviceList;
         private System.Windows.Forms.ListBox listboxRCKey;

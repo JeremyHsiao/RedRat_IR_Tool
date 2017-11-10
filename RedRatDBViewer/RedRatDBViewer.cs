@@ -48,50 +48,292 @@ namespace RedRatDatabaseViewer
         private int Previous_Device = -1;
         private int Previous_Key = -1;
 
-        public RedRatDBViewer()
+        //
+        // Add UART Part
+        //
+        static SerialPort _serialPort;
+
+        private void Serial_InitialSetting()
         {
-            InitializeComponent();
+            // Allow the user to set the appropriate properties.
+            _serialPort.PortName = "COM14";
+            _serialPort.BaudRate = 115200; // as default;
+            _serialPort.Parity = Parity.None;
+            _serialPort.DataBits = 8;
+            _serialPort.StopBits = StopBits.One;
+            _serialPort.Handshake = Handshake.None;
+            _serialPort.Encoding = Encoding.UTF8;
+
+            // Set the read/write timeouts
+            _serialPort.ReadTimeout = 2000;
+            _serialPort.WriteTimeout = 2000;
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void Serial_UpdatePortName()
         {
-            OpenFileDialog openFileDialog1 = new OpenFileDialog
+            listBox1.Items.Clear();
+            foreach (string comport_s in SerialPort.GetPortNames())
             {
-                InitialDirectory = ".\\",
-                Filter = "RedRat Device files (*.xml)|*.xml|All files (*.*)|*.*",
-                FilterIndex = 2,
-                RestoreDirectory = true
-            };
+                listBox1.Items.Add(comport_s);
+            }
+            if (listBox1.Items.Count > 0)
+            {
+                // listBox1.SelectedIndex = listBox1.Items.Count - 1;
+                listBox1.SelectedIndex = 0;     // this can be modified to preferred default
+                EnableConnectButton();
+                UpdateToConnectButton();
+            }
+            else
+            {
+                DisableConnectButton();
+                UpdateToConnectButton();
+            }
+        }
 
-            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+        private Boolean Serial_OpenPort(string PortName)
+        {
+            Boolean ret = false;
+            try
+            {
+                _serialPort.PortName = PortName;
+                _serialPort.Open();
+                ret = true;
+            }
+            catch (Exception ex232)
+            {
+                ret = false;
+            }
+            return ret;
+        }
+
+        private Boolean Serial_ClosePort()
+        {
+            Boolean ret = false;
+            try
+            {
+                _serialPort.Close();
+                ret = true;
+            }
+            catch (Exception ex232)
+            {
+                ret = false;
+            }
+            return ret;
+        }
+
+        static bool _continue_serial_read_write = false;
+        static Thread readThread = null;
+        private Queue<string> UART_READ_MSG_QUEUE = new Queue<string>();
+
+        private void Start_SerialReadThread()
+        {
+            _continue_serial_read_write = true;
+            readThread = new Thread(ReadSerialPortThread);
+            readThread.Start();
+        }
+        private void Stop_SerialReadThread()
+        {
+            _continue_serial_read_write = false;
+            if (readThread != null)
+            {
+                if (readThread.IsAlive)
+                {
+                    readThread.Join();
+                }
+            }
+        }
+
+        public void ReadSerialPortThread()
+        {
+            while (_continue_serial_read_write)
             {
                 try
                 {
-                    Console.WriteLine("Searching for RedRat...");
-                    // using (var rr3 = FindRedRat3())
+                    string message = _serialPort.ReadLine();
                     {
-                        Console.WriteLine("RedRat Found. Loading DB file...");
-                        SignalDB = LoadSignalDB(openFileDialog1.FileName);
-                        Console.WriteLine("DB file is OK.");
-                        listboxAVDeviceList.Items.Clear();
-                        foreach (var AVDevice in SignalDB.AVDevices)
-                        {
-                            listboxAVDeviceList.Items.Add(AVDevice.Name);
-                        }
-                        listboxAVDeviceList.Enabled = true;
-                        listboxRCKey.Enabled = true;
-                        Previous_Device = -1;
-                        Previous_Key = -1;
-                        listboxAVDeviceList.SelectedIndex = 0;
-                        EnableSingleRCButton();
+                        UART_READ_MSG_QUEUE.Enqueue(message);
+                        AppendSerialMessageLog(message);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Error: " + ex.Message);
+                    //AppendSerialMessageLog(ex.ToString());
                 }
             }
         }
+
+        private void SendToSerial(byte[] byte_to_sent)
+        {
+            if (_serialPort.IsOpen == true)
+            {
+                AppendSerialMessageLog("Start Tx\n");
+                Application.DoEvents();
+                try
+                {
+                    // _serialPort.Write("This is a Test\n");
+                    _serialPort.Write(byte_to_sent, 0, byte_to_sent.Length);
+                }
+                catch (Exception ex)
+                {
+                    AppendSerialMessageLog(ex.ToString());
+                }
+            }
+            else
+            {
+                //AppendSerialMessageLog("COM is closed and cannot send byte data\n");
+            }
+        }
+
+        private int Tx_CNT = 0;
+
+        private void SendToSerial_v2(byte[] byte_to_sent)
+        {
+            if (_serialPort.IsOpen == true)
+            {
+                AppendSerialMessageLog("\n========Tx:" + Tx_CNT.ToString() + " ");
+                Tx_CNT++;
+                Application.DoEvents();
+                try
+                {
+                    int temp_index = 0;
+                    const int fixed_length = 16;
+
+                    while (temp_index < byte_to_sent.Length)
+                    {
+                        if ((temp_index + fixed_length) < byte_to_sent.Length)
+                        {
+                            _serialPort.Write(byte_to_sent, temp_index, fixed_length);
+                            temp_index += fixed_length;
+                        }
+                        else
+                        {
+                            _serialPort.Write(byte_to_sent, temp_index, (byte_to_sent.Length - temp_index));
+                            temp_index = byte_to_sent.Length;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AppendSerialMessageLog(ex.ToString() + " ");
+                }
+            }
+            else
+            {
+                //AppendSerialMessageLog("COM is closed and cannot send byte data\n");
+            }
+        }
+
+        private void EnableSingleRCButton()
+        {
+            if ((_serialPort.IsOpen == true) && (SignalDB != null))
+            {
+                btnSingleRCPressed.Enabled = true;
+            }
+        }
+
+        private void DisableSingleRCButton()
+        {
+            btnSingleRCPressed.Enabled = false;
+        }
+
+        private void EnableRefreshCOMButton()
+        {
+            btnFreshCOMNo.Enabled = true;
+        }
+
+        private void DisableRefreshCOMButton()
+        {
+            btnFreshCOMNo.Enabled = false;
+        }
+
+        private void EnableConnectButton()
+        {
+            btnConnectionControl.Enabled = true;
+        }
+
+        private void DisableConnectButton()
+        {
+            btnConnectionControl.Enabled = false;
+        }
+
+        const string CONNECT_UART_STRING_ON_BUTTON = "Connect UART";
+        const string DISCONNECT_UART_STRING_ON_BUTTON = "Disconnect UART";
+
+        private void UpdateToConnectButton()
+        {
+            btnConnectionControl.Text = CONNECT_UART_STRING_ON_BUTTON;
+        }
+
+        private void UpdateToDisconnectButton()
+        {
+            btnConnectionControl.Text = DISCONNECT_UART_STRING_ON_BUTTON;
+        }
+
+        private void btnFreshCOMNo_Click(object sender, System.EventArgs e)
+        {
+            Serial_UpdatePortName();
+        }
+
+        //
+        // Print Serial Port Message on RichTextBox
+        //
+        delegate void AppendSerialMessageCallback(string text);
+        public void AppendSerialMessageLog(string my_str)
+        {
+            if (this.rtbSignalData.InvokeRequired)
+            {
+                AppendSerialMessageCallback d = new AppendSerialMessageCallback(AppendSerialMessageLog);
+                this.Invoke(d, new object[] { my_str });
+            }
+            else
+            {
+                this.rtbSignalData.AppendText(my_str);
+                this.rtbSignalData.ScrollToCaret();
+            }
+        }
+
+
+        private void btnConnectionControl_Click(object sender, EventArgs e)
+        {
+            if (btnConnectionControl.Text.Equals(CONNECT_UART_STRING_ON_BUTTON, StringComparison.Ordinal)) // Check if button is showing "Connect" at this moment.
+            {   // User to connect
+                if (_serialPort.IsOpen == false)
+                {
+                    string curItem = listBox1.SelectedItem.ToString();
+                    if (Serial_OpenPort(curItem) == true)
+                    {
+                        UpdateToDisconnectButton();
+                        DisableRefreshCOMButton();
+                        EnableSingleRCButton();
+                        Start_SerialReadThread();
+                    }
+                    else
+                    {
+                        rtbSignalData.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " - Cannot connect to RS232.\n");
+                    }
+                }
+            }
+            else
+            {   // User to disconnect
+                if (_serialPort.IsOpen == true)
+                {
+                    Stop_SerialReadThread();
+                    if (Serial_ClosePort() == true)
+                    {
+                        UpdateToConnectButton();
+                        EnableRefreshCOMButton();
+                        DisableSingleRCButton();
+                    }
+                    else
+                    {
+                        rtbSignalData.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " - Cannot disconnect from RS232.\n");
+                    }
+                }
+            }
+        }
+        //
+        // End of UART part
+        //
 
         /// <summary>
         /// Simply finds the first RedRat3 attached to this computer.
@@ -814,292 +1056,54 @@ namespace RedRatDatabaseViewer
                 Stop_SerialReadThread();
             }
         }
- 
-        //
-        // Add UART Part
-        //
-        static SerialPort _serialPort;
 
-        private void Serial_InitialSetting()
+
+        public RedRatDBViewer()
         {
-            // Allow the user to set the appropriate properties.
-            _serialPort.PortName = "COM14";
-            _serialPort.BaudRate = 115200; // as default;
-            _serialPort.Parity = Parity.None;
-            _serialPort.DataBits = 8;
-            _serialPort.StopBits = StopBits.One;
-            _serialPort.Handshake = Handshake.None;
-            _serialPort.Encoding = Encoding.UTF8;
-
-            // Set the read/write timeouts
-            _serialPort.ReadTimeout = 2000;
-            _serialPort.WriteTimeout = 2000;
+            InitializeComponent();
         }
 
-        private void Serial_UpdatePortName()
+        private void btnGetRCFile_Click(object sender, EventArgs e)
         {
-            listBox1.Items.Clear();
-            foreach (string comport_s in SerialPort.GetPortNames())
+            OpenFileDialog openFileDialog1 = new OpenFileDialog
             {
-                listBox1.Items.Add(comport_s);
-            }
-            if (listBox1.Items.Count > 0)
-            {
-                // listBox1.SelectedIndex = listBox1.Items.Count - 1;
-                listBox1.SelectedIndex = 0;     // this can be modified to preferred default
-                EnableConnectButton();
-                UpdateToConnectButton();
-            }
-            else
-            {
-                DisableConnectButton();
-                UpdateToConnectButton();
-            }
-        }
+                InitialDirectory = ".\\",
+                Filter = "RedRat Device files (*.xml)|*.xml|All files (*.*)|*.*",
+                FilterIndex = 2,
+                RestoreDirectory = true
+            };
 
-        private Boolean Serial_OpenPort(string PortName)
-        {
-            Boolean ret = false;
-            try
-            {
-                _serialPort.PortName = PortName;
-                _serialPort.Open();
-                ret = true;
-            }
-            catch (Exception ex232)
-            {
-                ret = false;
-            }
-            return ret;
-        }
-
-        private Boolean Serial_ClosePort()
-        {
-            Boolean ret = false;
-            try
-            {
-                _serialPort.Close();
-                ret = true;
-            }
-            catch (Exception ex232)
-            {
-                ret = false;
-            }
-            return ret;
-        }
-
-        static bool _continue_serial_read_write = false;
-        static Thread readThread = null;
-        private Queue<string> UART_READ_MSG_QUEUE = new Queue<string>();
-
-        private void Start_SerialReadThread()
-        {
-            _continue_serial_read_write = true;
-            readThread = new Thread(ReadSerialPortThread);
-            readThread.Start();
-        }
-        private void Stop_SerialReadThread()
-        {
-            _continue_serial_read_write = false;
-            if (readThread != null)
-            {
-                if (readThread.IsAlive)
-                {
-                    readThread.Join();
-                }
-            }
-        }
-
-        public void ReadSerialPortThread()
-        {
-            while (_continue_serial_read_write)
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 try
                 {
-                    string message = _serialPort.ReadLine();
+                    Console.WriteLine("Searching for RedRat...");
+                    // using (var rr3 = FindRedRat3())
                     {
-                        UART_READ_MSG_QUEUE.Enqueue(message);
-                        AppendSerialMessageLog(message);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    //AppendSerialMessageLog(ex.ToString());
-                }
-            }
-        }
-
-        private void SendToSerial(byte[] byte_to_sent)
-        {
-            if (_serialPort.IsOpen == true)
-            {
-                AppendSerialMessageLog("Start Tx\n");
-                Application.DoEvents();
-                try
-                {
-                   // _serialPort.Write("This is a Test\n");
-                   _serialPort.Write(byte_to_sent, 0, byte_to_sent.Length);
-                }
-                catch (Exception ex)
-                {
-                    AppendSerialMessageLog(ex.ToString());
-                }
-            }
-            else
-            {
-                //AppendSerialMessageLog("COM is closed and cannot send byte data\n");
-            }
-        }
-
-        private int Tx_CNT = 0;
-
-        private void SendToSerial_v2(byte[] byte_to_sent)
-        {
-            if (_serialPort.IsOpen == true)
-            {
-                AppendSerialMessageLog("\n========Tx:"+ Tx_CNT.ToString()+" ");
-                Tx_CNT++;
-                Application.DoEvents();
-                try
-                {
-                    int         temp_index = 0;
-                    const int  fixed_length = 16;
-
-                    while( temp_index < byte_to_sent.Length)
-                    {
-                        if ((temp_index + fixed_length) < byte_to_sent.Length)
+                        Console.WriteLine("RedRat Found. Loading DB file...");
+                        SignalDB = LoadSignalDB(openFileDialog1.FileName);
+                        Console.WriteLine("DB file is OK.");
+                        listboxAVDeviceList.Items.Clear();
+                        foreach (var AVDevice in SignalDB.AVDevices)
                         {
-                            _serialPort.Write(byte_to_sent, temp_index, fixed_length);
-                            temp_index += fixed_length;
+                            listboxAVDeviceList.Items.Add(AVDevice.Name);
                         }
-                        else
-                        {
-                            _serialPort.Write(byte_to_sent, temp_index, (byte_to_sent.Length- temp_index));
-                            temp_index = byte_to_sent.Length;
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    AppendSerialMessageLog(ex.ToString()+" ");
-                }
-            }
-            else
-            {
-                //AppendSerialMessageLog("COM is closed and cannot send byte data\n");
-            }
-        }
-
-        private void EnableSingleRCButton()
-        {
-            if ( (_serialPort.IsOpen == true) && (SignalDB != null) )
-            {
-                btnSingleRCPressed.Enabled = true;
-            }
-        }
-
-        private void DisableSingleRCButton()
-        {
-            btnSingleRCPressed.Enabled = false;
-        }
-
-        private void EnableRefreshCOMButton()
-        {
-            btnFreshCOMNo.Enabled = true;
-        }
-
-        private void DisableRefreshCOMButton()
-        {
-            btnFreshCOMNo.Enabled = false;
-        }
-
-        private void EnableConnectButton()
-        {
-            btnConnectionControl.Enabled = true;
-        }
-
-        private void DisableConnectButton()
-        {
-            btnConnectionControl.Enabled = false;
-        }
-
-        const string CONNECT_UART_STRING_ON_BUTTON = "Connect UART";
-        const string DISCONNECT_UART_STRING_ON_BUTTON = "Disconnect UART";
-
-        private void UpdateToConnectButton()
-        {
-            btnConnectionControl.Text = CONNECT_UART_STRING_ON_BUTTON;
-        }
-
-        private void UpdateToDisconnectButton()
-        {
-            btnConnectionControl.Text = DISCONNECT_UART_STRING_ON_BUTTON;
-        }
-
-        private void btnFreshCOMNo_Click(object sender, System.EventArgs e)
-        {
-            Serial_UpdatePortName();
-        }
-
-        //
-        // Print Serial Port Message on RichTextBox
-        //
-        delegate void AppendSerialMessageCallback(string text);
-        public void AppendSerialMessageLog(string my_str)
-        {
-            if (this.rtbSignalData.InvokeRequired)
-            {
-                AppendSerialMessageCallback d = new AppendSerialMessageCallback(AppendSerialMessageLog);
-                this.Invoke(d, new object[] { my_str });
-            }
-            else
-            {
-                this.rtbSignalData.AppendText(my_str);
-                this.rtbSignalData.ScrollToCaret();
-            }
-        }
-
-
-        private void btnConnectionControl_Click(object sender, EventArgs e)
-        {
-            if (btnConnectionControl.Text.Equals(CONNECT_UART_STRING_ON_BUTTON, StringComparison.Ordinal)) // Check if button is showing "Connect" at this moment.
-            {   // User to connect
-                if (_serialPort.IsOpen == false)
-                {
-                    string curItem = listBox1.SelectedItem.ToString();
-                    if (Serial_OpenPort(curItem) == true)
-                    {
-                        UpdateToDisconnectButton();
-                        DisableRefreshCOMButton();
+                        listboxAVDeviceList.Enabled = true;
+                        listboxRCKey.Enabled = true;
+                        Previous_Device = -1;
+                        Previous_Key = -1;
+                        listboxAVDeviceList.SelectedIndex = 0;
                         EnableSingleRCButton();
-                        Start_SerialReadThread();
-                    }
-                    else
-                    {
-                        rtbSignalData.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " - Cannot connect to RS232.\n");
                     }
                 }
-            }
-            else
-            {   // User to disconnect
-                if (_serialPort.IsOpen == true)
+                catch (Exception ex)
                 {
-                    Stop_SerialReadThread();
-                    if (Serial_ClosePort() == true)
-                    {
-                        UpdateToConnectButton();
-                        EnableRefreshCOMButton();
-                        DisableSingleRCButton();
-                    }
-                    else
-                    {
-                        rtbSignalData.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " - Cannot disconnect from RS232.\n");
-                    }
+                    Console.WriteLine("Error: " + ex.Message);
                 }
             }
         }
+
 
     }
-
 
 }
