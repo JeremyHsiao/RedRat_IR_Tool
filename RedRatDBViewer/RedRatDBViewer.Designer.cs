@@ -28,11 +28,11 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
             this.button1 = new System.Windows.Forms.Button();
             this.btnSingleRCPressed = new System.Windows.Forms.Button();
             this.listboxAVDeviceList = new System.Windows.Forms.ListBox();
@@ -46,7 +46,7 @@
             this.rbDoubleSignalLED = new System.Windows.Forms.RadioButton();
             this.lbFreq = new System.Windows.Forms.Label();
             this.rtbDecodeRCSignal = new System.Windows.Forms.RichTextBox();
-            this.btnRepeatOnce = new System.Windows.Forms.Button();
+            this.btnStopRCButton = new System.Windows.Forms.Button();
             this.gbRC_File_Data = new System.Windows.Forms.GroupBox();
             this.dgvToggleBits = new System.Windows.Forms.DataGridView();
             this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -56,6 +56,7 @@
             this.btnFreshCOMNo = new System.Windows.Forms.Button();
             this.listBox1 = new System.Windows.Forms.ListBox();
             this.btnConnectionControl = new System.Windows.Forms.Button();
+            this.btnCheckHeartBeat = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvPulseData)).BeginInit();
             this.gbRC_File_Data.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvToggleBits)).BeginInit();
@@ -137,27 +138,27 @@
             this.dgvPulseData.AllowUserToDeleteRows = false;
             this.dgvPulseData.AllowUserToResizeColumns = false;
             this.dgvPulseData.AllowUserToResizeRows = false;
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle6.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle6.Font = new System.Drawing.Font("新細明體", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dgvPulseData.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("新細明體", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dgvPulseData.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.dgvPulseData.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvPulseData.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Column1});
             this.dgvPulseData.Location = new System.Drawing.Point(8, 235);
             this.dgvPulseData.Name = "dgvPulseData";
-            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle7.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle7.Font = new System.Drawing.Font("新細明體", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            dataGridViewCellStyle7.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle7.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle7.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle7.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dgvPulseData.RowHeadersDefaultCellStyle = dataGridViewCellStyle7;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("新細明體", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dgvPulseData.RowHeadersDefaultCellStyle = dataGridViewCellStyle2;
             this.dgvPulseData.RowHeadersWidth = 50;
             this.dgvPulseData.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this.dgvPulseData.RowTemplate.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
@@ -222,15 +223,15 @@
             this.rtbDecodeRCSignal.TabIndex = 13;
             this.rtbDecodeRCSignal.Text = "";
             // 
-            // btnRepeatOnce
+            // btnStopRCButton
             // 
-            this.btnRepeatOnce.Location = new System.Drawing.Point(534, 12);
-            this.btnRepeatOnce.Name = "btnRepeatOnce";
-            this.btnRepeatOnce.Size = new System.Drawing.Size(82, 46);
-            this.btnRepeatOnce.TabIndex = 14;
-            this.btnRepeatOnce.Text = "Repeated RC Start";
-            this.btnRepeatOnce.UseVisualStyleBackColor = true;
-            this.btnRepeatOnce.Click += new System.EventHandler(this.button3_Click);
+            this.btnStopRCButton.Location = new System.Drawing.Point(582, 12);
+            this.btnStopRCButton.Name = "btnStopRCButton";
+            this.btnStopRCButton.Size = new System.Drawing.Size(34, 46);
+            this.btnStopRCButton.TabIndex = 14;
+            this.btnStopRCButton.Text = "Stop RC";
+            this.btnStopRCButton.UseVisualStyleBackColor = true;
+            this.btnStopRCButton.Click += new System.EventHandler(this.StopCMDButton_Click);
             // 
             // gbRC_File_Data
             // 
@@ -256,14 +257,14 @@
             this.dgvToggleBits.AllowUserToDeleteRows = false;
             this.dgvToggleBits.AllowUserToResizeColumns = false;
             this.dgvToggleBits.AllowUserToResizeRows = false;
-            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle8.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle8.Font = new System.Drawing.Font("新細明體", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            dataGridViewCellStyle8.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle8.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle8.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle8.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dgvToggleBits.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle8;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("新細明體", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dgvToggleBits.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle3;
             this.dgvToggleBits.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvToggleBits.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.dataGridViewTextBoxColumn1,
@@ -271,18 +272,18 @@
             this.dgvToggleBits.Location = new System.Drawing.Point(167, 235);
             this.dgvToggleBits.Name = "dgvToggleBits";
             this.dgvToggleBits.ReadOnly = true;
-            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle9.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle9.Font = new System.Drawing.Font("新細明體", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            dataGridViewCellStyle9.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle9.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle9.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle9.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dgvToggleBits.RowHeadersDefaultCellStyle = dataGridViewCellStyle9;
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle4.Font = new System.Drawing.Font("新細明體", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            dataGridViewCellStyle4.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dgvToggleBits.RowHeadersDefaultCellStyle = dataGridViewCellStyle4;
             this.dgvToggleBits.RowHeadersWidth = 65;
             this.dgvToggleBits.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
-            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            this.dgvToggleBits.RowsDefaultCellStyle = dataGridViewCellStyle10;
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.dgvToggleBits.RowsDefaultCellStyle = dataGridViewCellStyle5;
             this.dgvToggleBits.RowTemplate.Height = 24;
             this.dgvToggleBits.Size = new System.Drawing.Size(264, 214);
             this.dgvToggleBits.TabIndex = 16;
@@ -351,16 +352,27 @@
             this.btnConnectionControl.UseVisualStyleBackColor = true;
             this.btnConnectionControl.Click += new System.EventHandler(this.btnConnectionControl_Click);
             // 
+            // btnCheckHeartBeat
+            // 
+            this.btnCheckHeartBeat.Location = new System.Drawing.Point(531, 12);
+            this.btnCheckHeartBeat.Name = "btnCheckHeartBeat";
+            this.btnCheckHeartBeat.Size = new System.Drawing.Size(45, 46);
+            this.btnCheckHeartBeat.TabIndex = 17;
+            this.btnCheckHeartBeat.Text = "Heart Beat";
+            this.btnCheckHeartBeat.UseVisualStyleBackColor = true;
+            this.btnCheckHeartBeat.Click += new System.EventHandler(this.btnCheckHeartBeat_Click);
+            // 
             // RedRatDBViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(620, 678);
+            this.Controls.Add(this.btnCheckHeartBeat);
             this.Controls.Add(this.btnConnectionControl);
             this.Controls.Add(this.listBox1);
             this.Controls.Add(this.btnFreshCOMNo);
             this.Controls.Add(this.gbRC_File_Data);
-            this.Controls.Add(this.btnRepeatOnce);
+            this.Controls.Add(this.btnStopRCButton);
             this.Controls.Add(this.rbDoubleSignalLED);
             this.Controls.Add(this.chkSelectDoubleSignal);
             this.Controls.Add(this.rtbSignalData);
@@ -370,9 +382,8 @@
             this.MaximizeBox = false;
             this.Name = "RedRatDBViewer";
             this.Text = "RedRat Database Viewer";
-            this.Load += new System.EventHandler(this.RedRatDBViewer_Load);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.RedRatDBViewer_Closing);
-
+            this.Load += new System.EventHandler(this.RedRatDBViewer_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvPulseData)).EndInit();
             this.gbRC_File_Data.ResumeLayout(false);
             this.gbRC_File_Data.PerformLayout();
@@ -396,7 +407,7 @@
         private System.Windows.Forms.RadioButton rbDoubleSignalLED;
         private System.Windows.Forms.Label lbFreq;
         private System.Windows.Forms.RichTextBox rtbDecodeRCSignal;
-        private System.Windows.Forms.Button btnRepeatOnce;
+        private System.Windows.Forms.Button btnStopRCButton;
         private System.Windows.Forms.GroupBox gbRC_File_Data;
         private System.Windows.Forms.Label lbModulationType;
         private System.Windows.Forms.Label label3;
@@ -407,6 +418,7 @@
         private System.Windows.Forms.Button btnFreshCOMNo;
         private System.Windows.Forms.ListBox listBox1;
         private System.Windows.Forms.Button btnConnectionControl;
+        private System.Windows.Forms.Button btnCheckHeartBeat;
     }
 }
 

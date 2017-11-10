@@ -171,25 +171,183 @@ namespace RedRatDatabaseViewer
             //
         }
 
-        private void SendSingleRC()
+        private void ClearRCData()
         {
-            SelectedSignal = SelectedDevice.Signals[listboxRCKey.SelectedIndex];
-            lbModulationType.Text = SelectedSignal.GetType().ToString();
+            RC_ModutationFreq = 0;
+            RC_Lengths = null;
+            RC_SigData = null;
+            RC_NoRepeats = 0;
+            RC_IntraSigPause = 0;
+            RC_MainSignal = null;
+            RC_RepeatSignal = null;
+            RC_ToggleData = null;
+            RC_Description = "";
+            RC_Name = "";
+            // RC_PauseRepeatMode = ;
+            RC_RepeatPause = 0;
+            RC_MainRepeatIdentical = false;
+        }
 
-            if (SelectedSignal.GetType() == typeof(DoubleSignal))
+        private void Verify_Toggle_Bit_Data()
+        {
+            List<ToggleBit> temp_toggle_data = new List<ToggleBit>();
+
+            foreach (var toggle_data in RC_ToggleData)
             {
-                DoubleSignal tempDoubleSignal = (DoubleSignal)SelectedSignal;
-                chkSelectDoubleSignal.Enabled = true;
-                rbDoubleSignalLED.Checked = true;
-                ProcessDoubleSignalData(tempDoubleSignal);
+                if ((toggle_data.len1 < RC_Lengths.Length) && (toggle_data.len2 < RC_Lengths.Length))
+                {
+                    temp_toggle_data.Add(toggle_data);
+                }
+                else
+                {
+                    Console.WriteLine("Toggle Bit Data Error at bit:" + toggle_data.bitNo + " (" + toggle_data.len1 + "," + toggle_data.len2 + ")");
+                }
+            }
+
+            RC_ToggleData = temp_toggle_data.ToArray();
+        }
+
+        private void GetRCData(ModulatedSignal sig)
+        {
+            RC_ModutationFreq = sig.ModulationFreq;
+            RC_Lengths = sig.Lengths;
+            RC_SigData = sig.SigData;
+            RC_NoRepeats = sig.NoRepeats;
+            RC_IntraSigPause = sig.IntraSigPause;
+            RC_MainSignal = sig.MainSignal;
+            RC_RepeatSignal = sig.RepeatSignal;
+            RC_ToggleData = sig.ToggleData;
+            Verify_Toggle_Bit_Data();
+            RC_Description = sig.Description;
+            RC_Name = sig.Name;
+            RC_PauseRepeatMode = sig.PauseRepeatMode;
+            RC_RepeatPause = sig.RepeatPause;
+            RC_MainRepeatIdentical = ModulatedSignal.MainRepeatIdentical(sig);
+        }
+
+        private void GetRCData(RedRat3ModulatedSignal sig)
+        {
+            RC_ModutationFreq = sig.ModulationFreq;
+            RC_Lengths = sig.Lengths;
+            RC_SigData = sig.SigData;
+            RC_NoRepeats = sig.NoRepeats;
+            RC_IntraSigPause = sig.IntraSigPause;
+            RC_MainSignal = sig.MainSignal;
+            RC_RepeatSignal = sig.RepeatSignal;
+            RC_ToggleData = sig.ToggleData;
+            Verify_Toggle_Bit_Data();
+            RC_Description = sig.Description;
+            RC_Name = sig.Name;
+            RC_PauseRepeatMode = sig.PauseRepeatMode;
+            RC_RepeatPause = sig.RepeatPause;
+            RC_MainRepeatIdentical = RedRat3ModulatedSignal.MainRepeatIdentical(sig);
+        }
+
+        private void GetRCData(FlashCodeSignal sig)
+        {
+            RC_ModutationFreq = 0;
+            RC_Lengths = sig.Lengths;
+            RC_SigData = sig.SigData;
+            RC_NoRepeats = sig.NoRepeats;
+            RC_IntraSigPause = sig.IntraSigPause;
+            RC_MainSignal = sig.MainSignal;
+            RC_RepeatSignal = sig.RepeatSignal;
+            RC_ToggleData = null;
+            RC_Description = sig.Description;
+            RC_Name = sig.Name;
+            RC_MainRepeatIdentical = false; // No such function, need to compare
+        }
+
+        private void GetRCData(RedRat3FlashCodeSignal sig)
+        {
+            RC_ModutationFreq = 0;
+            RC_Lengths = sig.Lengths;
+            RC_SigData = sig.SigData;
+            RC_NoRepeats = sig.NoRepeats;
+            RC_IntraSigPause = sig.IntraSigPause;
+            RC_MainSignal = sig.MainSignal;
+            RC_RepeatSignal = sig.RepeatSignal;
+            RC_ToggleData = null;
+            RC_Description = sig.Description;
+            RC_Name = sig.Name;
+            RC_MainRepeatIdentical = false; // No such function, need to compare
+        }
+
+        private void ProcessSingleSignalData(IRPacket sgl_signal)
+        {
+            if (sgl_signal.GetType() == typeof(ModulatedSignal))
+            {
+                ModulatedSignal sig = (ModulatedSignal)sgl_signal;
+                rtbSignalData.Text = sig.ToString();
+                GetRCData(sig);
+                UpdateRCDataOnForm();
+            }
+            else if (sgl_signal.GetType() == typeof(RedRat3ModulatedSignal))
+            {
+                RedRat3ModulatedSignal sig = (RedRat3ModulatedSignal)sgl_signal;
+                rtbSignalData.Text = sig.ToString();
+                GetRCData(sig);
+                UpdateRCDataOnForm();
+            }
+            else if (sgl_signal.GetType() == typeof(FlashCodeSignal))
+            {
+                FlashCodeSignal sig = (FlashCodeSignal)sgl_signal;
+                rtbSignalData.Text = sgl_signal.ToString();
+                GetRCData(sig);
+                UpdateRCDataOnForm();
+            }
+            else if (sgl_signal.GetType() == typeof(RedRat3FlashCodeSignal))
+            {
+                RedRat3FlashCodeSignal sig = (RedRat3FlashCodeSignal)sgl_signal;
+                rtbSignalData.Text = sgl_signal.ToString();
+                GetRCData(sig);
+                UpdateRCDataOnForm();
+            }
+            //else if (Signal.GetType() == typeof(ProntoModulatedSignal))
+            //{
+            //    rtbSignalData.Text = Signal.ToString();
+            //}
+            //else if (Signal.GetType() == typeof(RedRat3ModulatedKeyboardSignal))
+            //{
+            //    rtbSignalData.Text = Signal.ToString();
+            //}
+            //else if (Signal.GetType() == typeof(RedRat3IrDaPacket))
+            //{
+            //    rtbSignalData.Text = Signal.ToString();
+            //}
+            //else if (Signal.GetType() == typeof(IrDaPacket))
+            //{
+            //    rtbSignalData.Text = Signal.ToString();
+            //}
+            else if (sgl_signal.GetType() == typeof(DoubleSignal))
+            {
+                rtbSignalData.Text = sgl_signal.ToString() + "\nNot supported in this funciton\n";
+                ClearRCData();
+                UpdateRCDataOnForm();
             }
             else
             {
-                chkSelectDoubleSignal.Enabled = false;
-                rbDoubleSignalLED.Checked = false;
-                ProcessSingleSignalData(SelectedSignal);
+                rtbSignalData.Text = sgl_signal.ToString();
+                ClearRCData();
+                UpdateRCDataOnForm();
+            }
+        }
+
+        private void ProcessDoubleSignalData(DoubleSignal dbl_signal)
+        {
+            IRPacket tempSingleSignal;
+
+            if (RC_Select2ndSignalForDoubleSignal == false)
+            {
+                tempSingleSignal = dbl_signal.Signal1;
+            }
+            else
+            {
+                tempSingleSignal = dbl_signal.Signal2;
             }
 
+            //var tempSignal = typeof()
+            ProcessSingleSignalData(tempSingleSignal);
         }
 
         private List<byte> Convert_data_to_Byte(uint width_value)
@@ -253,7 +411,7 @@ namespace RedRatDatabaseViewer
             return high_pulse_compensation;
         }
 
-        private List<byte> Prepare_RC_Data_Packet(bool IsFirstSignal)
+        public List<byte> Prepare_RC_Data_Packet(bool IsFirstSignal)
         {
             List<byte> data_to_sent = new List<byte>();
             IRPacket TxSignal = SelectedSignal;
@@ -417,6 +575,29 @@ namespace RedRatDatabaseViewer
             return data_to_sent;
         }
 
+        public List<byte> Prepare_Do_Nothing_CMD()
+        {
+            List<byte> data_to_sent = new List<byte>();
+
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0x00);
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            return data_to_sent;
+        }
+
+        public List<byte> Prepare_STOP_CMD()
+        {
+            List<byte> data_to_sent = new List<byte>();
+
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xfe);
+            data_to_sent.Add(0xfe);
+            return data_to_sent;
+        }
+
         //
         // Form Events
         //
@@ -485,20 +666,18 @@ namespace RedRatDatabaseViewer
             btnSingleRCPressed.Enabled = true;
         }
 
-        private void button3_Click(object sender, EventArgs e)
+        private void btnCheckHeartBeat_Click(object sender, EventArgs e)
         {
-            // To be implemented
-            List<byte> data_to_sent = new List<byte>();
+            btnStopRCButton.Enabled = false;
+            SendToSerial_v2(Prepare_Do_Nothing_CMD().ToArray());
+            btnStopRCButton.Enabled = true;
+        }
 
-            data_to_sent.Add(0xff);
-            data_to_sent.Add(0xff);
-            data_to_sent.Add(0x0);
-            data_to_sent.Add(0x0);
-            data_to_sent.Add(0xff);
-
-            Byte[] byte_to_sent = data_to_sent.ToArray();
-
-            SendToSerial_v2(byte_to_sent);
+        private void StopCMDButton_Click(object sender, EventArgs e)
+        {
+            btnStopRCButton.Enabled = false;
+            SendToSerial_v2(Prepare_STOP_CMD().ToArray());
+            btnStopRCButton.Enabled = true;
         }
 
         private void listboxAVDeviceList_SelectedIndexChanged(object sender, EventArgs e)
@@ -594,186 +773,6 @@ namespace RedRatDatabaseViewer
         {
             RC_Select2ndSignalForDoubleSignal = if_checked;
             chkSelectDoubleSignal.Checked = if_checked;
-        }
-
-        private void ClearRCData()
-        {
-            RC_ModutationFreq = 0;
-            RC_Lengths = null;
-            RC_SigData = null;
-            RC_NoRepeats = 0;
-            RC_IntraSigPause = 0;
-            RC_MainSignal = null;
-            RC_RepeatSignal = null;
-            RC_ToggleData = null;
-            RC_Description = "";
-            RC_Name = "";
-            // RC_PauseRepeatMode = ;
-            RC_RepeatPause = 0;
-            RC_MainRepeatIdentical = false;
-        }
-
-        private void Verify_Toggle_Bit_Data()
-        {
-            List<ToggleBit> temp_toggle_data = new List<ToggleBit>();
-
-            foreach (var toggle_data in RC_ToggleData)
-            {
-                if ((toggle_data.len1 < RC_Lengths.Length) && (toggle_data.len2 < RC_Lengths.Length))
-                {
-                    temp_toggle_data.Add(toggle_data);
-                }
-                else
-                {
-                    Console.WriteLine("Toggle Bit Data Error at bit:" + toggle_data.bitNo + " (" + toggle_data.len1 + "," + toggle_data.len2 + ")" );
-                }
-            }
-
-            RC_ToggleData = temp_toggle_data.ToArray();
-        }
-
-        private void GetRCData(ModulatedSignal sig)
-        {
-            RC_ModutationFreq = sig.ModulationFreq;
-            RC_Lengths = sig.Lengths;
-            RC_SigData = sig.SigData;
-            RC_NoRepeats = sig.NoRepeats;
-            RC_IntraSigPause = sig.IntraSigPause;
-            RC_MainSignal = sig.MainSignal;
-            RC_RepeatSignal = sig.RepeatSignal;
-            RC_ToggleData = sig.ToggleData;
-            Verify_Toggle_Bit_Data();
-            RC_Description = sig.Description;
-            RC_Name = sig.Name;
-            RC_PauseRepeatMode = sig.PauseRepeatMode;
-            RC_RepeatPause = sig.RepeatPause;
-            RC_MainRepeatIdentical = ModulatedSignal.MainRepeatIdentical(sig);
-         }
-
-        private void GetRCData(RedRat3ModulatedSignal sig)
-        {
-            RC_ModutationFreq = sig.ModulationFreq;
-            RC_Lengths = sig.Lengths;
-            RC_SigData = sig.SigData;
-            RC_NoRepeats = sig.NoRepeats;
-            RC_IntraSigPause = sig.IntraSigPause;
-            RC_MainSignal = sig.MainSignal;
-            RC_RepeatSignal = sig.RepeatSignal;
-            RC_ToggleData = sig.ToggleData;
-            Verify_Toggle_Bit_Data();
-            RC_Description = sig.Description;
-            RC_Name = sig.Name;
-            RC_PauseRepeatMode = sig.PauseRepeatMode;
-            RC_RepeatPause = sig.RepeatPause;
-            RC_MainRepeatIdentical = RedRat3ModulatedSignal.MainRepeatIdentical(sig);
-        }
-
-        private void GetRCData(FlashCodeSignal sig)
-        {
-            RC_ModutationFreq = 0;
-            RC_Lengths = sig.Lengths;
-            RC_SigData = sig.SigData;
-            RC_NoRepeats = sig.NoRepeats;
-            RC_IntraSigPause = sig.IntraSigPause;
-            RC_MainSignal = sig.MainSignal;
-            RC_RepeatSignal = sig.RepeatSignal;
-            RC_ToggleData = null;
-            RC_Description = sig.Description;
-            RC_Name = sig.Name;
-            RC_MainRepeatIdentical = false; // No such function, need to compare
-        }
-
-        private void GetRCData(RedRat3FlashCodeSignal sig)
-        {
-            RC_ModutationFreq = 0;
-            RC_Lengths = sig.Lengths;
-            RC_SigData = sig.SigData;
-            RC_NoRepeats = sig.NoRepeats;
-            RC_IntraSigPause = sig.IntraSigPause;
-            RC_MainSignal = sig.MainSignal;
-            RC_RepeatSignal = sig.RepeatSignal;
-            RC_ToggleData = null;
-            RC_Description = sig.Description;
-            RC_Name = sig.Name;
-            RC_MainRepeatIdentical = false; // No such function, need to compare
-        }
-
-
-        private void ProcessSingleSignalData(IRPacket sgl_signal)
-        {
-            if (sgl_signal.GetType() == typeof(ModulatedSignal))
-            {
-                ModulatedSignal sig = (ModulatedSignal)sgl_signal;
-                rtbSignalData.Text = sig.ToString();
-                GetRCData(sig);
-                UpdateRCDataOnForm();
-            }
-            else if (sgl_signal.GetType() == typeof(RedRat3ModulatedSignal))
-            {
-                RedRat3ModulatedSignal sig = (RedRat3ModulatedSignal)sgl_signal;
-                rtbSignalData.Text = sig.ToString();
-                GetRCData(sig);
-                UpdateRCDataOnForm();
-            }
-            else if (sgl_signal.GetType() == typeof(FlashCodeSignal))
-            {
-                FlashCodeSignal sig = (FlashCodeSignal)sgl_signal;
-                rtbSignalData.Text = sgl_signal.ToString();
-                GetRCData(sig);
-                UpdateRCDataOnForm();
-            }
-            else if (sgl_signal.GetType() == typeof(RedRat3FlashCodeSignal))
-            {
-                RedRat3FlashCodeSignal sig = (RedRat3FlashCodeSignal)sgl_signal;
-                rtbSignalData.Text = sgl_signal.ToString();
-                GetRCData(sig);
-                UpdateRCDataOnForm();
-            }
-            //else if (Signal.GetType() == typeof(ProntoModulatedSignal))
-            //{
-            //    rtbSignalData.Text = Signal.ToString();
-            //}
-            //else if (Signal.GetType() == typeof(RedRat3ModulatedKeyboardSignal))
-            //{
-            //    rtbSignalData.Text = Signal.ToString();
-            //}
-            //else if (Signal.GetType() == typeof(RedRat3IrDaPacket))
-            //{
-            //    rtbSignalData.Text = Signal.ToString();
-            //}
-            //else if (Signal.GetType() == typeof(IrDaPacket))
-            //{
-            //    rtbSignalData.Text = Signal.ToString();
-            //}
-            else if (sgl_signal.GetType() == typeof(DoubleSignal))
-            {
-                rtbSignalData.Text = sgl_signal.ToString() + "\nNot supported in this funciton\n";
-                ClearRCData();
-                UpdateRCDataOnForm();
-            }
-            else
-            {
-                rtbSignalData.Text = sgl_signal.ToString();
-                ClearRCData();
-                UpdateRCDataOnForm();
-            }
-        }
-
-        private void ProcessDoubleSignalData(DoubleSignal dbl_signal)
-        {
-            IRPacket tempSingleSignal;
-
-            if (RC_Select2ndSignalForDoubleSignal == false)
-            {
-                tempSingleSignal = dbl_signal.Signal1;
-            }
-            else
-            {
-                tempSingleSignal = dbl_signal.Signal2;
-            }
-
-            //var tempSignal = typeof()
-            ProcessSingleSignalData(tempSingleSignal);
         }
 
         private void chkSelectDoubleSignal_CheckedChanged(object sender, EventArgs e)
@@ -958,7 +957,7 @@ namespace RedRatDatabaseViewer
         {
             if (_serialPort.IsOpen == true)
             {
-                AppendSerialMessageLog("========Tx:"+ Tx_CNT.ToString()+"\n");
+                AppendSerialMessageLog("\n========Tx:"+ Tx_CNT.ToString()+" ");
                 Tx_CNT++;
                 Application.DoEvents();
                 try
