@@ -187,7 +187,7 @@
             this.chkSelectDoubleSignal.TabIndex = 10;
             this.chkSelectDoubleSignal.Text = "Display 2nd Signal?";
             this.chkSelectDoubleSignal.UseVisualStyleBackColor = true;
-            this.chkSelectDoubleSignal.CheckedChanged += new System.EventHandler(this.chkSelectDoubleSignal_CheckedChanged);
+            this.chkSelectDoubleSignal.CheckedChanged += new System.EventHandler(this.chkSelect2ndSignal_CheckedChanged);
             // 
             // rbDoubleSignalLED
             // 
