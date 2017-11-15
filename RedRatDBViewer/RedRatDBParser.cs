@@ -129,17 +129,131 @@ namespace RedRatDatabaseViewer
             return new List<string>(signal_db.GetAVDeviceNames());
         }
 
-        public List<string> RedRageGetRCNameList()
+        public List<string> RedRatGetRCNameList()
         {
             Contract.Requires(signal_db != null);
             Contract.Requires(selected_device != null);
             return new List<string>(selected_device.GetSignalNames());
         }
 
+        public List<double> GetTxPulseWidth()
+        {
+            Contract.Requires(signal_db != null);
+            Contract.Requires(selected_device != null);
+            Contract.Requires(selected_signal != null);
+
+            List<double> data_to_sent = new List<double> ();
+            int repeat_cnt, pulse_index, toggle_bit_index;
+            bool pulse_high;
+            double signal_width, high_pulse_compensation;
+
+            // Tx Main signal
+            high_pulse_compensation = 0;
+            toggle_bit_index = 0;
+            pulse_index = 0;
+            pulse_high = true;
+            foreach (var sig in rc_main_signal)
+            {
+                //
+                //  Update Toggle Bits
+                //
+                if ((toggle_bit_index <rc_toggle_data.Length) && (pulse_index == rc_toggle_data[toggle_bit_index].bitNo))
+                {
+                    int toggle_bit_no = (if_use_1st_signal == true) ? (rc_toggle_data[toggle_bit_index].len1) : (rc_toggle_data[toggle_bit_index].len2);
+                    signal_width = rc_lengths[toggle_bit_no];
+                    toggle_bit_index++;
+                }
+                else
+                {
+                    signal_width = rc_lengths[sig];
+                }
+                signal_width *= time_factor_to_us;
+
+                //
+                // high_pulse period must extended a bit to compensate shorted-period due to detection mechanism
+                //
+                if (pulse_high)
+                {
+                    high_pulse_compensation = High_Pulse_Width_Adjustment(rc_modulation_freq, signal_width);
+                    signal_width += high_pulse_compensation;
+                }
+                else
+                {
+                    signal_width -= high_pulse_compensation;
+                }
+                data_to_sent.Add(signal_width);
+
+                pulse_high = !pulse_high;
+                pulse_index++;
+            }
+
+            // Tx the rest of signal (2nd/3rd/...etc)
+            repeat_cnt = rc_repeats_number;
+            while (repeat_cnt-- > 0)
+            {
+                // Insert a blank
+                signal_width = (rc_intra_sig_pause * time_factor_to_us) - high_pulse_compensation;
+                data_to_sent.Add(signal_width);
+                pulse_index++;
+                pulse_high = true;
+
+                foreach (var sig in rc_repeat_signal)
+                {
+                    //
+                    //  Update Toggle Bits
+                    //
+                    if ((toggle_bit_index < rc_toggle_data.Length) && (pulse_index == rc_toggle_data[toggle_bit_index].bitNo))
+                    {
+                        signal_width = rc_lengths[(if_use_1st_signal == true) ? (rc_toggle_data[toggle_bit_index].len1) : (rc_toggle_data[toggle_bit_index].len2)];
+                        toggle_bit_index++;
+                    }
+                    else
+                    {
+                        signal_width = rc_lengths[sig];
+                    }
+                    signal_width *= time_factor_to_us;
+                    if (pulse_high)
+                    {
+                        high_pulse_compensation = High_Pulse_Width_Adjustment(rc_modulation_freq, signal_width);
+                        signal_width += high_pulse_compensation;
+                    }
+                    else
+                    {
+                        signal_width -= high_pulse_compensation;
+                    }
+                    data_to_sent.Add(signal_width);
+                    pulse_high = !pulse_high;
+                    pulse_index++;
+                }
+            }
+
+            //
+            //  Insert end-of-packet blank.
+            //
+            if (rc_repeat_pause > 0)
+            {
+                data_to_sent.Add((rc_repeat_pause * time_factor_to_us) - high_pulse_compensation);
+            }
+            else if (rc_intra_sig_pause > 0)
+            {
+                data_to_sent.Add((rc_intra_sig_pause * time_factor_to_us) - high_pulse_compensation);
+            }
+            else
+            {
+                data_to_sent.Add((1000000/rc_modulation_freq*32) - high_pulse_compensation);            // min 32 pulse low
+            }
+            //pulse_index++;
+            //
+            // End of Tx preprocessing
+            //
+
+            return data_to_sent;
+        }
+
         public double RC_ModutationFreq() { return rc_modulation_freq; }
         public double[] RC_Lengths() { return rc_lengths; }
         public byte[] RC_SigData() { return rc_sig_data; }
-        public int RC_NoRepeats() { return rc_repeats; }
+        public int RC_NoRepeats() { return rc_repeats_number; }
         public double RC_IntraSigPause() { return rc_intra_sig_pause; }
         public byte[] RC_MainSignal() { return rc_main_signal; } 
         public byte[] RC_RepeatSignal() { return rc_repeat_signal; }
@@ -156,7 +270,7 @@ namespace RedRatDatabaseViewer
         private double rc_modulation_freq;
         private double[] rc_lengths;
         private byte[] rc_sig_data;
-        private int rc_repeats;
+        private int rc_repeats_number;
         private double rc_intra_sig_pause;
         private byte[] rc_main_signal;
         private byte[] rc_repeat_signal;
@@ -202,7 +316,7 @@ namespace RedRatDatabaseViewer
             rc_modulation_freq = 0;
             rc_lengths = null;
             rc_sig_data = null;
-            rc_repeats = 0;
+            rc_repeats_number = 0;
             rc_intra_sig_pause = 0;
             rc_main_signal = null;
             rc_repeat_signal = null;
@@ -244,7 +358,7 @@ namespace RedRatDatabaseViewer
                 rc_modulation_freq = sig.ModulationFreq;
                 rc_lengths = sig.Lengths;
                 rc_sig_data = sig.SigData;
-                rc_repeats = sig.NoRepeats;
+                rc_repeats_number = sig.NoRepeats;
                 rc_intra_sig_pause = sig.IntraSigPause;
                 rc_main_signal = sig.MainSignal;
                 rc_repeat_signal = sig.RepeatSignal;
@@ -263,7 +377,7 @@ namespace RedRatDatabaseViewer
                 rc_modulation_freq = sig.ModulationFreq;
                 rc_lengths = sig.Lengths;
                 rc_sig_data = sig.SigData;
-                rc_repeats = sig.NoRepeats;
+                rc_repeats_number = sig.NoRepeats;
                 rc_intra_sig_pause = sig.IntraSigPause;
                 rc_main_signal = sig.MainSignal;
                 rc_repeat_signal = sig.RepeatSignal;
@@ -282,7 +396,7 @@ namespace RedRatDatabaseViewer
                 rc_modulation_freq = 0;
                 rc_lengths = sig.Lengths;
                 rc_sig_data = sig.SigData;
-                rc_repeats = sig.NoRepeats;
+                rc_repeats_number = sig.NoRepeats;
                 rc_intra_sig_pause = sig.IntraSigPause;
                 rc_main_signal = sig.MainSignal;
                 rc_repeat_signal = sig.RepeatSignal;
@@ -298,7 +412,7 @@ namespace RedRatDatabaseViewer
                 rc_modulation_freq = 0;
                 rc_lengths = sig.Lengths;
                 rc_sig_data = sig.SigData;
-                rc_repeats = sig.NoRepeats;
+                rc_repeats_number = sig.NoRepeats;
                 rc_intra_sig_pause = sig.IntraSigPause;
                 rc_main_signal = sig.MainSignal;
                 rc_repeat_signal = sig.RepeatSignal;
@@ -326,6 +440,42 @@ namespace RedRatDatabaseViewer
                 RedRatClearRCData();
             }
         }
+
+        private double High_Pulse_Width_Adjustment(double RC_ModutationFreq, double signal_width)
+        {
+            //double RC_ModutationFreq = RedRatData.RC_ModutationFreq();
+            double high_pulse_compensation;
+            //ToggleBit[] RC_ToggleData = RedRatData.RC_ToggleData();
+
+            if (RC_ModutationFreq == 0)
+            {
+                const double min_width = 50;
+                if (signal_width < min_width)
+                {
+                    high_pulse_compensation = 50 - signal_width;
+                }
+                else
+                {
+                    high_pulse_compensation = 0;
+                }
+            }
+            else
+            {
+                const double min_carrier_width_ratio = 3;
+                double carrier_width = (1000000 / RC_ModutationFreq);
+                double min_width = carrier_width * (min_carrier_width_ratio);
+                if ((signal_width + carrier_width) >= min_width)
+                {
+                    high_pulse_compensation = carrier_width;
+                }
+                else
+                {
+                    high_pulse_compensation = min_width - signal_width;
+                }
+            }
+            return high_pulse_compensation;
+        }
+
     }
 }
 

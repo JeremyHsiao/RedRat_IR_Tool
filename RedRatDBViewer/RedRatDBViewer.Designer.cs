@@ -79,7 +79,7 @@
             this.btnSingleRCPressed.Name = "btnSingleRCPressed";
             this.btnSingleRCPressed.Size = new System.Drawing.Size(82, 46);
             this.btnSingleRCPressed.TabIndex = 1;
-            this.btnSingleRCPressed.Text = "Single RC";
+            this.btnSingleRCPressed.Text = "Output Current RC";
             this.btnSingleRCPressed.UseVisualStyleBackColor = true;
             this.btnSingleRCPressed.Click += new System.EventHandler(this.SingleOutput_Click);
             // 
