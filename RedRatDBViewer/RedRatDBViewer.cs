@@ -60,7 +60,6 @@ namespace RedRatDatabaseViewer
             }
             if (listBox1.Items.Count > 0)
             {
-                // listBox1.SelectedIndex = listBox1.Items.Count - 1;
                 listBox1.SelectedIndex = 0;     // this can be modified to preferred default
                 EnableConnectButton();
                 UpdateToConnectButton();
@@ -331,35 +330,19 @@ namespace RedRatDatabaseViewer
             return rr3li.GetRedRat() as IRedRat3; ;
         }
 
-        private void Displaying_RC_Signal_Array(double[] rc_length, byte[] rc_main_sig_array, byte[] rc_repeat_sig_array, int rc_repeat, double rc_intra_sig_pause, int Repeat_Tx_Times=0)
+        private void Update_RC_Signal_Display_Content()
         {
-            Contract.Requires(rc_main_sig_array != null);
-            Contract.Requires((rc_repeat <= 0) || ((rc_repeat > 0) && (rc_repeat_sig_array != null)));
-
-            int repeat_cnt = rc_repeat, pulse_high;
-            double time_ratio = RedRatData.Time_Factor_to_uS;
-            
-            // Main signal
+            int pulse_high;
+            string temp_freq_str = RedRatData.RC_ModutationFreq().ToString();
+            rtbDecodeRCSignal.Text = "Carrier Frequency:" + temp_freq_str + " Hz\n";
+            lbFreq.Text = temp_freq_str + " Hz";
+            List<double> pulse_width = RedRatData.GetTxPulseWidth();
             pulse_high = 1;
-            foreach (var sig in rc_main_sig_array)
+            foreach (var val in pulse_width)
             {
-                rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + (rc_length[sig] * time_ratio).ToString() + "\n");
+                rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + Convert.ToInt32(val).ToString() + "\n");
                 pulse_high = (pulse_high != 0) ? 0 : 1;
             }
-
-            while (repeat_cnt-- > 0) 
-            {
-                rtbDecodeRCSignal.AppendText("0" + ":" + (rc_intra_sig_pause * time_ratio).ToString() + "\n");
-                pulse_high = 1;
-                foreach (var sig in rc_repeat_sig_array)
-                {
-                    rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + (rc_length[sig]* time_ratio).ToString() + "\n");
-                    pulse_high = (pulse_high != 0) ? 0 : 1;
-                }
-            }
-            //
-            // To be implemented: make use of Repeat_Tx_Times
-            //
         }
 
         private List<byte> Convert_data_to_Byte(uint width_value)
@@ -390,182 +373,6 @@ namespace RedRatDatabaseViewer
             }
             return data_to_sent;
         }
-
-        //private double High_Pulse_Width_Adjustment(double signal_width)
-        //{
-        //    double RC_ModutationFreq = RedRatData.RC_ModutationFreq();
-        //    double high_pulse_compensation;
-        //    //ToggleBit[] RC_ToggleData = RedRatData.RC_ToggleData();
-
-        //    if (RC_ModutationFreq == 0)
-        //    {
-        //        const double min_width = 50;
-        //        if (signal_width < min_width)
-        //        {
-        //            high_pulse_compensation = 50 - signal_width;
-        //        }
-        //        else
-        //        {
-        //            high_pulse_compensation = 0;
-        //        }
-        //    }
-        //    else
-        //    {
-        //        const double min_carrier_width_ratio = 3;
-        //        double carrier_width = (1000000 / RC_ModutationFreq);
-        //        double min_width = carrier_width * (min_carrier_width_ratio);
-        //        if ((signal_width + carrier_width) >= min_width)
-        //        {
-        //            high_pulse_compensation = carrier_width;
-        //        }
-        //        else
-        //        {
-        //            high_pulse_compensation = min_width - signal_width;
-        //        }
-        //    }
-        //    return high_pulse_compensation;
-        //}
-
-        //public List<byte> Prepare_RC_Data_Packet(bool IsFirstSignal)
-        //{
-        //    List<byte> data_to_sent = new List<byte>();
-        //    //IRPacket TxSignal = SelectedSignal;
-        //    double high_pulse_compensation = 0;
-
-        //    if(RedRatData.RedRatSelectRCSignal(listboxRCKey.SelectedIndex, IsFirstSignal) ==false)
-        //    {
-        //        return data_to_sent;
-        //    }
-
-        //    // DEBUG PURPOSE ONLY
-        //    //rtbDecodeRCSignal.Text = "Tx Mod-Freq: " + RC_ModutationFreq.ToString() + "\n";
-        //    // END
-
-        //    //
-        //    // Pre-processing done, start to prepare pulse-width data for a single Tx
-        //    //
-        //    double RC_ModutationFreq = RedRatData.RC_ModutationFreq();
-        //    double[] RC_Lengths = RedRatData.RC_Lengths();
-        //    byte[] RC_MainSignal = RedRatData.RC_MainSignal();
-        //    byte[] RC_RepeatSignal = RedRatData.RC_RepeatSignal();
-        //    int RC_NoRepeats = RedRatData.RC_NoRepeats();
-        //    double RC_IntraSigPause = RedRatData.RC_IntraSigPause();
-        //    double RC_RepeatPause = RedRatData.RC_RepeatPause();
-        //    ToggleBit[] RC_ToggleData = RedRatData.RC_ToggleData();
-
-        //    int repeat_cnt = RC_NoRepeats, pulse_index, toggle_bit_index;
-        //    bool pulse_high;
-        //    double time_ratio = RedRatData.Time_Factor_to_uS;
-
-        //    // Tx Main signal
-        //    toggle_bit_index = 0;
-        //    pulse_index = 0;
-        //    pulse_high = true;
-        //    foreach (var sig in RC_MainSignal)
-        //    {
-        //        double signal_width;
-        //        //
-        //        //  Update Toggle Bits
-        //        //
-        //        if ((toggle_bit_index < RC_ToggleData.Length) && (pulse_index == RC_ToggleData[toggle_bit_index].bitNo))
-        //        {
-        //            int toggle_bit_no = (IsFirstSignal == true) ? (RC_ToggleData[toggle_bit_index].len1) : (RC_ToggleData[toggle_bit_index].len2);
-        //            signal_width = RC_Lengths[toggle_bit_no];
-        //            toggle_bit_index++;
-        //        }
-        //        else
-        //        {
-        //            signal_width = RC_Lengths[sig];
-        //        }
-        //        //rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + (signal_width * time_ratio).ToString() + "\n");
-        //        signal_width *= time_ratio;
-
-        //        //
-        //        // high_pulse period must extended a bit to compensate shorted-period due to detection mechanism
-        //        //
-        //        if (pulse_high)
-        //        {
-        //            high_pulse_compensation = High_Pulse_Width_Adjustment(signal_width);
-        //            signal_width += high_pulse_compensation;
-        //        }
-        //        else
-        //        {
-        //            signal_width -= high_pulse_compensation;
-        //        }
-
-        //        data_to_sent.AddRange(Convert_data_to_Byte(Convert.ToUInt32(signal_width)));
-        //        // DEBUG PURPOSE ONLY
-        //        //rtbDecodeRCSignal.AppendText((pulse_high==true?"1":"0") + ":" + Convert.ToUInt32(signal_width).ToString() + "\n");
-        //        // END
-
-        //        pulse_high = !pulse_high;
-        //        pulse_index++;
-        //    }
-
-        //    // Tx the rest of signal (2nd/3rd/...etc)
-        //    while (repeat_cnt-- > 0)
-        //    {
-        //        uint temp_value = Convert.ToUInt32(RC_IntraSigPause * time_ratio - high_pulse_compensation);
-        //        data_to_sent.AddRange(Convert_data_to_Byte(temp_value));
-        //        // DEBUG PURPOSE ONLY
-        //        //rtbDecodeRCSignal.AppendText((pulse_high == true ? "1" : "0") + ":" + temp_value.ToString() + "\n");
-        //        // END
-
-        //        pulse_index++;
-        //        pulse_high = true;
-
-        //        foreach (var sig in RC_RepeatSignal)
-        //        {
-        //            double signal_width;
-        //            //
-        //            //  Update Toggle Bits
-        //            //
-        //            if ((toggle_bit_index < RC_ToggleData.Length) && (pulse_index == RC_ToggleData[toggle_bit_index].bitNo))
-        //            {
-        //                signal_width = RC_Lengths[(IsFirstSignal == true) ? (RC_ToggleData[toggle_bit_index].len1) : (RC_ToggleData[toggle_bit_index].len2)];
-        //                toggle_bit_index++;
-        //            }
-        //            else
-        //            {
-        //                signal_width = RC_Lengths[sig];
-        //            }
-        //            //rtbDecodeRCSignal.AppendText(pulse_high.ToString() + ":" + (signal_width * time_ratio).ToString() + "\n");
-        //            //pulse_high = (pulse_high != 0) ? 0 : 1;
-        //            signal_width *= time_ratio;
-        //            if (pulse_high)
-        //            {
-        //                high_pulse_compensation = High_Pulse_Width_Adjustment(signal_width);
-        //                signal_width += high_pulse_compensation;
-        //            }
-        //            else
-        //            {
-        //                signal_width -= high_pulse_compensation;
-        //            }
-        //            data_to_sent.AddRange(Convert_data_to_Byte(Convert.ToUInt32(signal_width)));
-
-        //            // DEBUG PURPOSE ONLY
-        //            //rtbDecodeRCSignal.AppendText((pulse_high == true ? "1" : "0") + ":" + Convert.ToUInt32(signal_width).ToString() + "\n");
-        //            // END
-
-        //            pulse_high = !pulse_high;
-        //            pulse_index++;
-        //        }
-        //    }
-        //    if (RC_RepeatPause > 0)
-        //    {
-        //        data_to_sent.AddRange(Convert_data_to_Byte(Convert.ToUInt32((RC_RepeatPause * time_ratio) - high_pulse_compensation)));
-        //    }
-        //    else if (RC_IntraSigPause > 0)
-        //    {
-        //        data_to_sent.AddRange(Convert_data_to_Byte(Convert.ToUInt32((RC_IntraSigPause * time_ratio) - high_pulse_compensation)));
-        //    }
-        //    pulse_index++;
-        //    //
-        //    // End of Tx preprocessing
-        //    //
-
-        //    return data_to_sent;
-        //}
 
         public List<byte> Prepare_Do_Nothing_CMD()
         {
@@ -735,10 +542,7 @@ namespace RedRatDatabaseViewer
                         chkSelect2ndSignal.Enabled = false;
                         rbDoubleSignalLED.Checked = false;
                     }
-                    string temp_freq = RedRatData.RC_ModutationFreq().ToString();
-                    rtbDecodeRCSignal.Text = "Modulation Frequency: " + temp_freq + " Hz\n";
-                    lbFreq.Text = temp_freq + " Hz";
-                    Displaying_RC_Signal_Array(RedRatData.RC_Lengths(), RedRatData.RC_MainSignal(), RedRatData.RC_RepeatSignal(), RedRatData.RC_NoRepeats(), RedRatData.RC_IntraSigPause(), 0);
+                    Update_RC_Signal_Display_Content();
                     UpdateRCDataOnForm();
                     if (ThisTimeDoNotUpdateMessageBox)
                     {
@@ -801,7 +605,6 @@ namespace RedRatDatabaseViewer
 
         private void UpdateRCDoubleSignalCheckBoxValue(bool if_checked)
         {
-            //RC_Select2ndSignalForDoubleSignal = if_checked;
             chkSelect2ndSignal.Checked = if_checked;
         }
 
@@ -816,9 +619,7 @@ namespace RedRatDatabaseViewer
             byte[] RC_RepeatSignal = RedRatData.RC_RepeatSignal() ;
             int RC_NoRepeats = RedRatData.RC_NoRepeats();
             double RC_IntraSigPause = RedRatData.RC_IntraSigPause();
-            rtbDecodeRCSignal.Text = "Modulation Frequency: " + RC_ModutationFreq.ToString() + "\n";
-            lbFreq.Text = RC_ModutationFreq.ToString() + " Hz";
-            Displaying_RC_Signal_Array(RC_Lengths, RC_MainSignal, RC_RepeatSignal, RC_NoRepeats, RC_IntraSigPause, 0);
+            Update_RC_Signal_Display_Content();
             UpdateRCDataOnForm();
             if (ThisTimeDoNotUpdateMessageBox)
             {
