@@ -22,7 +22,7 @@ namespace RedRatDatabaseViewer
         private double time_factor_to_us;
         // Property Function
         public AVDeviceDB SignalDB { get { return signal_db; } }
-        //public AVDevice SelectedDevice { get { return selected_device; } }
+        public AVDevice SelectedDevice { get { return selected_device; } }
         public IRPacket SelectedSignal { get { return selected_signal; } }
         public IRPacket TxSignal { get { return tx_signal; } }
         public bool If_Use_First_Signal { get { return if_use_1st_signal; } }

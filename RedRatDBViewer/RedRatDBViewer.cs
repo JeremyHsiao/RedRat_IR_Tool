@@ -167,8 +167,10 @@ namespace RedRatDatabaseViewer
 
         private int Tx_CNT = 0;
 
-        private void SendToSerial_v2(byte[] byte_to_sent)
+        private bool SendToSerial_v2(byte[] byte_to_sent)
         {
+            bool return_value = false;
+
             if (_serialPort.IsOpen == true)
             {
                 AppendSerialMessageLog("\n========Tx:" + Tx_CNT.ToString() + " ");
@@ -192,29 +194,37 @@ namespace RedRatDatabaseViewer
                             temp_index = byte_to_sent.Length;
                         }
                     }
+                    return_value = true;
                 }
                 catch (Exception ex)
                 {
                     AppendSerialMessageLog(ex.ToString() + " ");
+                    return_value = false;
                 }
             }
             else
             {
                 //AppendSerialMessageLog("COM is closed and cannot send byte data\n");
+                return_value = false;
             }
+            return return_value;
         }
 
-        private void EnableSingleRCButton()
+        private void EnableRCFunctionButton()
         {
             if ((_serialPort.IsOpen == true) && (RedRatData !=null) && (RedRatData.SignalDB != null))
             {
                 btnSingleRCPressed.Enabled = true;
+                btnCheckHeartBeat.Enabled = true;
+                btnStopRCButton.Enabled = true;
             }
         }
 
         private void DisableSingleRCButton()
         {
             btnSingleRCPressed.Enabled = false;
+            btnCheckHeartBeat.Enabled = false;
+            btnStopRCButton.Enabled = false;
         }
 
         private void EnableRefreshCOMButton()
@@ -285,7 +295,7 @@ namespace RedRatDatabaseViewer
                     {
                         UpdateToDisconnectButton();
                         DisableRefreshCOMButton();
-                        EnableSingleRCButton();
+                        EnableRCFunctionButton();
                         Start_SerialReadThread();
                     }
                     else
@@ -397,24 +407,24 @@ namespace RedRatDatabaseViewer
             return data_to_sent;
         }
 
-        //
-        // Form Events
-        //
-
-        bool ThisTimeDoNotUpdateMessageBox = false;
-
-        private void SingleOutput_Click(object sender, EventArgs e)
+        public bool SendOneRC()
         {
-            if((Previous_Device<0)||(Previous_Key<0))
-            {
-                // return immediately when No Selected Device or no Selected Signal
-                return;
-            }
+            // Precondition
+            //   1. Load RC Database by RedRatLoadSignalDB()
+            //   2. Select Device by RedRatSelectDevice() using device_name or index_no
+            //   3. Select RC Signal by RedRatSelectRCSignal() using rc_name or index_no --> specify false at 2nd input parameter if need to Tx 2nd signal of Double signal / Toggle Bits Signal
+            Contract.Requires(RedRatData != null);
+            Contract.Requires(RedRatData.SignalDB != null); 
+            Contract.Requires(RedRatData.SelectedDevice != null);
+            Contract.Requires(RedRatData.SelectedSignal != null);
 
-            btnSingleRCPressed.Enabled = false;
+            // Exection in this function
+            //   4. Get complete pulse width data by GetTxPulseWidth()
+            //   5. Combine pulse width data with other RC information into one array
+            //   6. UART Tx this array
+            //   7. For Double signal or Toggle Bit signal, switch to next one
 
-            Byte CheckSum = 0, temp_byte, duty_cycle=50, default_repeat_cnt=0;
-            double RC_ModutationFreq = RedRatData.RC_ModutationFreq();
+            // Step 4
             List<byte> data_to_sent = new List<byte>();
             List<byte> pulse_packet = new List<byte>();
             List<double> pulse_width = RedRatData.GetTxPulseWidth();
@@ -423,6 +433,9 @@ namespace RedRatDatabaseViewer
                 pulse_packet.AddRange(Convert_data_to_Byte(Convert.ToUInt32(val)));
             }
 
+            // Step 5
+            Byte CheckSum = 0, temp_byte, duty_cycle = 50, default_repeat_cnt = 0;
+            double RC_ModutationFreq = RedRatData.RC_ModutationFreq();
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
             data_to_sent.Add(default_repeat_cnt);        // Repeat_No
@@ -446,11 +459,46 @@ namespace RedRatDatabaseViewer
             CheckSum ^= 0xff;
             data_to_sent.Add(CheckSum);
 
+            // Step 6
             SendToSerial_v2(data_to_sent.ToArray());
 
-            if (RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal)))
+            // Step 7
+            if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData().Length > 0))
             {
                 RC_Select1stSignalForDoubleOrToggleSignal = !RC_Select1stSignalForDoubleOrToggleSignal;
+                RedRatData.RedRatSelectRCSignal(listboxRCKey.SelectedIndex, RC_Select1stSignalForDoubleOrToggleSignal);
+            }
+
+            return true; // To-be-implemented: implement error detection in the future
+        }
+
+        //
+        // Form Events
+        //
+
+        bool ThisTimeDoNotUpdateMessageBox = false;
+
+        private void SingleOutput_Click(object sender, EventArgs e)
+        {
+            if((Previous_Device<0)||(Previous_Key<0))
+            {
+                // return immediately when No Selected Device or no Selected Signal
+                return;
+            }
+
+            btnSingleRCPressed.Enabled = false;
+            btnCheckHeartBeat.Enabled = false;
+            btnStopRCButton.Enabled = false;
+            btnConnectionControl.Enabled = false;
+            btnGetRCFile.Enabled = false;
+
+            // Use UART to transmit RC signal
+            SendOneRC(); 
+
+            // Update 2nd Signal checkbox
+            if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData().Length > 0) )
+            {
+                // Switch to the other signal in display
                 ThisTimeDoNotUpdateMessageBox = true;
                 chkSelect2ndSignal.Checked = RC_Select1stSignalForDoubleOrToggleSignal;
             }
@@ -477,21 +525,33 @@ namespace RedRatDatabaseViewer
             //
             //
             //
+            btnConnectionControl.Enabled = true;
+            btnGetRCFile.Enabled = true;
+            btnCheckHeartBeat.Enabled = true;
+            btnStopRCButton.Enabled = true;
             btnSingleRCPressed.Enabled = true;
         }
 
         private void btnCheckHeartBeat_Click(object sender, EventArgs e)
         {
+            btnSingleRCPressed.Enabled = false;
+            btnCheckHeartBeat.Enabled = false;
             btnStopRCButton.Enabled = false;
             SendToSerial_v2(Prepare_Do_Nothing_CMD().ToArray());
+            btnCheckHeartBeat.Enabled = true;
             btnStopRCButton.Enabled = true;
+            btnSingleRCPressed.Enabled = true;
         }
 
         private void StopCMDButton_Click(object sender, EventArgs e)
         {
+            btnSingleRCPressed.Enabled = false;
+            btnCheckHeartBeat.Enabled = false;
             btnStopRCButton.Enabled = false;
             SendToSerial_v2(Prepare_STOP_CMD().ToArray());
+            btnCheckHeartBeat.Enabled = true;
             btnStopRCButton.Enabled = true;
+            btnSingleRCPressed.Enabled = true;
         }
 
         private void listboxAVDeviceList_SelectedIndexChanged(object sender, EventArgs e)
@@ -613,12 +673,12 @@ namespace RedRatDatabaseViewer
             RC_Select1stSignalForDoubleOrToggleSignal = chkSelect2ndSignal.Checked;
             RedRatData.RedRatSelectRCSignal(listboxRCKey.SelectedIndex, RC_Select1stSignalForDoubleOrToggleSignal);
 
-            double RC_ModutationFreq = RedRatData.RC_ModutationFreq();
-            double[] RC_Lengths = RedRatData.RC_Lengths();
-            byte[] RC_MainSignal = RedRatData.RC_MainSignal();
-            byte[] RC_RepeatSignal = RedRatData.RC_RepeatSignal() ;
-            int RC_NoRepeats = RedRatData.RC_NoRepeats();
-            double RC_IntraSigPause = RedRatData.RC_IntraSigPause();
+            //double RC_ModutationFreq = RedRatData.RC_ModutationFreq();
+            //double[] RC_Lengths = RedRatData.RC_Lengths();
+            //byte[] RC_MainSignal = RedRatData.RC_MainSignal();
+            //byte[] RC_RepeatSignal = RedRatData.RC_RepeatSignal() ;
+            //int RC_NoRepeats = RedRatData.RC_NoRepeats();
+            //double RC_IntraSigPause = RedRatData.RC_IntraSigPause();
             Update_RC_Signal_Display_Content();
             UpdateRCDataOnForm();
             if (ThisTimeDoNotUpdateMessageBox)
@@ -699,7 +759,7 @@ namespace RedRatDatabaseViewer
                         this.listboxAVDeviceList_SelectedIndexChanged(sender, e); // Force to update both list selection box
                         listboxAVDeviceList.Enabled = true;
                         listboxRCKey.Enabled = true;
-                        EnableSingleRCButton();
+                        EnableRCFunctionButton();
                     }
                 }
                 catch (Exception ex)
