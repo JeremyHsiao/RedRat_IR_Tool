@@ -42,7 +42,7 @@
             this.rtbSignalData = new System.Windows.Forms.RichTextBox();
             this.dgvPulseData = new System.Windows.Forms.DataGridView();
             this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.chkSelectDoubleSignal = new System.Windows.Forms.CheckBox();
+            this.chkSelect2ndSignal = new System.Windows.Forms.CheckBox();
             this.rbDoubleSignalLED = new System.Windows.Forms.RadioButton();
             this.lbFreq = new System.Windows.Forms.Label();
             this.rtbDecodeRCSignal = new System.Windows.Forms.RichTextBox();
@@ -176,18 +176,18 @@
             this.Column1.ReadOnly = true;
             this.Column1.Width = 101;
             // 
-            // chkSelectDoubleSignal
+            // chkSelect2ndSignal
             // 
-            this.chkSelectDoubleSignal.AutoSize = true;
-            this.chkSelectDoubleSignal.Enabled = false;
-            this.chkSelectDoubleSignal.Font = new System.Drawing.Font("微軟正黑體", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.chkSelectDoubleSignal.Location = new System.Drawing.Point(62, 38);
-            this.chkSelectDoubleSignal.Name = "chkSelectDoubleSignal";
-            this.chkSelectDoubleSignal.Size = new System.Drawing.Size(137, 20);
-            this.chkSelectDoubleSignal.TabIndex = 10;
-            this.chkSelectDoubleSignal.Text = "Display 2nd Signal?";
-            this.chkSelectDoubleSignal.UseVisualStyleBackColor = true;
-            this.chkSelectDoubleSignal.CheckedChanged += new System.EventHandler(this.chkSelect2ndSignal_CheckedChanged);
+            this.chkSelect2ndSignal.AutoSize = true;
+            this.chkSelect2ndSignal.Enabled = false;
+            this.chkSelect2ndSignal.Font = new System.Drawing.Font("微軟正黑體", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            this.chkSelect2ndSignal.Location = new System.Drawing.Point(62, 38);
+            this.chkSelect2ndSignal.Name = "chkSelect2ndSignal";
+            this.chkSelect2ndSignal.Size = new System.Drawing.Size(137, 20);
+            this.chkSelect2ndSignal.TabIndex = 10;
+            this.chkSelect2ndSignal.Text = "Display 2nd Signal?";
+            this.chkSelect2ndSignal.UseVisualStyleBackColor = true;
+            this.chkSelect2ndSignal.CheckedChanged += new System.EventHandler(this.chkSelect2ndSignal_CheckedChanged);
             // 
             // rbDoubleSignalLED
             // 
@@ -374,7 +374,7 @@
             this.Controls.Add(this.gbRC_File_Data);
             this.Controls.Add(this.btnStopRCButton);
             this.Controls.Add(this.rbDoubleSignalLED);
-            this.Controls.Add(this.chkSelectDoubleSignal);
+            this.Controls.Add(this.chkSelect2ndSignal);
             this.Controls.Add(this.rtbSignalData);
             this.Controls.Add(this.btnSingleRCPressed);
             this.Controls.Add(this.btnGetRCFile);
@@ -403,7 +403,7 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.RichTextBox rtbSignalData;
         private System.Windows.Forms.DataGridView dgvPulseData;
-        private System.Windows.Forms.CheckBox chkSelectDoubleSignal;
+        private System.Windows.Forms.CheckBox chkSelect2ndSignal;
         private System.Windows.Forms.RadioButton rbDoubleSignalLED;
         private System.Windows.Forms.Label lbFreq;
         private System.Windows.Forms.RichTextBox rtbDecodeRCSignal;
