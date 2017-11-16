@@ -59,7 +59,7 @@ namespace RedRatDatabaseViewer
             try
             {
                 selected_device = signal_db.GetAVDevice(DeviceName);
-                RedRatSelectRCSignal(0);
+                //RedRatSelectRCSignal(0);
             }
             catch (Exception ex)
             {
@@ -75,7 +75,7 @@ namespace RedRatDatabaseViewer
             try
             {
                 selected_device = signal_db.AVDevices[DeviceIndex];
-                RedRatSelectRCSignal(0);
+                //RedRatSelectRCSignal(0);
             }
             catch (Exception ex)
             {

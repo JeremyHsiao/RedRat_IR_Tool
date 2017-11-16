@@ -384,6 +384,27 @@ namespace RedRatDatabaseViewer
             return data_to_sent;
         }
 
+        private Byte CheckSum = 0;
+        public void ClearCheckSum()
+        {
+            CheckSum = 0;
+        }
+
+        public void UpdateCheckSum(byte value)
+        {
+            CheckSum ^= value;
+        }
+
+        public byte GetCheckSum()
+        {
+            return CheckSum;
+        }
+
+        public bool CompareCheckSum()
+        {
+            return (CheckSum == 0) ? true : false;
+        }
+
         public List<byte> Prepare_Do_Nothing_CMD()
         {
             List<byte> data_to_sent = new List<byte>();
@@ -434,30 +455,89 @@ namespace RedRatDatabaseViewer
             }
 
             // Step 5
-            Byte CheckSum = 0, temp_byte, duty_cycle = 50, default_repeat_cnt = 0;
+            Byte temp_byte, duty_cycle = 50, default_repeat_cnt = 0;
             double RC_ModutationFreq = RedRatData.RC_ModutationFreq();
-            data_to_sent.Add(0xff);
-            data_to_sent.Add(0xff);
-            data_to_sent.Add(default_repeat_cnt);        // Repeat_No
-            CheckSum = default_repeat_cnt;
-            data_to_sent.Add(duty_cycle);       // Duty-cycle is currently fixed to 50
-            CheckSum ^= duty_cycle;
-            UInt16 period = (RC_ModutationFreq == 0) ? (UInt16)0 : (Convert.ToUInt16(8000000 / RC_ModutationFreq));
-            temp_byte = Convert.ToByte(period / 256);
-            data_to_sent.Add(temp_byte);
-            CheckSum ^= temp_byte;
-            temp_byte = Convert.ToByte(period % 256);
-            data_to_sent.Add(temp_byte);
-            CheckSum ^= temp_byte;
-            // Add RC Signal
-            foreach (var val in pulse_packet)
+
+            // (1) Packet header -- must start with at least 2 times 0xff - no need to calcuate checksum for header
             {
-                CheckSum ^= val;
+                data_to_sent.Add(0xff);
+                data_to_sent.Add(0xff);
+                ClearCheckSum();
             }
-            data_to_sent.AddRange(pulse_packet);
-            data_to_sent.Add(0xff);
-            CheckSum ^= 0xff;
-            data_to_sent.Add(CheckSum);
+            // (2) how many times to repeat RC (0-127, to-be-implemented in MCU), other values (128-255) are reserved
+            {
+                const byte repeat_count_max = 0x7f;
+                if (default_repeat_cnt<= repeat_count_max)
+                {
+                    data_to_sent.Add(default_repeat_cnt);        // Repeat_No
+                    UpdateCheckSum(default_repeat_cnt);
+                }
+                else
+                {
+                    Console.WriteLine("Repeat Count is out of range (>" + repeat_count_max.ToString() +"), using " + repeat_count_max.ToString() + " instead.");
+                    data_to_sent.Add(repeat_count_max);        // Repeat_No
+                    UpdateCheckSum(repeat_count_max);
+                }
+            }
+            // (3) Duty Cycle range is 0-100, other values are reserved
+            {
+                const byte default_duty_cycle = 50, max_duty_cycle = 100;
+                if (duty_cycle <= max_duty_cycle)
+                {
+                    data_to_sent.Add(duty_cycle);
+                    UpdateCheckSum(duty_cycle);
+                }
+                else
+                {
+                    Console.WriteLine("Duty Cycle is out of range (>" + max_duty_cycle.ToString() + "), using  " + default_duty_cycle.ToString() + "  instead.");
+                    data_to_sent.Add(default_duty_cycle);
+                    UpdateCheckSum(default_duty_cycle);
+                }
+            }
+            // (4) Frequency is between 200 KHz - 20Hz, or 0 Hz (no carrier)
+            {
+                const double max_freq = 200000, min_freq = 20, default_freq = 38000;
+                UInt16 period;
+                if (RC_ModutationFreq> max_freq)
+                {
+                    Console.WriteLine("Duty Cycle is out of range (> " + max_freq.ToString() + " Hz), using " + max_freq.ToString() + " instead.");
+                    period = Convert.ToUInt16(8000000 / max_freq);
+                }
+                else if (RC_ModutationFreq >= min_freq)
+                {
+                    period = Convert.ToUInt16(8000000 / RC_ModutationFreq);
+                }
+                else if (RC_ModutationFreq==0)
+                {
+                    period = 0;
+                }
+                else
+                {
+                    Console.WriteLine("Duty Cycle is out of range (< " + min_freq.ToString() + " Hz), using " + default_freq.ToString() + " instead.");
+                    period = Convert.ToUInt16(8000000 / default_freq);
+                }
+                temp_byte = Convert.ToByte(period / 256);
+                data_to_sent.Add(temp_byte);
+                UpdateCheckSum(temp_byte);
+                temp_byte = Convert.ToByte(period % 256);
+                data_to_sent.Add(temp_byte);
+                UpdateCheckSum(temp_byte);
+            }
+            // (5) Add RC width data
+            {
+                foreach (var val in pulse_packet)
+                {
+                    UpdateCheckSum(val);
+                }
+                data_to_sent.AddRange(pulse_packet);
+            }
+            // (6) Add 0xff as last data byte
+            {
+                data_to_sent.Add(0xff);
+                UpdateCheckSum(0xff);
+            }
+            // (7) Finally add checksum at end of packet
+            data_to_sent.Add(GetCheckSum());
 
             // Step 6
             SendToSerial_v2(data_to_sent.ToArray());
@@ -554,7 +634,7 @@ namespace RedRatDatabaseViewer
             btnSingleRCPressed.Enabled = true;
         }
 
-        private void listboxAVDeviceList_SelectedIndexChanged(object sender, EventArgs e)
+        private void listboxAVDeviceList_SelectedIndexChanged(object sender, EventArgs ev)
         {
             int Current_Device = listboxAVDeviceList.SelectedIndex;
             if (Previous_Device != Current_Device)
@@ -564,10 +644,11 @@ namespace RedRatDatabaseViewer
                 {
                     listboxRCKey.Items.Clear();
                     listboxRCKey.Items.AddRange(RedRatData.RedRatGetRCNameList().ToArray());
-                    Previous_Device = Current_Device;
+                    listboxRCKey.SelectedIndex = 0;
+                    RedRatData.RedRatSelectRCSignal(0,RC_Select1stSignalForDoubleOrToggleSignal);
                     Previous_Key = -1;
-                    listboxRCKey.SelectedIndex = 0;  // Make sure (Previous_Key!= listboxRCKey.SelectedIndex) at next SelectedIndexChanged event
-                    RC_Select1stSignalForDoubleOrToggleSignal = true;
+                    this.listboxRCKey_SelectedIndexChanged(sender, ev);
+                    Previous_Device = Current_Device;
                 }
                 else
                 {
@@ -755,8 +836,9 @@ namespace RedRatDatabaseViewer
                         UpdateRCDataOnForm();
 
                         Previous_Device = -1;
+                        Previous_Key = -1;
                         listboxAVDeviceList.SelectedIndex = 0;
-                        this.listboxAVDeviceList_SelectedIndexChanged(sender, e); // Force to update both list selection box
+                        this.listboxAVDeviceList_SelectedIndexChanged(sender, e); // Force to update Device list selection box (RC selection box will be forced to updated within listboxAVDeviceList_SelectedIndexChanged()
                         listboxAVDeviceList.Enabled = true;
                         listboxRCKey.Enabled = true;
                         EnableRCFunctionButton();
