@@ -210,17 +210,24 @@ namespace RedRatDatabaseViewer
             return return_value;
         }
 
-        private void EnableRCFunctionButton()
+        private void UpdateRCFunctionButtonAfterConnection()
         {
-            if ((_serialPort.IsOpen == true) && (RedRatData !=null) && (RedRatData.SignalDB != null))
+            if ((_serialPort.IsOpen == true))
             {
-                btnSingleRCPressed.Enabled = true;
+                if ((RedRatData != null) && (RedRatData.SignalDB != null) && (RedRatData.SelectedDevice != null) && (RedRatData.SelectedSignal != null))
+                {
+                    btnSingleRCPressed.Enabled = true;
+                }
+                else
+                {
+                    btnSingleRCPressed.Enabled = false;
+                }
                 btnCheckHeartBeat.Enabled = true;
                 btnStopRCButton.Enabled = true;
             }
         }
 
-        private void DisableSingleRCButton()
+        private void UpdateRCFunctionButtonAfterDisconnection()
         {
             btnSingleRCPressed.Enabled = false;
             btnCheckHeartBeat.Enabled = false;
@@ -295,7 +302,7 @@ namespace RedRatDatabaseViewer
                     {
                         UpdateToDisconnectButton();
                         DisableRefreshCOMButton();
-                        EnableRCFunctionButton();
+                        UpdateRCFunctionButtonAfterConnection();
                         Start_SerialReadThread();
                     }
                     else
@@ -313,7 +320,7 @@ namespace RedRatDatabaseViewer
                     {
                         UpdateToConnectButton();
                         EnableRefreshCOMButton();
-                        DisableSingleRCButton();
+                        UpdateRCFunctionButtonAfterDisconnection();
                     }
                     else
                     {
@@ -409,11 +416,15 @@ namespace RedRatDatabaseViewer
         {
             List<byte> data_to_sent = new List<byte>();
 
+            ClearCheckSum();
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
+            // No need to calculate checksum for header
             data_to_sent.Add(0x00);
+            UpdateCheckSum(0x00);
             data_to_sent.Add(0xff);
-            data_to_sent.Add(0xff);
+            UpdateCheckSum(0xff);
+            data_to_sent.Add(GetCheckSum());
             return data_to_sent;
         }
 
@@ -421,10 +432,13 @@ namespace RedRatDatabaseViewer
         {
             List<byte> data_to_sent = new List<byte>();
 
+            ClearCheckSum();
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
+            // No need to calculate checksum for header
             data_to_sent.Add(0xfe);
-            data_to_sent.Add(0xfe);
+            UpdateCheckSum(0xfe);
+            data_to_sent.Add(GetCheckSum());
             return data_to_sent;
         }
 
@@ -841,7 +855,7 @@ namespace RedRatDatabaseViewer
                         this.listboxAVDeviceList_SelectedIndexChanged(sender, e); // Force to update Device list selection box (RC selection box will be forced to updated within listboxAVDeviceList_SelectedIndexChanged()
                         listboxAVDeviceList.Enabled = true;
                         listboxRCKey.Enabled = true;
-                        EnableRCFunctionButton();
+                        UpdateRCFunctionButtonAfterConnection();
                     }
                 }
                 catch (Exception ex)
