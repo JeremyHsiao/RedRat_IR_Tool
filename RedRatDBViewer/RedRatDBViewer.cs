@@ -414,14 +414,24 @@ namespace RedRatDatabaseViewer
 
         public List<byte> Prepare_Do_Nothing_CMD()
         {
+             return Prepare_Send_Repeat_Cnt_CMD(0);
+        }
+
+        public List<byte> Prepare_Send_Repeat_Cnt_CMD(byte cnt)
+        {
             List<byte> data_to_sent = new List<byte>();
+
+            if(cnt>=0xf0)   // value >= 0xf0 are reserved
+            {
+                cnt = 0;
+            }
 
             ClearCheckSum();
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
             // No need to calculate checksum for header
-            data_to_sent.Add(0x00);
-            UpdateCheckSum(0x00);
+            data_to_sent.Add(cnt);
+            UpdateCheckSum(cnt);
             data_to_sent.Add(0xff);
             UpdateCheckSum(0xff);
             data_to_sent.Add(GetCheckSum());
@@ -453,7 +463,7 @@ namespace RedRatDatabaseViewer
             Contract.Requires(RedRatData.SelectedDevice != null);
             Contract.Requires(RedRatData.SelectedSignal != null);
 
-            // Exection in this function
+            // Execution in this function
             //   4. Get complete pulse width data by GetTxPulseWidth()
             //   5. Combine pulse width data with other RC information into one array
             //   6. UART Tx this array
@@ -469,7 +479,7 @@ namespace RedRatDatabaseViewer
             }
 
             // Step 5
-            Byte temp_byte, duty_cycle = 50, default_repeat_cnt = 0;
+            Byte temp_byte, duty_cycle = 33, default_repeat_cnt = 0;
             double RC_ModutationFreq = RedRatData.RC_ModutationFreq();
 
             // (1) Packet header -- must start with at least 2 times 0xff - no need to calcuate checksum for header
@@ -495,7 +505,7 @@ namespace RedRatDatabaseViewer
             }
             // (3) Duty Cycle range is 0-100, other values are reserved
             {
-                const byte default_duty_cycle = 50, max_duty_cycle = 100;
+                const byte default_duty_cycle = 33, max_duty_cycle = 100;
                 if (duty_cycle <= max_duty_cycle)
                 {
                     data_to_sent.Add(duty_cycle);
@@ -632,9 +642,10 @@ namespace RedRatDatabaseViewer
             btnCheckHeartBeat.Enabled = false;
             btnStopRCButton.Enabled = false;
             SendToSerial_v2(Prepare_Do_Nothing_CMD().ToArray());
-            btnCheckHeartBeat.Enabled = true;
-            btnStopRCButton.Enabled = true;
-            btnSingleRCPressed.Enabled = true;
+            //btnCheckHeartBeat.Enabled = true;
+            //btnStopRCButton.Enabled = true;
+            //btnSingleRCPressed.Enabled = true;
+            UpdateRCFunctionButtonAfterConnection();
         }
 
         private void StopCMDButton_Click(object sender, EventArgs e)
@@ -643,9 +654,10 @@ namespace RedRatDatabaseViewer
             btnCheckHeartBeat.Enabled = false;
             btnStopRCButton.Enabled = false;
             SendToSerial_v2(Prepare_STOP_CMD().ToArray());
-            btnCheckHeartBeat.Enabled = true;
-            btnStopRCButton.Enabled = true;
-            btnSingleRCPressed.Enabled = true;
+            //btnCheckHeartBeat.Enabled = true;
+            //btnStopRCButton.Enabled = true;
+            //btnSingleRCPressed.Enabled = true;
+            UpdateRCFunctionButtonAfterConnection();
         }
 
         private void listboxAVDeviceList_SelectedIndexChanged(object sender, EventArgs ev)
