@@ -224,6 +224,7 @@ namespace RedRatDatabaseViewer
                 }
                 btnCheckHeartBeat.Enabled = true;
                 btnStopRCButton.Enabled = true;
+                btnRepeatRC.Enabled = true;
             }
         }
 
@@ -232,6 +233,31 @@ namespace RedRatDatabaseViewer
             btnSingleRCPressed.Enabled = false;
             btnCheckHeartBeat.Enabled = false;
             btnStopRCButton.Enabled = false;
+        }
+
+        private void UndoTemoparilyDisbleAllRCFunctionButtons()
+        {
+            if ((RedRatData != null) && (RedRatData.SignalDB != null) && (RedRatData.SelectedDevice != null) && (RedRatData.SelectedSignal != null))
+            {
+                btnSingleRCPressed.Enabled = true;
+            }
+            else
+            {
+                btnSingleRCPressed.Enabled = false;
+            }
+            btnCheckHeartBeat.Enabled = true;
+            btnStopRCButton.Enabled = true;
+            btnRepeatRC.Enabled = true;
+            btnConnectionControl.Enabled = true;
+        }
+
+        private void TemoparilyDisbleAllRCFunctionButtons()
+        {
+            btnSingleRCPressed.Enabled = false;
+            btnCheckHeartBeat.Enabled = false;
+            btnStopRCButton.Enabled = false;
+            btnRepeatRC.Enabled = false;
+            btnConnectionControl.Enabled = false;
         }
 
         private void EnableRefreshCOMButton()
@@ -417,7 +443,7 @@ namespace RedRatDatabaseViewer
              return Prepare_Send_Repeat_Cnt_CMD(0);
         }
 
-        public List<byte> Prepare_Send_Repeat_Cnt_CMD(byte cnt)
+        public List<byte> Prepare_Send_Repeat_Cnt_CMD(byte cnt = 0)
         {
             List<byte> data_to_sent = new List<byte>();
 
@@ -590,10 +616,11 @@ namespace RedRatDatabaseViewer
                 return;
             }
 
-            btnSingleRCPressed.Enabled = false;
-            btnCheckHeartBeat.Enabled = false;
-            btnStopRCButton.Enabled = false;
-            btnConnectionControl.Enabled = false;
+            //btnSingleRCPressed.Enabled = false;
+            //btnCheckHeartBeat.Enabled = false;
+            //btnStopRCButton.Enabled = false;
+            //btnConnectionControl.Enabled = false;
+            TemoparilyDisbleAllRCFunctionButtons();
             btnGetRCFile.Enabled = false;
 
             // Use UART to transmit RC signal
@@ -629,35 +656,38 @@ namespace RedRatDatabaseViewer
             //
             //
             //
-            btnConnectionControl.Enabled = true;
             btnGetRCFile.Enabled = true;
-            btnCheckHeartBeat.Enabled = true;
-            btnStopRCButton.Enabled = true;
-            btnSingleRCPressed.Enabled = true;
+            UndoTemoparilyDisbleAllRCFunctionButtons();
+            //btnConnectionControl.Enabled = true;
+            //btnCheckHeartBeat.Enabled = true;
+            //btnStopRCButton.Enabled = true;
+            //btnSingleRCPressed.Enabled = true;
         }
 
         private void btnCheckHeartBeat_Click(object sender, EventArgs e)
         {
-            btnSingleRCPressed.Enabled = false;
-            btnCheckHeartBeat.Enabled = false;
-            btnStopRCButton.Enabled = false;
+            //btnSingleRCPressed.Enabled = false;
+            //btnCheckHeartBeat.Enabled = false;
+            //btnStopRCButton.Enabled = false;
+            TemoparilyDisbleAllRCFunctionButtons();
             SendToSerial_v2(Prepare_Do_Nothing_CMD().ToArray());
+            UndoTemoparilyDisbleAllRCFunctionButtons();
             //btnCheckHeartBeat.Enabled = true;
             //btnStopRCButton.Enabled = true;
             //btnSingleRCPressed.Enabled = true;
-            UpdateRCFunctionButtonAfterConnection();
         }
 
         private void StopCMDButton_Click(object sender, EventArgs e)
         {
-            btnSingleRCPressed.Enabled = false;
-            btnCheckHeartBeat.Enabled = false;
-            btnStopRCButton.Enabled = false;
+            //btnSingleRCPressed.Enabled = false;
+            //btnCheckHeartBeat.Enabled = false;
+            //btnStopRCButton.Enabled = false;
+            TemoparilyDisbleAllRCFunctionButtons();
             SendToSerial_v2(Prepare_STOP_CMD().ToArray());
+            UndoTemoparilyDisbleAllRCFunctionButtons();
             //btnCheckHeartBeat.Enabled = true;
             //btnStopRCButton.Enabled = true;
             //btnSingleRCPressed.Enabled = true;
-            UpdateRCFunctionButtonAfterConnection();
         }
 
         private void listboxAVDeviceList_SelectedIndexChanged(object sender, EventArgs ev)
@@ -877,7 +907,13 @@ namespace RedRatDatabaseViewer
             }
         }
 
-
+        private void btnRepeatRC_Click(object sender, EventArgs e)
+        {
+            byte repeat_cnt = 8;
+            TemoparilyDisbleAllRCFunctionButtons();
+            SendToSerial_v2(Prepare_Send_Repeat_Cnt_CMD(repeat_cnt).ToArray());
+            UndoTemoparilyDisbleAllRCFunctionButtons();
+        }
     }
 
 }
