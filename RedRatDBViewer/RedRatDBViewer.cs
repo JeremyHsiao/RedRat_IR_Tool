@@ -103,6 +103,7 @@ namespace RedRatDatabaseViewer
         }
 
         static bool _continue_serial_read_write = false;
+        static uint Get_UART_Input = 0;
         static Thread readThread = null;
         private Queue<string> UART_READ_MSG_QUEUE = new Queue<string>();
 
@@ -130,10 +131,18 @@ namespace RedRatDatabaseViewer
             {
                 try
                 {
-                    string message = _serialPort.ReadLine();
+                    if (_serialPort.BytesToRead > 0)
                     {
-                        UART_READ_MSG_QUEUE.Enqueue(message);
-                        AppendSerialMessageLog(message);
+                        _serialPort.ReadTimeout = 500;
+                        string message = _serialPort.ReadLine();
+                        {
+                            if (Get_UART_Input > 0)
+                            {
+                                Get_UART_Input--;
+                                UART_READ_MSG_QUEUE.Enqueue(message);
+                            }
+                            AppendSerialMessageLog(message);
+                        }
                     }
                 }
                 catch (Exception ex)
