@@ -50,6 +50,7 @@ namespace RedRatDatabaseViewer
             }
             catch (Exception ex)
             {
+                Console.WriteLine("RedRatLoadSignalDB exception at filename: " + dbFileName + " - " + ex);
                 return false;
             }
         }
@@ -64,6 +65,7 @@ namespace RedRatDatabaseViewer
             }
             catch (Exception ex)
             {
+                Console.WriteLine("RedRatLoadSignalDB exception at device: " + DeviceName + " - " + ex);
                 return false;
             }
             return true;
@@ -80,6 +82,7 @@ namespace RedRatDatabaseViewer
             }
             catch (Exception ex)
             {
+                Console.WriteLine("RedRatLoadSignalDB exception at device number: " + DeviceIndex.ToString() + " - " + ex);
                 return false;
             }
             return true;
@@ -96,12 +99,13 @@ namespace RedRatDatabaseViewer
             }
             catch (Exception ex)
             {
+                Console.WriteLine("RedRatSelectRCSignal exception at RC Key: " + rcName + " - " + ex);
                 return false;
             }
             return true;
         }
 
-        public bool RedRatSelectRCSignal(int rc_index, bool Use_1st_Signal=true)
+        public bool RedRatSelectRCSignal(int rc_index, bool Use_1st_Signal = true)
         {
             Contract.Requires(selected_device != null);
             Contract.Requires(rc_index >= 0);
@@ -114,6 +118,7 @@ namespace RedRatDatabaseViewer
             }
             catch (Exception ex)
             {
+                Console.WriteLine("RedRatSelectRCSignal exception at RC Key number: " + rc_index.ToString() + " - " + ex);
                 return false;
             }
             return true;
@@ -143,7 +148,7 @@ namespace RedRatDatabaseViewer
             Contract.Requires(selected_device != null);
             Contract.Requires(selected_signal != null);
 
-            List<double> data_to_sent = new List<double> ();
+            List<double> data_to_sent = new List<double>();
             int repeat_cnt, pulse_index, toggle_bit_index;
             bool pulse_high;
             double signal_width, high_pulse_compensation;
@@ -158,7 +163,7 @@ namespace RedRatDatabaseViewer
                 //
                 //  Update Toggle Bits
                 //
-                if ((rc_toggle_data!=null) && (toggle_bit_index <rc_toggle_data.Length) && (pulse_index == rc_toggle_data[toggle_bit_index].bitNo))
+                if ((toggle_bit_index < RC_ToggleData_Length_Value()) && (pulse_index == rc_toggle_data[toggle_bit_index].bitNo))
                 {
                     int toggle_bit_no = (if_use_1st_signal == true) ? (rc_toggle_data[toggle_bit_index].len1) : (rc_toggle_data[toggle_bit_index].len2);
                     signal_width = rc_lengths[toggle_bit_no];
@@ -203,7 +208,7 @@ namespace RedRatDatabaseViewer
                     //
                     //  Update Toggle Bits
                     //
-                    if ((rc_toggle_data != null) && (toggle_bit_index < rc_toggle_data.Length) && (pulse_index == rc_toggle_data[toggle_bit_index].bitNo))
+                    if ((toggle_bit_index < RC_ToggleData_Length_Value()) && (pulse_index == rc_toggle_data[toggle_bit_index].bitNo))
                     {
                         signal_width = rc_lengths[(if_use_1st_signal == true) ? (rc_toggle_data[toggle_bit_index].len1) : (rc_toggle_data[toggle_bit_index].len2)];
                         toggle_bit_index++;
@@ -241,7 +246,7 @@ namespace RedRatDatabaseViewer
             }
             else
             {
-                data_to_sent.Add((1000000/rc_modulation_freq*32) - high_pulse_compensation);            // min 32 pulse low
+                data_to_sent.Add((1000000 / rc_modulation_freq * 32) - high_pulse_compensation);            // min 32 pulse low
             }
             //pulse_index++;
             //
@@ -256,19 +261,22 @@ namespace RedRatDatabaseViewer
         public byte[] RC_SigData() { return rc_sig_data; }
         public int RC_NoRepeats() { return rc_repeats_number; }
         public double RC_IntraSigPause() { return rc_intra_sig_pause; }
-        public byte[] RC_MainSignal() { return rc_main_signal; } 
+        public byte[] RC_MainSignal() { return rc_main_signal; }
         public byte[] RC_RepeatSignal() { return rc_repeat_signal; }
         public ToggleBit[] RC_ToggleData() { return rc_toggle_data; }
-        public string RC_Description() { return rc_description; } 
-        public string RC_Name() { return rc_name; } 
-        public ModulatedSignal.PauseRepeatType RC_PauseRepeatMode () { return rc_pause_repeat_mode; }
+        public string RC_Description() { return rc_description; }
+        public string RC_Name() { return rc_name; }
+        public ModulatedSignal.PauseRepeatType RC_PauseRepeatMode() { return rc_pause_repeat_mode; }
         public double RC_RepeatPause() { return rc_repeat_pause; }
-        public bool RC_MainRepeatIdentical() { return rc_main_repeat_identical; } 
+        public bool RC_MainRepeatIdentical() { return rc_main_repeat_identical; }
 
-        //
-        // Private Function
-        //
-        private double rc_modulation_freq;
+        // to avoid null pointer access when getting toggle bit array size
+        public int RC_ToggleData_Length_Value() { return (rc_toggle_data!=null)?(rc_toggle_data.Length):0; }
+
+    //
+    // Private Function
+    //
+    private double rc_modulation_freq;
         private double[] rc_lengths;
         private byte[] rc_sig_data;
         private int rc_repeats_number;
@@ -296,6 +304,7 @@ namespace RedRatDatabaseViewer
         {
             List<ToggleBit> temp_toggle_data = new List<ToggleBit>();
 
+            //Contract.Requires<ArgumentNullException> (rc_lengths != null, "rc_lengths is null!");
             Contract.Requires(rc_lengths != null);
             foreach (var toggle_data in rc_toggle_data)
             {
@@ -373,7 +382,11 @@ namespace RedRatDatabaseViewer
                 rc_main_repeat_identical = ModulatedSignal.MainRepeatIdentical(sig);
                 tx_signal = sig;
                 sig_type_supported = true;
-            }
+                if (rc_lengths == null)
+                {
+                    sig_type_supported = false;
+                }
+           }
             else if (sgl_signal.GetType() == typeof(RedRat3ModulatedSignal))
             {
                 RedRat3ModulatedSignal sig = (RedRat3ModulatedSignal)sgl_signal;
@@ -393,6 +406,10 @@ namespace RedRatDatabaseViewer
                 rc_main_repeat_identical = RedRat3ModulatedSignal.MainRepeatIdentical(sig);
                 tx_signal = sig;
                 sig_type_supported = true;
+                if (rc_lengths == null)
+                {
+                    sig_type_supported = false;
+                }
             }
             else if (sgl_signal.GetType() == typeof(FlashCodeSignal))
             {

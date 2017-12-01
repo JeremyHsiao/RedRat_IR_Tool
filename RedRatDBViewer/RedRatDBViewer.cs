@@ -82,6 +82,7 @@ namespace RedRatDatabaseViewer
             }
             catch (Exception ex232)
             {
+                Console.WriteLine("Serial_OpenPort Exception at PORT: "+ PortName + " - " + ex232);
                 ret = false;
             }
             return ret;
@@ -90,13 +91,16 @@ namespace RedRatDatabaseViewer
         private Boolean Serial_ClosePort()
         {
             Boolean ret = false;
+            string PortName = "Invalid _serialPort.PortName";
             try
             {
+                PortName = _serialPort.PortName;
                 _serialPort.Close();
                 ret = true;
             }
             catch (Exception ex232)
             {
+                Console.WriteLine("Serial_ClosePort Exception at PORT: " + PortName + " - " + ex232);
                 ret = false;
             }
             return ret;
@@ -147,6 +151,7 @@ namespace RedRatDatabaseViewer
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine("ReadSerialPortThread - " + ex);
                     //AppendSerialMessageLog(ex.ToString());
                 }
             }
@@ -165,6 +170,7 @@ namespace RedRatDatabaseViewer
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine("SendToSerial - " + ex);
                     AppendSerialMessageLog(ex.ToString());
                 }
             }
@@ -207,7 +213,7 @@ namespace RedRatDatabaseViewer
                 }
                 catch (Exception ex)
                 {
-                    AppendSerialMessageLog(ex.ToString() + " ");
+                    Console.WriteLine("SendToSerial_v2 - " + ex);
                     return_value = false;
                 }
             }
@@ -602,7 +608,7 @@ namespace RedRatDatabaseViewer
             SendToSerial_v2(data_to_sent.ToArray());
 
             // Step 7
-            if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData().Length > 0))
+            if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
             {
                 RC_Select1stSignalForDoubleOrToggleSignal = !RC_Select1stSignalForDoubleOrToggleSignal;
                 RedRatData.RedRatSelectRCSignal(listboxRCKey.SelectedIndex, RC_Select1stSignalForDoubleOrToggleSignal);
@@ -619,24 +625,30 @@ namespace RedRatDatabaseViewer
 
         private void SingleOutput_Click(object sender, EventArgs e)
         {
-            if((Previous_Device<0)||(Previous_Key<0))
+            if(RedRatData.Signal_Type_Supported!=true)
+            {
+                return;
+            }
+
+            if ((Previous_Device<0)||(Previous_Key<0))
             {
                 // return immediately when No Selected Device or no Selected Signal
                 return;
             }
 
+            TemoparilyDisbleAllRCFunctionButtons();
+
             //btnSingleRCPressed.Enabled = false;
             //btnCheckHeartBeat.Enabled = false;
             //btnStopRCButton.Enabled = false;
             //btnConnectionControl.Enabled = false;
-            TemoparilyDisbleAllRCFunctionButtons();
             btnGetRCFile.Enabled = false;
 
             // Use UART to transmit RC signal
             SendOneRC(); 
 
             // Update 2nd Signal checkbox
-            if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData().Length > 0) )
+            if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0) )
             {
                 // Switch to the other signal in display
                 ThisTimeDoNotUpdateMessageBox = true;
@@ -720,7 +732,7 @@ namespace RedRatDatabaseViewer
                         chkSelect2ndSignal.Enabled = false;
                         rbDoubleSignalLED.Checked = false;
                         //Update_RC_Signal_Display_Content();
-                        rtbDecodeRCSignal.Text = temp_type + " is not supported yet.";
+                        rtbDecodeRCSignal.Text = temp_type + " is not supported, or signal data is corrupted.";
                         //UpdateRCDataOnForm();
                         dgvPulseData.Rows.Clear();
                         dgvToggleBits.Rows.Clear();
@@ -733,7 +745,7 @@ namespace RedRatDatabaseViewer
                             chkSelect2ndSignal.Enabled = true;
                             rbDoubleSignalLED.Checked = true;
                         }
-                        else if ((RedRatData.RC_ToggleData() != null) && (RedRatData.RC_ToggleData().Length > 0))
+                        else if (RedRatData.RC_ToggleData_Length_Value() > 0)
                         {
                             chkSelect2ndSignal.Enabled = true;
                             rbDoubleSignalLED.Checked = false;
