@@ -20,6 +20,7 @@ namespace RedRatDatabaseViewer
         private IRPacket tx_signal;
         private bool if_use_1st_signal;
         private double time_factor_to_us;
+        private bool sig_type_supported;
         // Property Function
         public AVDeviceDB SignalDB { get { return signal_db; } }
         public AVDevice SelectedDevice { get { return selected_device; } }
@@ -27,7 +28,7 @@ namespace RedRatDatabaseViewer
         public IRPacket TxSignal { get { return tx_signal; } }
         public bool If_Use_First_Signal { get { return if_use_1st_signal; } }
         public double Time_Factor_to_uS { get { return time_factor_to_us; } }
-
+        public bool Signal_Type_Supported { get { return sig_type_supported; } }
         //
         // Public Function
         //
@@ -157,7 +158,7 @@ namespace RedRatDatabaseViewer
                 //
                 //  Update Toggle Bits
                 //
-                if ((toggle_bit_index <rc_toggle_data.Length) && (pulse_index == rc_toggle_data[toggle_bit_index].bitNo))
+                if ((rc_toggle_data!=null) && (toggle_bit_index <rc_toggle_data.Length) && (pulse_index == rc_toggle_data[toggle_bit_index].bitNo))
                 {
                     int toggle_bit_no = (if_use_1st_signal == true) ? (rc_toggle_data[toggle_bit_index].len1) : (rc_toggle_data[toggle_bit_index].len2);
                     signal_width = rc_lengths[toggle_bit_no];
@@ -202,7 +203,7 @@ namespace RedRatDatabaseViewer
                     //
                     //  Update Toggle Bits
                     //
-                    if ((toggle_bit_index < rc_toggle_data.Length) && (pulse_index == rc_toggle_data[toggle_bit_index].bitNo))
+                    if ((rc_toggle_data != null) && (toggle_bit_index < rc_toggle_data.Length) && (pulse_index == rc_toggle_data[toggle_bit_index].bitNo))
                     {
                         signal_width = rc_lengths[(if_use_1st_signal == true) ? (rc_toggle_data[toggle_bit_index].len1) : (rc_toggle_data[toggle_bit_index].len2)];
                         toggle_bit_index++;
@@ -288,6 +289,7 @@ namespace RedRatDatabaseViewer
             selected_signal = null;
             if_use_1st_signal = true;
             time_factor_to_us = 1000;
+            sig_type_supported = false;
         }
 
         private void Verify_Toggle_Bit_Data_with_RC_Length_Array()
@@ -326,7 +328,7 @@ namespace RedRatDatabaseViewer
             rc_pause_repeat_mode = ModulatedSignal.PauseRepeatType.ConstantGap;
             rc_repeat_pause = 0;
             rc_main_repeat_identical = false;
-        }
+         }
 
         private void ProcessSignalData(IRPacket process_signal, bool RC_Select1StSignal = true)
         {
@@ -370,6 +372,7 @@ namespace RedRatDatabaseViewer
                 rc_repeat_pause = sig.RepeatPause;
                 rc_main_repeat_identical = ModulatedSignal.MainRepeatIdentical(sig);
                 tx_signal = sig;
+                sig_type_supported = true;
             }
             else if (sgl_signal.GetType() == typeof(RedRat3ModulatedSignal))
             {
@@ -389,6 +392,7 @@ namespace RedRatDatabaseViewer
                 rc_repeat_pause = sig.RepeatPause;
                 rc_main_repeat_identical = RedRat3ModulatedSignal.MainRepeatIdentical(sig);
                 tx_signal = sig;
+                sig_type_supported = true;
             }
             else if (sgl_signal.GetType() == typeof(FlashCodeSignal))
             {
@@ -405,6 +409,7 @@ namespace RedRatDatabaseViewer
                 rc_name = sig.Name;
                 rc_main_repeat_identical = false; // No such function, need to compare
                 tx_signal = sig;
+                sig_type_supported = true;
             }
             else if (sgl_signal.GetType() == typeof(RedRat3FlashCodeSignal))
             {
@@ -421,6 +426,7 @@ namespace RedRatDatabaseViewer
                 rc_name = sig.Name;
                 rc_main_repeat_identical = false; // No such function, need to compare
                 tx_signal = sig;
+                sig_type_supported = true;
             }
             //else if (Signal.GetType() == typeof(ProntoModulatedSignal))
             //{
@@ -437,6 +443,7 @@ namespace RedRatDatabaseViewer
             else
             {
                 tx_signal = sgl_signal;
+                sig_type_supported = false;
                 RedRatClearRCData();
             }
         }

@@ -646,25 +646,6 @@ namespace RedRatDatabaseViewer
             // End of Tx 
             //
 
-            //if(UART_READ_MSG_QUEUE.Count>0)
-            //{
-            //    string temp_str = UART_READ_MSG_QUEUE.Dequeue();
-            //    int value_in = Convert.ToInt16(temp_str);
-            //    temp_str = UART_READ_MSG_QUEUE.Dequeue();
-            //    int value_out = Convert.ToInt16(temp_str);
-            //    if(value_in<value_out)
-            //    {
-            //        value_in += 250;
-            //    }
-            //    if((value_in-value_out)== pulse_width.Count)
-            //    {
-            //        AppendSerialMessageLog("OK\n");
-            //    }
-            //}
-
-            //
-            //
-            //
             btnGetRCFile.Enabled = true;
             UndoTemoparilyDisbleAllRCFunctionButtons();
             //btnConnectionControl.Enabled = true;
@@ -728,38 +709,51 @@ namespace RedRatDatabaseViewer
  
             if ( Previous_Key != Current_Key)
             {
+                Previous_Key = Current_Key;
                 string rcname = listboxRCKey.SelectedItem.ToString();
                 if (RedRatData.RedRatSelectRCSignal(rcname, RC_Select1stSignalForDoubleOrToggleSignal))
                 {
                     Type temp_type = RedRatData.RedRatSelectedSignalType();
                     lbModulationType.Text = temp_type.ToString();
-                    if (temp_type == typeof(DoubleSignal))
-                    {
-                        chkSelect2ndSignal.Enabled = true;
-                        rbDoubleSignalLED.Checked = true;
-                    }
-                    else if (RedRatData.RC_ToggleData().Length > 0)
-                    {
-                        chkSelect2ndSignal.Enabled = true;
-                        rbDoubleSignalLED.Checked = false;
-                    }
-                    else
+                    if(RedRatData.Signal_Type_Supported == false)
                     {
                         chkSelect2ndSignal.Enabled = false;
                         rbDoubleSignalLED.Checked = false;
-                    }
-                    Update_RC_Signal_Display_Content();
-                    UpdateRCDataOnForm();
-                    if (ThisTimeDoNotUpdateMessageBox)
-                    {
-                        ThisTimeDoNotUpdateMessageBox = false;
+                        //Update_RC_Signal_Display_Content();
+                        rtbDecodeRCSignal.Text = temp_type + " is not supported yet.";
+                        //UpdateRCDataOnForm();
+                        dgvPulseData.Rows.Clear();
+                        dgvToggleBits.Rows.Clear();
+                        rtbSignalData.Text = RedRatData.TxSignal.ToString();
                     }
                     else
                     {
-                        rtbSignalData.Text = RedRatData.TxSignal.ToString();
+                        if (temp_type == typeof(DoubleSignal))
+                        {
+                            chkSelect2ndSignal.Enabled = true;
+                            rbDoubleSignalLED.Checked = true;
+                        }
+                        else if ((RedRatData.RC_ToggleData() != null) && (RedRatData.RC_ToggleData().Length > 0))
+                        {
+                            chkSelect2ndSignal.Enabled = true;
+                            rbDoubleSignalLED.Checked = false;
+                        }
+                        else
+                        {
+                            chkSelect2ndSignal.Enabled = false;
+                            rbDoubleSignalLED.Checked = false;
+                        }
+                        Update_RC_Signal_Display_Content();
+                        UpdateRCDataOnForm();
+                        if (ThisTimeDoNotUpdateMessageBox)
+                        {
+                            ThisTimeDoNotUpdateMessageBox = false;
+                        }
+                        else
+                        {
+                            rtbSignalData.Text = RedRatData.TxSignal.ToString();
+                        }
                     }
-
-                    Previous_Key = Current_Key;
                 }
                 else
                 {
