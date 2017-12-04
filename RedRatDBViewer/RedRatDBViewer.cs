@@ -612,9 +612,9 @@ namespace RedRatDatabaseViewer
                 data_to_sent.Add(0xff);
                 ClearCheckSum();
             }
-            // (2) how many times to repeat RC (0-127, to-be-implemented in MCU), other values (128-255) are reserved
+            // (2) how many times to repeat RC (max 0xbf)
             {
-                const byte repeat_count_max = 0x7f;
+                const byte repeat_count_max = 0xbf;
                 if (default_repeat_cnt<= repeat_count_max)
                 {
                     data_to_sent.Add(default_repeat_cnt);        // Repeat_No
@@ -983,18 +983,42 @@ namespace RedRatDatabaseViewer
                         //
                         // Update Form Display Data according to content of RedRatData.SelectedSignal
                         //
+                        rtbDecodeRCSignal.Text = "";
+                        rtbSignalData.Text = "";
                         listboxAVDeviceList.Items.Clear();
                         listboxRCKey.Items.Clear();
-                        listboxAVDeviceList.Items.AddRange(RedRatData.RedRatGetDBDeviceNameList().ToArray());
-                        listboxRCKey.Items.AddRange(RedRatData.RedRatGetRCNameList().ToArray());
-                        UpdateRCDataOnForm();
+                        if (RedRatData.SignalDB != null)
+                        {
+                            listboxAVDeviceList.Items.AddRange(RedRatData.RedRatGetDBDeviceNameList().ToArray());
+                            if (RedRatData.SelectedDevice != null)
+                            {
+                                listboxRCKey.Items.AddRange(RedRatData.RedRatGetRCNameList().ToArray());
+                                UpdateRCDataOnForm();
+                                Previous_Device = -1;
+                                Previous_Key = -1;
+                                listboxAVDeviceList.SelectedIndex = 0;
+                                this.listboxAVDeviceList_SelectedIndexChanged(sender, e); // Force to update Device list selection box (RC selection box will be forced to updated within listboxAVDeviceList_SelectedIndexChanged()
+                                listboxAVDeviceList.Enabled = true;
+                                listboxRCKey.Enabled = true;
+                            }
+                            else
+                            {
+                                UpdateRCDataOnForm();
+                                Previous_Device = -1;
+                                Previous_Key = -1;
+                                listboxAVDeviceList.Enabled = false;
+                                listboxRCKey.Enabled = false;
+                            }
+                        }
+                        else
+                        {
+                            UpdateRCDataOnForm();
+                            Previous_Device = -1;
+                            Previous_Key = -1;
+                            listboxAVDeviceList.Enabled = false;
+                            listboxRCKey.Enabled = false;
+                        }
 
-                        Previous_Device = -1;
-                        Previous_Key = -1;
-                        listboxAVDeviceList.SelectedIndex = 0;
-                        this.listboxAVDeviceList_SelectedIndexChanged(sender, e); // Force to update Device list selection box (RC selection box will be forced to updated within listboxAVDeviceList_SelectedIndexChanged()
-                        listboxAVDeviceList.Enabled = true;
-                        listboxRCKey.Enabled = true;
                         UpdateRCFunctionButtonAfterConnection();
                     }
                 }
