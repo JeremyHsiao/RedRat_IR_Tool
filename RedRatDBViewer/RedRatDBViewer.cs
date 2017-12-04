@@ -403,7 +403,48 @@ namespace RedRatDatabaseViewer
             }
         }
 
-        private List<byte> Convert_data_to_Byte(uint width_value)
+        private List<byte> Convert_data_to_Byte(UInt32 input_data)
+        {
+            Stack<Byte> byte_data = new Stack<Byte>();
+            UInt32 value = input_data;
+            byte_data.Push(Convert.ToByte(value & 0xff));
+            value >>= 8;
+            byte_data.Push(Convert.ToByte(value & 0xff));
+            value >>= 8;
+            byte_data.Push(Convert.ToByte(value & 0xff));
+            value >>= 8;
+            byte_data.Push(Convert.ToByte(value & 0xff));
+            List<byte> data_to_sent = new List<byte>();
+            foreach (var single_byte in byte_data)
+            {
+                data_to_sent.Add(single_byte);
+            }
+            return data_to_sent;
+        }
+
+        private List<byte> Convert_data_to_Byte(UInt16 input_data)
+        {
+            Stack<Byte> byte_data = new Stack<Byte>();
+            UInt16 value = input_data;
+            byte_data.Push(Convert.ToByte(value & 0xff));
+            value >>= 8;
+            byte_data.Push(Convert.ToByte(value & 0xff));
+            List<byte> data_to_sent = new List<byte>();
+            foreach (var single_byte in byte_data)
+            {
+                data_to_sent.Add(single_byte);
+            }
+            return data_to_sent;
+        }
+
+        private List<byte> Convert_data_to_Byte(byte input_data)
+        {
+            List<byte> data_to_sent = new List<byte>();
+            data_to_sent.Add(input_data);
+            return data_to_sent;
+        }
+
+        private List<byte> Convert_data_to_Byte_modified(uint width_value)
         {
             Stack<Byte> byte_data = new Stack<Byte>();
             if (width_value > 0x7fff)
@@ -462,7 +503,7 @@ namespace RedRatDatabaseViewer
         {
             List<byte> data_to_sent = new List<byte>();
 
-            if(cnt>=0xf0)   // value >= 0xf0 are reserved
+            if(cnt>=0xc0)   // value >= 0xf0 are reserved
             {
                 cnt = 0;
             }
@@ -470,7 +511,7 @@ namespace RedRatDatabaseViewer
             ClearCheckSum();
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
-            // No need to calculate checksum for header
+            // No need to calculate checksum for headers
             data_to_sent.Add(cnt);
             UpdateCheckSum(cnt);
             data_to_sent.Add(0xff);
@@ -489,6 +530,48 @@ namespace RedRatDatabaseViewer
             // No need to calculate checksum for header
             data_to_sent.Add(0xfe);
             UpdateCheckSum(0xfe);
+            data_to_sent.Add(GetCheckSum());
+            return data_to_sent;
+        }
+
+        public List<byte> Prepare_Send_Input_CMD(byte input_cmd, UInt32 input_param = 0)
+        {
+            if ((input_cmd < 0xc0) ||(input_cmd==0xff))
+            {
+                return Prepare_Send_Repeat_Cnt_CMD();
+            }
+
+            List<byte> data_to_sent = new List<byte>();
+            ClearCheckSum();
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            // No need to calculate checksum for header
+            data_to_sent.Add(input_cmd);
+            UpdateCheckSum(input_cmd);
+            if((input_cmd >= 0xe0)&&(input_cmd<0xf0))
+            {
+                byte temp = Convert.ToByte(input_param&0xff);
+                data_to_sent.Add(Convert.ToByte(temp & 0xff));
+                UpdateCheckSum(temp);
+            }
+            else if ((input_cmd >= 0xd0)&& (input_cmd< 0xe0))
+            {
+                List<byte> input_param_in_byte = Convert_data_to_Byte(Convert.ToUInt16(input_param & 0xffff));
+                foreach (byte temp in input_param_in_byte)
+                {
+                    data_to_sent.Add(temp);
+                    UpdateCheckSum(temp);
+                }
+            }
+            else if ((input_cmd >= 0xc0) && (input_cmd < 0xd0))
+            {
+                List<byte> input_param_in_byte = Convert_data_to_Byte(Convert.ToUInt32(input_param & 0xffffffff));
+                foreach (byte temp in input_param_in_byte)
+                {
+                    data_to_sent.Add(temp);
+                    UpdateCheckSum(temp);
+                }
+            }
             data_to_sent.Add(GetCheckSum());
             return data_to_sent;
         }
@@ -516,7 +599,7 @@ namespace RedRatDatabaseViewer
             List<double> pulse_width = RedRatData.GetTxPulseWidth();
             foreach (var val in pulse_width)
             {
-                pulse_packet.AddRange(Convert_data_to_Byte(Convert.ToUInt32(val)));
+                pulse_packet.AddRange(Convert_data_to_Byte_modified(Convert.ToUInt32(val)));
             }
 
             // Step 5
