@@ -983,8 +983,7 @@ namespace RedRatDatabaseViewer
                         //
                         // Update Form Display Data according to content of RedRatData.SelectedSignal
                         //
-                        rtbDecodeRCSignal.Text = "";
-                        rtbSignalData.Text = "";
+                         rtbSignalData.Text = "";
                         listboxAVDeviceList.Items.Clear();
                         listboxRCKey.Items.Clear();
                         if (RedRatData.SignalDB != null)
@@ -1003,15 +1002,17 @@ namespace RedRatDatabaseViewer
                             }
                             else
                             {
+                                rtbDecodeRCSignal.Text = "RC data file data is corrupted!";
                                 UpdateRCDataOnForm();
                                 Previous_Device = -1;
                                 Previous_Key = -1;
-                                listboxAVDeviceList.Enabled = false;
+                                listboxAVDeviceList.Enabled = true;
                                 listboxRCKey.Enabled = false;
                             }
                         }
                         else
                         {
+                            rtbDecodeRCSignal.Text = "RC data file data is corrupted!";
                             UpdateRCDataOnForm();
                             Previous_Device = -1;
                             Previous_Key = -1;
