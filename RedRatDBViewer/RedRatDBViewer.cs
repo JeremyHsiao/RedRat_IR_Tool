@@ -26,7 +26,7 @@ namespace RedRatDatabaseViewer
 
         private int Previous_Device = -1;
         private int Previous_Key = -1;
-        private bool RC_Select1stSignalForDoubleOrToggleSignal =  true;
+        private bool RC_Select1stSignalForDoubleOrToggleSignal = true;
 
         private RedRatDBParser RedRatData;
 
@@ -82,7 +82,7 @@ namespace RedRatDatabaseViewer
             }
             catch (Exception ex232)
             {
-                Console.WriteLine("Serial_OpenPort Exception at PORT: "+ PortName + " - " + ex232);
+                Console.WriteLine("Serial_OpenPort Exception at PORT: " + PortName + " - " + ex232);
                 ret = false;
             }
             return ret;
@@ -188,7 +188,6 @@ namespace RedRatDatabaseViewer
 
             if (_serialPort.IsOpen == true)
             {
-                AppendSerialMessageLog("\n========Tx:" + Tx_CNT.ToString() + " ");
                 Tx_CNT++;
                 Application.DoEvents();
                 try
@@ -222,6 +221,7 @@ namespace RedRatDatabaseViewer
                 //AppendSerialMessageLog("COM is closed and cannot send byte data\n");
                 return_value = false;
             }
+            AppendSerialMessageLog("\n========Tx:" + Tx_CNT.ToString() + " ");
             return return_value;
         }
 
@@ -496,14 +496,14 @@ namespace RedRatDatabaseViewer
 
         public List<byte> Prepare_Do_Nothing_CMD()
         {
-             return Prepare_Send_Repeat_Cnt_CMD(0);
+            return Prepare_Send_Repeat_Cnt_CMD(0);
         }
 
         public List<byte> Prepare_Send_Repeat_Cnt_CMD(byte cnt = 0)
         {
             List<byte> data_to_sent = new List<byte>();
 
-            if(cnt>=0xc0)   // value >= 0xf0 are reserved
+            if (cnt >= 0xc0)   // value >= 0xf0 are reserved
             {
                 cnt = 0;
             }
@@ -536,7 +536,7 @@ namespace RedRatDatabaseViewer
 
         public List<byte> Prepare_Send_Input_CMD(byte input_cmd, UInt32 input_param = 0)
         {
-            if ((input_cmd < 0xc0) ||(input_cmd==0xff))
+            if ((input_cmd < 0xc0) || (input_cmd == 0xff))
             {
                 return Prepare_Send_Repeat_Cnt_CMD();
             }
@@ -548,13 +548,13 @@ namespace RedRatDatabaseViewer
             // No need to calculate checksum for header
             data_to_sent.Add(input_cmd);
             UpdateCheckSum(input_cmd);
-            if((input_cmd >= 0xe0)&&(input_cmd<0xf0))
+            if ((input_cmd >= 0xe0) && (input_cmd < 0xf0))
             {
-                byte temp = Convert.ToByte(input_param&0xff);
+                byte temp = Convert.ToByte(input_param & 0xff);
                 data_to_sent.Add(Convert.ToByte(temp & 0xff));
                 UpdateCheckSum(temp);
             }
-            else if ((input_cmd >= 0xd0)&& (input_cmd< 0xe0))
+            else if ((input_cmd >= 0xd0) && (input_cmd < 0xe0))
             {
                 List<byte> input_param_in_byte = Convert_data_to_Byte(Convert.ToUInt16(input_param & 0xffff));
                 foreach (byte temp in input_param_in_byte)
@@ -576,14 +576,14 @@ namespace RedRatDatabaseViewer
             return data_to_sent;
         }
 
-        public int SendOneRC()
+        public int SendOneRC(byte default_repeat_cnt = 0)
         {
             // Precondition
             //   1. Load RC Database by RedRatLoadSignalDB()
             //   2. Select Device by RedRatSelectDevice() using device_name or index_no
             //   3. Select RC Signal by RedRatSelectRCSignal() using rc_name or index_no --> specify false at 2nd input parameter if need to Tx 2nd signal of Double signal / Toggle Bits Signal
             Contract.Requires(RedRatData != null);
-            Contract.Requires(RedRatData.SignalDB != null); 
+            Contract.Requires(RedRatData.SignalDB != null);
             Contract.Requires(RedRatData.SelectedDevice != null);
             Contract.Requires(RedRatData.SelectedSignal != null);
             Contract.Requires(RedRatData.Signal_Type_Supported == true);
@@ -606,7 +606,7 @@ namespace RedRatDatabaseViewer
             }
 
             // Step 5
-            Byte temp_byte, duty_cycle = 33, default_repeat_cnt = 0;
+            Byte temp_byte, duty_cycle = 33;
             double RC_ModutationFreq = RedRatData.RC_ModutationFreq();
 
             // (1) Packet header -- must start with at least 2 times 0xff - no need to calcuate checksum for header
@@ -618,19 +618,19 @@ namespace RedRatDatabaseViewer
             // (2) how many times to repeat RC (max 0xbf)
             {
                 const byte repeat_count_max = 0xbf;
-                if (default_repeat_cnt<= repeat_count_max)
+                if (default_repeat_cnt <= repeat_count_max)
                 {
                     data_to_sent.Add(default_repeat_cnt);        // Repeat_No
                     UpdateCheckSum(default_repeat_cnt);
-                    total_us *= (default_repeat_cnt>0)? (default_repeat_cnt+1):1;
+                    total_us *= (default_repeat_cnt > 0) ? (default_repeat_cnt + 1) : 1;
                 }
                 else
                 {
-                    Console.WriteLine("Repeat Count is out of range (>" + repeat_count_max.ToString() +"), using " + repeat_count_max.ToString() + " instead.");
+                    Console.WriteLine("Repeat Count is out of range (>" + repeat_count_max.ToString() + "), using " + repeat_count_max.ToString() + " instead.");
                     data_to_sent.Add(repeat_count_max);        // Repeat_No
                     UpdateCheckSum(repeat_count_max);
                     total_us *= (repeat_count_max > 0) ? (repeat_count_max + 1) : 1;
-                } 
+                }
             }
             // (3) Duty Cycle range is 0-100, other values are reserved
             {
@@ -651,7 +651,7 @@ namespace RedRatDatabaseViewer
             {
                 const double max_freq = 200000, min_freq = 20, default_freq = 38000;
                 UInt16 period;
-                if (RC_ModutationFreq> max_freq)
+                if (RC_ModutationFreq > max_freq)
                 {
                     Console.WriteLine("Duty Cycle is out of range (> " + max_freq.ToString() + " Hz), using " + max_freq.ToString() + " instead.");
                     period = Convert.ToUInt16(8000000 / max_freq);
@@ -660,7 +660,7 @@ namespace RedRatDatabaseViewer
                 {
                     period = Convert.ToUInt16(8000000 / RC_ModutationFreq);
                 }
-                else if (RC_ModutationFreq==0)
+                else if (RC_ModutationFreq == 0)
                 {
                     period = 0;
                 }
@@ -713,12 +713,12 @@ namespace RedRatDatabaseViewer
 
         private void SingleOutput_Click(object sender, EventArgs e)
         {
-            if(RedRatData.Signal_Type_Supported!=true)
+            if (RedRatData.Signal_Type_Supported != true)
             {
                 return;
             }
 
-            if ((Previous_Device<0)||(Previous_Key<0))
+            if ((Previous_Device < 0) || (Previous_Key < 0))
             {
                 // return immediately when No Selected Device or no Selected Signal
                 return;
@@ -735,11 +735,11 @@ namespace RedRatDatabaseViewer
             // Use UART to transmit RC signal
             int rc_duration = SendOneRC();
             Application.DoEvents();
-            Thread.Sleep(rc_duration/1000+32);
+            Thread.Sleep(rc_duration / 1000);
             Application.DoEvents();
 
             // Update 2nd Signal checkbox
-            if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0) )
+            if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
             {
                 // Switch to the other signal in display
                 ThisTimeDoNotUpdateMessageBox = true;
@@ -789,12 +789,12 @@ namespace RedRatDatabaseViewer
             if (Previous_Device != Current_Device)
             {
                 string devicename = listboxAVDeviceList.SelectedItem.ToString();
-                if(RedRatData.RedRatSelectDevice(devicename))
+                if (RedRatData.RedRatSelectDevice(devicename))
                 {
                     listboxRCKey.Items.Clear();
                     listboxRCKey.Items.AddRange(RedRatData.RedRatGetRCNameList().ToArray());
                     listboxRCKey.SelectedIndex = 0;
-                    RedRatData.RedRatSelectRCSignal(0,RC_Select1stSignalForDoubleOrToggleSignal);
+                    RedRatData.RedRatSelectRCSignal(0, RC_Select1stSignalForDoubleOrToggleSignal);
                     Previous_Key = -1;
                     this.listboxRCKey_SelectedIndexChanged(sender, ev);
                     Previous_Device = Current_Device;
@@ -809,8 +809,8 @@ namespace RedRatDatabaseViewer
         private void listboxRCKey_SelectedIndexChanged(object sender, EventArgs ev)
         {
             int Current_Key = listboxRCKey.SelectedIndex;
- 
-            if ( Previous_Key != Current_Key)
+
+            if (Previous_Key != Current_Key)
             {
                 Previous_Key = Current_Key;
                 string rcname = listboxRCKey.SelectedItem.ToString();
@@ -818,7 +818,7 @@ namespace RedRatDatabaseViewer
                 {
                     Type temp_type = RedRatData.RedRatSelectedSignalType();
                     lbModulationType.Text = temp_type.ToString();
-                    if(RedRatData.Signal_Type_Supported == false)
+                    if (RedRatData.Signal_Type_Supported == false)
                     {
                         chkSelect2ndSignal.Enabled = false;
                         rbDoubleSignalLED.Checked = false;
@@ -936,15 +936,15 @@ namespace RedRatDatabaseViewer
 
         private void rbDoubleSignalLED_CheckedChanged(object sender, EventArgs e)
         {
-            if(rbDoubleSignalLED.Checked==true)
+            if (rbDoubleSignalLED.Checked == true)
             {
                 rbDoubleSignalLED.ForeColor = System.Drawing.Color.Blue;
-             }
+            }
             else
             {
                 rbDoubleSignalLED.ForeColor = System.Drawing.Color.Black;
             }
-         }
+        }
 
         private void RedRatDBViewer_Load(object sender, EventArgs e)
         {
@@ -991,7 +991,7 @@ namespace RedRatDatabaseViewer
                         //
                         // Update Form Display Data according to content of RedRatData.SelectedSignal
                         //
-                         rtbSignalData.Text = "";
+                        rtbSignalData.Text = "";
                         listboxAVDeviceList.Items.Clear();
                         listboxRCKey.Items.Clear();
                         if (RedRatData.SignalDB != null)
@@ -1038,23 +1038,22 @@ namespace RedRatDatabaseViewer
             }
         }
 
-        private void WalkThroughAllRCKeys()
+        private void TEST_WalkThroughAllRCKeys()
         {
-            TemoparilyDisbleAllRCFunctionButtons();
             // 1. Open RC database file to load it in advance
             foreach (var temp_device in RedRatData.RedRatGetDBDeviceNameList())
             {
                 RedRatData.RedRatSelectDevice(temp_device);
                 foreach (var temp_rc in RedRatData.RedRatGetRCNameList())
                 {
-                    RedRatData.RedRatSelectRCSignal(temp_rc,true);
+                    RedRatData.RedRatSelectRCSignal(temp_rc, true);
                     if (RedRatData.Signal_Type_Supported == true)
                     {
 
                         // Use UART to transmit RC signal
                         int rc_duration = SendOneRC();
                         Application.DoEvents();
-                        Thread.Sleep(rc_duration / 1000 + 32);
+                        Thread.Sleep(rc_duration / 1000 + 150);
                         Application.DoEvents();
 
                         // Update 2nd Signal checkbox
@@ -1064,13 +1063,97 @@ namespace RedRatDatabaseViewer
                             // Use UART to transmit RC signal
                             rc_duration = SendOneRC();
                             Application.DoEvents();
-                            Thread.Sleep(rc_duration / 1000 + 32);
+                            Thread.Sleep(rc_duration / 1000 + 150);
                             Application.DoEvents();
                         }
                     }
                 }
             }
-            UndoTemoparilyDisbleAllRCFunctionButtons();
+        }
+
+        private void TEST_WalkThroughAllCMDwithData()
+        {
+            // Testing: send all CMD with input parameter
+            for (byte cmd = 0xfe; cmd >= 0xc0; cmd--)
+            //byte cmd = 0xdf;
+            {
+                SendToSerial_v2(Prepare_Send_Input_CMD(cmd, 0x10101U * cmd).ToArray());
+                Application.DoEvents();
+                Thread.Sleep(32);
+                Application.DoEvents();
+            }
+        }
+
+        private void TEST_StressOneRC()
+        {
+            // Testing: send "repeat_cnt" times Single RC
+            byte repeat_cnt = 250;
+
+            while (repeat_cnt-- > 0)
+            {
+                // Use UART to transmit RC signal
+                int rc_duration = SendOneRC();
+                Application.DoEvents();
+                Thread.Sleep(rc_duration / 1000 + 150);
+                Application.DoEvents();
+
+                // Update 2nd Signal checkbox
+                if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
+                {
+                    // Switch to the other signal in display
+                    ThisTimeDoNotUpdateMessageBox = true;
+                    chkSelect2ndSignal.Checked = RC_Select1stSignalForDoubleOrToggleSignal;
+                }
+            }
+
+        }
+
+        private void TEST_StressRCRepeatCount()
+        {
+            // Testing: send "repeat_cnt" times Single RC
+            const int segment_size = 5;
+            int repeat_cnt = 99;
+
+            int rc_duration;
+            if (repeat_cnt > segment_size)
+            {
+                rc_duration = SendOneRC(segment_size);
+                rc_duration = rc_duration * repeat_cnt / segment_size;
+                repeat_cnt -= segment_size;
+            }
+            else
+            {
+                rc_duration = SendOneRC(Convert.ToByte(repeat_cnt));
+                repeat_cnt = 0;
+            }
+
+            rc_duration /= 1000;
+            while (repeat_cnt > 0)
+            {
+                Application.DoEvents();
+                Thread.Sleep(32);
+                rc_duration -= 32;
+                Application.DoEvents();
+                if (repeat_cnt> segment_size)
+                {
+                    SendToSerial_v2(Prepare_Send_Repeat_Cnt_CMD(segment_size).ToArray());
+                    repeat_cnt -= segment_size;
+                }
+                else
+                {
+                    SendToSerial_v2(Prepare_Send_Repeat_Cnt_CMD(Convert.ToByte(repeat_cnt)).ToArray());
+                    repeat_cnt = 0;
+                }
+            }
+
+            while(rc_duration>200)
+            {
+                Application.DoEvents();
+                Thread.Sleep(200);
+                rc_duration -= 200 ;
+            }
+            Application.DoEvents();
+            Thread.Sleep(rc_duration);
         }
 
 
@@ -1080,47 +1163,10 @@ namespace RedRatDatabaseViewer
             //byte repeat_cnt = 12;
             //SendToSerial_v2(Prepare_Send_Repeat_Cnt_CMD(repeat_cnt).ToArray());
 
-            WalkThroughAllRCKeys();
-
-            /*
-            // Testing: send all CMD with input parameter
-            for (byte cmd=0xfe; cmd>=0xc0; cmd--)
-            //byte cmd = 0xdf;
-            {
-                SendToSerial_v2(Prepare_Send_Input_CMD(cmd, 0x10101U*cmd).ToArray());
-                Application.DoEvents();
-                Thread.Sleep(32);
-                Application.DoEvents();
-            }
-            */
-
-            /*
-            // Testing: send "repeat_cnt" times Single RC
-            byte repeat_cnt = 250;
-
-            while (repeat_cnt-- > 0)
-            {
-                // Use UART to transmit RC signal
-                SendOneRC();
-
-                // Update 2nd Signal checkbox
-                if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
-                {
-                    // Switch to the other signal in display
-                    ThisTimeDoNotUpdateMessageBox = true;
-                    chkSelect2ndSignal.Checked = RC_Select1stSignalForDoubleOrToggleSignal;
-                }
-
-                Application.DoEvents();
-                Thread.Sleep(100);
-                Application.DoEvents();
-                Thread.Sleep(100);
-                Application.DoEvents();
-                Thread.Sleep(100);
-                Application.DoEvents();
-
-            }
-            */
+            //TEST_WalkThroughAllRCKeys();
+            //TEST_WalkThroughAllCMDwithData();
+            //TEST_StressOneRC();
+            TEST_StressRCRepeatCount();
 
             UndoTemoparilyDisbleAllRCFunctionButtons();
         }

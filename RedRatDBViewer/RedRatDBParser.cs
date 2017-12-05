@@ -387,8 +387,8 @@ namespace RedRatDatabaseViewer
                     sig_type_supported = false;
                 }
            }
-            else if (sgl_signal.GetType() == typeof(RedRat3ModulatedSignal))
-            {
+           else if (sgl_signal.GetType() == typeof(RedRat3ModulatedSignal))
+           {
                 RedRat3ModulatedSignal sig = (RedRat3ModulatedSignal)sgl_signal;
                 rc_modulation_freq = sig.ModulationFreq;
                 rc_lengths = sig.Lengths;
@@ -411,6 +411,7 @@ namespace RedRatDatabaseViewer
                     sig_type_supported = false;
                 }
             }
+/*
             else if (sgl_signal.GetType() == typeof(FlashCodeSignal))
             {
                 FlashCodeSignal sig = (FlashCodeSignal)sgl_signal;
@@ -445,6 +446,7 @@ namespace RedRatDatabaseViewer
                 tx_signal = sig;
                 sig_type_supported = true;
             }
+*/
             //else if (Signal.GetType() == typeof(ProntoModulatedSignal))
             //{
             //}
