@@ -135,24 +135,32 @@ namespace RedRatDatabaseViewer
             {
                 try
                 {
-                    if (_serialPort.BytesToRead > 0)
+                    if (_serialPort.IsOpen == true)
                     {
-                        _serialPort.ReadTimeout = 500;
-                        string message = _serialPort.ReadLine();
+                        if (_serialPort.BytesToRead > 0)
                         {
-                            if (Get_UART_Input > 0)
+                            _serialPort.ReadTimeout = 500;
+                            string message = _serialPort.ReadLine();
                             {
-                                Get_UART_Input--;
-                                UART_READ_MSG_QUEUE.Enqueue(message);
+                                if (Get_UART_Input > 0)
+                                {
+                                    Get_UART_Input--;
+                                    UART_READ_MSG_QUEUE.Enqueue(message);
+                                }
+                                AppendSerialMessageLog(message);
                             }
-                            AppendSerialMessageLog(message);
                         }
+                    }
+                    else
+                    {
+                        _continue_serial_read_write = false;
                     }
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine("ReadSerialPortThread - " + ex);
                     //AppendSerialMessageLog(ex.ToString());
+                    //_continue_serial_read_write = false;
                 }
             }
         }
@@ -221,7 +229,7 @@ namespace RedRatDatabaseViewer
                 //AppendSerialMessageLog("COM is closed and cannot send byte data\n");
                 return_value = false;
             }
-            AppendSerialMessageLog("\n========Tx:" + Tx_CNT.ToString() + " ");
+            AppendSerialMessageLog("\n===Tx:" + Tx_CNT.ToString() + " ");
             return return_value;
         }
 
@@ -733,10 +741,8 @@ namespace RedRatDatabaseViewer
             btnGetRCFile.Enabled = false;
 
             // Use UART to transmit RC signal
-            int rc_duration = SendOneRC();
-            Application.DoEvents();
-            Thread.Sleep(rc_duration / 1000);
-            Application.DoEvents();
+            int rc_duration = SendOneRC() / 1000 + 1;
+            HomeMade_Delay(rc_duration);
 
             // Update 2nd Signal checkbox
             if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
@@ -1038,6 +1044,20 @@ namespace RedRatDatabaseViewer
             }
         }
 
+        private void HomeMade_Delay(int delay_ms)
+        {
+            const int home_made_delay_segment_time = 32;
+            while(delay_ms> home_made_delay_segment_time)
+            {
+                Application.DoEvents();
+                Thread.Sleep(home_made_delay_segment_time);
+                delay_ms -= home_made_delay_segment_time;
+            }
+            Application.DoEvents();
+            Thread.Sleep(delay_ms);
+            Application.DoEvents();
+        }
+
         private void TEST_WalkThroughAllRCKeys()
         {
             // 1. Open RC database file to load it in advance
@@ -1051,20 +1071,16 @@ namespace RedRatDatabaseViewer
                     {
 
                         // Use UART to transmit RC signal
-                        int rc_duration = SendOneRC();
-                        Application.DoEvents();
-                        Thread.Sleep(rc_duration / 1000 + 150);
-                        Application.DoEvents();
+                        int rc_duration = SendOneRC()/1000 + 1;
+                        HomeMade_Delay(rc_duration);
 
                         // Update 2nd Signal checkbox
                         if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
                         {
                             RedRatData.RedRatSelectRCSignal(temp_rc, false);
                             // Use UART to transmit RC signal
-                            rc_duration = SendOneRC();
-                            Application.DoEvents();
-                            Thread.Sleep(rc_duration / 1000 + 150);
-                            Application.DoEvents();
+                            rc_duration = SendOneRC() / 1000 + 1;
+                            HomeMade_Delay(rc_duration);
                         }
                     }
                 }
@@ -1078,24 +1094,20 @@ namespace RedRatDatabaseViewer
             //byte cmd = 0xdf;
             {
                 SendToSerial_v2(Prepare_Send_Input_CMD(cmd, 0x10101U * cmd).ToArray());
-                Application.DoEvents();
-                Thread.Sleep(32);
-                Application.DoEvents();
+                HomeMade_Delay(32);
             }
         }
 
         private void TEST_StressOneRC()
         {
-            // Testing: send "repeat_cnt" times Single RC
-            byte repeat_cnt = 250;
+            // Testing: send "stress_cnt" times Single RC
+            byte stress_cnt = 250;
 
-            while (repeat_cnt-- > 0)
+            while (stress_cnt-- > 0)
             {
                 // Use UART to transmit RC signal
-                int rc_duration = SendOneRC();
-                Application.DoEvents();
-                Thread.Sleep(rc_duration / 1000 + 150);
-                Application.DoEvents();
+                int rc_duration = SendOneRC() / 1000 + 1;
+                HomeMade_Delay(rc_duration);
 
                 // Update 2nd Signal checkbox
                 if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
@@ -1127,13 +1139,18 @@ namespace RedRatDatabaseViewer
                 repeat_cnt = 0;
             }
 
-            rc_duration /= 1000;
+            rc_duration /= 1000 + 1;
             while (repeat_cnt > 0)
             {
-                Application.DoEvents();
-                Thread.Sleep(32);
-                rc_duration -= 32;
-                Application.DoEvents();
+                HomeMade_Delay(32);
+                if (rc_duration > 32)
+                {
+                    rc_duration -= 32;
+                }
+                else
+                {
+                    rc_duration = 0;
+                }
                 if (repeat_cnt> segment_size)
                 {
                     SendToSerial_v2(Prepare_Send_Repeat_Cnt_CMD(segment_size).ToArray());
@@ -1146,27 +1163,23 @@ namespace RedRatDatabaseViewer
                 }
             }
 
-            while(rc_duration>200)
-            {
-                Application.DoEvents();
-                Thread.Sleep(200);
-                rc_duration -= 200 ;
-            }
-            Application.DoEvents();
-            Thread.Sleep(rc_duration);
+            HomeMade_Delay(rc_duration);
         }
 
 
         private void btnRepeatRC_Click(object sender, EventArgs e)
         {
             TemoparilyDisbleAllRCFunctionButtons();
-            //byte repeat_cnt = 12;
-            //SendToSerial_v2(Prepare_Send_Repeat_Cnt_CMD(repeat_cnt).ToArray());
 
-            //TEST_WalkThroughAllRCKeys();
-            //TEST_WalkThroughAllCMDwithData();
-            //TEST_StressOneRC();
+            SendToSerial_v2(Prepare_STOP_CMD().ToArray());
+            SendToSerial_v2(Prepare_Do_Nothing_CMD().ToArray());
+            TEST_WalkThroughAllCMDwithData();
             TEST_StressRCRepeatCount();
+            if (RedRatData.SignalDB != null)
+            {
+                TEST_WalkThroughAllRCKeys();
+                TEST_StressOneRC();
+            }
 
             UndoTemoparilyDisbleAllRCFunctionButtons();
         }
