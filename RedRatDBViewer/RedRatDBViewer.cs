@@ -596,6 +596,10 @@ namespace RedRatDatabaseViewer
             Contract.Requires(RedRatData.SelectedSignal != null);
             Contract.Requires(RedRatData.Signal_Type_Supported == true);
 
+            if((RedRatData == null))
+            {
+                return 0;
+            }
             // Execution in this function
             //   4. Get complete pulse width data by GetTxPulseWidth()
             //   5. Combine pulse width data with other RC information into one array
@@ -1093,7 +1097,7 @@ namespace RedRatDatabaseViewer
             for (byte cmd = 0xfe; cmd >= 0xc0; cmd--)
             //byte cmd = 0xdf;
             {
-                SendToSerial_v2(Prepare_Send_Input_CMD(cmd, 0x10101U * cmd).ToArray());
+                SendToSerial_v2(Prepare_Send_Input_CMD(cmd, 0x1010101U * cmd).ToArray());
                 HomeMade_Delay(32);
             }
         }
@@ -1166,17 +1170,91 @@ namespace RedRatDatabaseViewer
             HomeMade_Delay(rc_duration);
         }
 
+        private void TEST_GPIO_Output()
+        {
+            const byte GPIOOutputByteCMD = 0xe0;
+            const byte GPIOOutputBitCMD = 0xd0;
+            const int delay_time = 50;
+            // Testing: send GPIO output with input parameter
+            for (uint output_value = 0; output_value <= 0xff; output_value++)
+            {
+                SendToSerial_v2(Prepare_Send_Input_CMD(GPIOOutputByteCMD, output_value).ToArray());
+                HomeMade_Delay(delay_time/2);
+            }
+
+            int run_time = 10;
+            const UInt32 IO_value_mask = 0x0, reverse_IO_value_mask = 0x1;
+
+            SendToSerial_v2(Prepare_Send_Input_CMD(GPIOOutputByteCMD, ~reverse_IO_value_mask).ToArray());
+            HomeMade_Delay(delay_time);
+
+            while (run_time-- > 0)
+            {
+                for (uint output_bit = 0; output_bit < 7;)
+                {
+                    UInt32 temp_parameter = (output_bit << 8) | reverse_IO_value_mask;
+                    SendToSerial_v2(Prepare_Send_Input_CMD(GPIOOutputBitCMD, temp_parameter).ToArray());
+                    HomeMade_Delay(16);
+                    output_bit++;
+                    temp_parameter = (((output_bit) << 8) | IO_value_mask);
+                    SendToSerial_v2(Prepare_Send_Input_CMD(GPIOOutputBitCMD, temp_parameter).ToArray());
+                    HomeMade_Delay(delay_time);
+                }
+                for (uint output_bit = 7; output_bit > 0;)
+                {
+                    UInt32 temp_parameter = (output_bit << 8) | reverse_IO_value_mask;
+                    SendToSerial_v2(Prepare_Send_Input_CMD(GPIOOutputBitCMD, temp_parameter).ToArray());
+                    HomeMade_Delay(16);
+                    output_bit--;
+                    temp_parameter = (((output_bit) << 8) | IO_value_mask);
+                    SendToSerial_v2(Prepare_Send_Input_CMD(GPIOOutputBitCMD, temp_parameter).ToArray());
+                    HomeMade_Delay(delay_time);
+                }
+            }
+        }
+
+        private void TEST_GPIO_Input()
+        {
+            const byte GPIOInputByteCMD = 0xf0;
+            const byte GPIOOutputByteCMD = 0xe0;
+            const int delay_time = 500;
+            UInt32 GPIO_Read_Data = 0;
+
+            // For reading an UART input, please make sure previous return data has been already received
+
+            int run_time = 50;
+            while (run_time-- > 0)
+            {
+                Get_UART_Input = 4;
+                SendToSerial_v2(Prepare_Send_Input_CMD(GPIOInputByteCMD).ToArray());
+                HomeMade_Delay(16);
+                while(UART_READ_MSG_QUEUE.Count>0)
+                {
+                    String in_str = UART_READ_MSG_QUEUE.Dequeue();
+                    if (in_str.Contains("0x"))
+                    {
+                        GPIO_Read_Data = Convert.ToUInt32(in_str, 16);
+                    }
+                }
+                SendToSerial_v2(Prepare_Send_Input_CMD(GPIOOutputByteCMD, ~GPIO_Read_Data).ToArray());
+                HomeMade_Delay(delay_time);
+                SendToSerial_v2(Prepare_Send_Input_CMD(GPIOOutputByteCMD, 0xff).ToArray());
+                HomeMade_Delay(delay_time);
+            }
+        }
 
         private void btnRepeatRC_Click(object sender, EventArgs e)
         {
             TemoparilyDisbleAllRCFunctionButtons();
 
             SendToSerial_v2(Prepare_STOP_CMD().ToArray());
-            SendToSerial_v2(Prepare_Do_Nothing_CMD().ToArray());
-            TEST_WalkThroughAllCMDwithData();
-            TEST_StressRCRepeatCount();
-            if (RedRatData.SignalDB != null)
+            //SendToSerial_v2(Prepare_Do_Nothing_CMD().ToArray());
+            //TEST_WalkThroughAllCMDwithData();
+            //TEST_GPIO_Output();
+            TEST_GPIO_Input();
+            if ((RedRatData!=null)&&(RedRatData.SignalDB != null))
             {
+                TEST_StressRCRepeatCount();
                 TEST_WalkThroughAllRCKeys();
                 TEST_StressOneRC();
             }
