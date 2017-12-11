@@ -41,11 +41,12 @@ namespace RedRatDatabaseViewer
                 var ser = new XmlSerializer(typeof(AVDeviceDB));
                 var fs = new FileStream((new FileInfo(dbFileName)).FullName, FileMode.Open);
                 var avDeviceDB = (AVDeviceDB)ser.Deserialize(fs);
+                fs.Close();
                 signal_db = avDeviceDB;
                 //
                 // Use device 0 signal 0 as default after RC database is loaded
                 //
-                RedRatSelectDevice(0);
+                //RedRatSelectDevice(0);
                 return true;
             }
             catch (Exception ex)
