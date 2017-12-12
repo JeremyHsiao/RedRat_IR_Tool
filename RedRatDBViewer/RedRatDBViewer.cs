@@ -339,7 +339,6 @@ namespace RedRatDatabaseViewer
             }
         }
 
-
         private void btnConnectionControl_Click(object sender, EventArgs e)
         {
             if (btnConnectionControl.Text.Equals(CONNECT_UART_STRING_ON_BUTTON, StringComparison.Ordinal)) // Check if button is showing "Connect" at this moment.
@@ -410,6 +409,84 @@ namespace RedRatDatabaseViewer
                 pulse_high = (pulse_high != 0) ? 0 : 1;
             }
         }
+
+        // V02
+        enum ENUM_CMD_STATUS
+        {
+            ENUM_CMD_IDLE = 0,
+            ENUM_CMD_UNKNOWN = 0xbe,
+            ENUM_CMD_INPUT_TX_SIGNAL = 0xbf,
+            ENUM_CMD_ADD_REPEAT_COUNT = 0xc0,
+            ENUM_CMD_CODE_0XC1 = 0xc1,
+            ENUM_CMD_CODE_0XC2 = 0xc2,
+            ENUM_CMD_CODE_0XC3 = 0xc3,
+            ENUM_CMD_CODE_0XC4 = 0xc4,
+            ENUM_CMD_CODE_0XC5 = 0xc5,
+            ENUM_CMD_CODE_0XC6 = 0xc6,
+            ENUM_CMD_CODE_0XC7 = 0xc7,
+            ENUM_CMD_CODE_0XC8 = 0xc8,
+            ENUM_CMD_CODE_0XC9 = 0xc9,
+            ENUM_CMD_CODE_0XCA = 0xca,
+            ENUM_CMD_CODE_0XCB = 0xcb,
+            ENUM_CMD_CODE_0XCC = 0xcc,
+            ENUM_CMD_CODE_0XCD = 0xcd,
+            ENUM_CMD_CODE_0XCE = 0xce,
+            ENUM_CMD_CODE_0XCF = 0xcf,
+            ENUM_CMD_SET_GPIO_SINGLE_BIT = 0xd0,
+            ENUM_CMD_CODE_0XD1 = 0xd1,
+            ENUM_CMD_CODE_0XD2 = 0xd2,
+            ENUM_CMD_CODE_0XD3 = 0xd3,
+            ENUM_CMD_CODE_0XD4 = 0xd4,
+            ENUM_CMD_CODE_0XD5 = 0xd5,
+            ENUM_CMD_CODE_0XD6 = 0xd6,
+            ENUM_CMD_CODE_0XD7 = 0xd7,
+            ENUM_CMD_CODE_0XD8 = 0xd8,
+            ENUM_CMD_CODE_0XD9 = 0xd9,
+            ENUM_CMD_CODE_0XDA = 0xda,
+            ENUM_CMD_CODE_0XDB = 0xdb,
+            ENUM_CMD_CODE_0XDC = 0xdc,
+            ENUM_CMD_CODE_0XDD = 0xdd,
+            ENUM_CMD_CODE_0XDE = 0xde,
+            ENUM_CMD_CODE_0XDF = 0xdf,
+            ENUM_CMD_SET_GPIO_ALL_BIT = 0xe0,
+            ENUM_CMD_CODE_0XE1 = 0xe1,
+            ENUM_CMD_CODE_0XE2 = 0xe2,
+            ENUM_CMD_CODE_0XE3 = 0xe3,
+            ENUM_CMD_CODE_0XE4 = 0xe4,
+            ENUM_CMD_CODE_0XE5 = 0xe5,
+            ENUM_CMD_CODE_0XE6 = 0xe6,
+            ENUM_CMD_CODE_0XE7 = 0xe7,
+            ENUM_CMD_CODE_0XE8 = 0xe8,
+            ENUM_CMD_CODE_0XE9 = 0xe9,
+            ENUM_CMD_CODE_0XEA = 0xea,
+            ENUM_CMD_CODE_0XEB = 0xeb,
+            ENUM_CMD_CODE_0XEC = 0xec,
+            ENUM_CMD_CODE_0XED = 0xed,
+            ENUM_CMD_CODE_0XEE = 0xee,
+            ENUM_CMD_CODE_0XEF = 0xef,
+            ENUM_CMD_GET_GPIO_INPUT = 0xf0,
+            ENUM_CMD_GET_SENSOR_VALUE = 0xf1,
+            ENUM_CMD_CODE_0XF2 = 0xf2,
+            ENUM_CMD_CODE_0XF3 = 0xf3,
+            ENUM_CMD_CODE_0XF4 = 0xf4,
+            ENUM_CMD_CODE_0XF5 = 0xf5,
+            ENUM_CMD_CODE_0XF6 = 0xf6,
+            ENUM_CMD_CODE_0XF7 = 0xf7,
+            ENUM_CMD_CODE_0XF8 = 0xf8,
+            ENUM_CMD_CODE_0XF9 = 0xf9,
+            ENUM_CMD_CODE_0XFA = 0xfa,
+            ENUM_CMD_CODE_0XFB = 0xfb,
+            ENUM_CMD_CODE_0XFC = 0xfc,
+            GPIOOutputByteCMD = 0xfd,
+            ENUM_CMD_STOP_ALL = 0xfe,
+            ENUM_SYNC_BYTE_VALUE = 0xff,
+            ENUM_CMD_STATE_MAX
+        };
+
+        const uint CMD_SEND_COMMAND_CODE_WITH_DOUBLE_WORD = (0xc0);
+        const uint CMD_SEND_COMMAND_CODE_WITH_WORD = (0xd0);
+        const uint CMD_SEND_COMMAND_CODE_WITH_BYTE = (0xe0);
+        const uint CMD_SEND_COMMAND_CODE_ONLY = (0xf0);
 
         private List<byte> Convert_data_to_Byte(UInt32 input_data)
         {
@@ -502,32 +579,6 @@ namespace RedRatDatabaseViewer
             return (CheckSum == 0) ? true : false;
         }
 
-        public List<byte> Prepare_Do_Nothing_CMD()
-        {
-            return Prepare_Send_Repeat_Cnt_CMD(0);
-        }
-
-        public List<byte> Prepare_Send_Repeat_Cnt_CMD(byte cnt = 0)
-        {
-            List<byte> data_to_sent = new List<byte>();
-
-            if (cnt >= 0xc0)   // value >= 0xf0 are reserved
-            {
-                cnt = 0;
-            }
-
-            ClearCheckSum();
-            data_to_sent.Add(0xff);
-            data_to_sent.Add(0xff);
-            // No need to calculate checksum for headers
-            data_to_sent.Add(cnt);
-            UpdateCheckSum(cnt);
-            data_to_sent.Add(0xff);
-            UpdateCheckSum(0xff);
-            data_to_sent.Add(GetCheckSum());
-            return data_to_sent;
-        }
-
         public List<byte> Prepare_STOP_CMD()
         {
             List<byte> data_to_sent = new List<byte>();
@@ -536,8 +587,42 @@ namespace RedRatDatabaseViewer
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
             // No need to calculate checksum for header
-            data_to_sent.Add(0xfe);
-            UpdateCheckSum(0xfe);
+            data_to_sent.Add((Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_STOP_ALL)));
+            UpdateCheckSum((Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_STOP_ALL)));
+            data_to_sent.Add(GetCheckSum());
+            return data_to_sent;
+        }
+
+        public List<byte> Prepare_Do_Nothing_CMD()
+        {
+            List<byte> data_to_sent = new List<byte>();
+
+            ClearCheckSum();
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            // No need to calculate checksum for headers
+            data_to_sent.Add(Convert.ToByte(ENUM_CMD_STATUS.GPIOOutputByteCMD));
+            UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.GPIOOutputByteCMD));
+            data_to_sent.Add(GetCheckSum());
+            return data_to_sent;
+        }
+
+        public List<byte> Prepare_Send_Repeat_Cnt_CMD(UInt32 cnt = 0)
+        {
+            List<byte> data_to_sent = new List<byte>();
+
+            ClearCheckSum();
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            // No need to calculate checksum for headers
+            data_to_sent.Add(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_ADD_REPEAT_COUNT));
+            UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_ADD_REPEAT_COUNT));
+            List<byte> input_param_in_byte = Convert_data_to_Byte(cnt);
+            foreach (byte temp in input_param_in_byte)
+            {
+                data_to_sent.Add(temp);
+                UpdateCheckSum(temp);
+            }
             data_to_sent.Add(GetCheckSum());
             return data_to_sent;
         }
@@ -556,13 +641,13 @@ namespace RedRatDatabaseViewer
             // No need to calculate checksum for header
             data_to_sent.Add(input_cmd);
             UpdateCheckSum(input_cmd);
-            if ((input_cmd >= 0xe0) && (input_cmd < 0xf0))
+            if ((input_cmd >= CMD_SEND_COMMAND_CODE_WITH_BYTE) && (input_cmd < CMD_SEND_COMMAND_CODE_ONLY))
             {
                 byte temp = Convert.ToByte(input_param & 0xff);
                 data_to_sent.Add(Convert.ToByte(temp & 0xff));
                 UpdateCheckSum(temp);
             }
-            else if ((input_cmd >= 0xd0) && (input_cmd < 0xe0))
+            else if ((input_cmd >= CMD_SEND_COMMAND_CODE_WITH_WORD) && (input_cmd < CMD_SEND_COMMAND_CODE_WITH_BYTE))
             {
                 List<byte> input_param_in_byte = Convert_data_to_Byte(Convert.ToUInt16(input_param & 0xffff));
                 foreach (byte temp in input_param_in_byte)
@@ -571,7 +656,7 @@ namespace RedRatDatabaseViewer
                     UpdateCheckSum(temp);
                 }
             }
-            else if ((input_cmd >= 0xc0) && (input_cmd < 0xd0))
+            else if ((input_cmd >= CMD_SEND_COMMAND_CODE_WITH_DOUBLE_WORD) && (input_cmd < CMD_SEND_COMMAND_CODE_WITH_WORD))
             {
                 List<byte> input_param_in_byte = Convert_data_to_Byte(Convert.ToUInt32(input_param & 0xffffffff));
                 foreach (byte temp in input_param_in_byte)
@@ -627,9 +712,14 @@ namespace RedRatDatabaseViewer
                 data_to_sent.Add(0xff);
                 ClearCheckSum();
             }
-            // (2) how many times to repeat RC (max 0xbf)
+
+            // (2) Command
+            data_to_sent.Add(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_INPUT_TX_SIGNAL));
+            UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_INPUT_TX_SIGNAL));
+
+            // (3) how many times to repeat RC (max 0xff)
             {
-                const byte repeat_count_max = 0xbf;
+                const byte repeat_count_max = 0xff;
                 if (default_repeat_cnt <= repeat_count_max)
                 {
                     data_to_sent.Add(default_repeat_cnt);        // Repeat_No
@@ -644,7 +734,7 @@ namespace RedRatDatabaseViewer
                     total_us *= (repeat_count_max > 0) ? (repeat_count_max + 1) : 1;
                 }
             }
-            // (3) Duty Cycle range is 0-100, other values are reserved
+            // (4) Duty Cycle range is 0-100, other values are reserved
             {
                 const byte default_duty_cycle = 33, max_duty_cycle = 100;
                 if (duty_cycle <= max_duty_cycle)
@@ -659,7 +749,7 @@ namespace RedRatDatabaseViewer
                     UpdateCheckSum(default_duty_cycle);
                 }
             }
-            // (4) Frequency is between 200 KHz - 20Hz, or 0 Hz (no carrier)
+            // (5) Frequency is between 200 KHz - 20Hz, or 0 Hz (no carrier)
             {
                 const double max_freq = 200000, min_freq = 20, default_freq = 38000;
                 UInt16 period;
@@ -688,7 +778,7 @@ namespace RedRatDatabaseViewer
                 data_to_sent.Add(temp_byte);
                 UpdateCheckSum(temp_byte);
             }
-            // (5) Add RC width data
+            // (6) Add RC width data
             {
                 foreach (var val in pulse_packet)
                 {
@@ -696,12 +786,12 @@ namespace RedRatDatabaseViewer
                 }
                 data_to_sent.AddRange(pulse_packet);
             }
-            // (6) Add 0xff as last data byte
+            // (7) Add 0xff as last data byte
             {
                 data_to_sent.Add(0xff);
                 UpdateCheckSum(0xff);
             }
-            // (7) Finally add checksum at end of packet
+            // (8) Finally add checksum at end of packet
             data_to_sent.Add(GetCheckSum());
 
             // Step 6
@@ -971,7 +1061,6 @@ namespace RedRatDatabaseViewer
             }
         }
 
-
         public RedRatDBViewer()
         {
             InitializeComponent();
@@ -1109,7 +1198,7 @@ namespace RedRatDatabaseViewer
         private void TEST_WalkThroughAllCMDwithData()
         {
             // Testing: send all CMD with input parameter
-            for (byte cmd = 0xfe; cmd >= 0xc0; cmd--)
+            for (byte cmd = Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_STOP_ALL); cmd > Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_INPUT_TX_SIGNAL); cmd--)
             //byte cmd = 0xdf;
             {
                 SendToSerial_v2(Prepare_Send_Input_CMD(cmd, 0x1010101U * cmd).ToArray());
@@ -1229,8 +1318,6 @@ namespace RedRatDatabaseViewer
 
         private void TEST_GPIO_Input()
         {
-            const byte GPIOInputByteCMD = 0xf0;
-            const byte GPIOOutputByteCMD = 0xe0;
             const int delay_time = 500;
             UInt32 GPIO_Read_Data = 0;
 
@@ -1240,7 +1327,7 @@ namespace RedRatDatabaseViewer
             while (run_time-- > 0)
             {
                 Get_UART_Input = 4;
-                SendToSerial_v2(Prepare_Send_Input_CMD(GPIOInputByteCMD).ToArray());
+                SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)).ToArray());
                 HomeMade_Delay(16);
                 while(UART_READ_MSG_QUEUE.Count>0)
                 {
@@ -1250,47 +1337,50 @@ namespace RedRatDatabaseViewer
                         GPIO_Read_Data = Convert.ToUInt32(in_str, 16);
                     }
                 }
-                SendToSerial_v2(Prepare_Send_Input_CMD(GPIOOutputByteCMD, ~GPIO_Read_Data).ToArray());
+                SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), ~GPIO_Read_Data).ToArray());
                 HomeMade_Delay(delay_time);
-                SendToSerial_v2(Prepare_Send_Input_CMD(GPIOOutputByteCMD, 0xff).ToArray());
+                SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), 0xff).ToArray());
                 HomeMade_Delay(delay_time);
             }
         }
 
+        // 發射一個信號的範例
         private void Example_to_Send_RC()
         {
-            // Load RedRat database
+            const byte SendOneRC_default_cnt = 5;
+            // Load RedRat database - 載入資料庫
             RedRatData.RedRatLoadSignalDB("C:\\Users\\jeremy.hsiao\\Downloads\\SDK-V4-Samples\\Samples\\RC DB\\DeviceDB - 複製.xml");
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
             HomeMade_Delay(16);
-            // Select Device
+            // Select Device  - 選擇RC Device
             RedRatData.RedRatSelectDevice("HP-MCE");
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
             HomeMade_Delay(16);
-            // Select RC
+            // Select RC - 選擇RC (使用名稱或Index No)
             RedRatData.RedRatSelectRCSignal("1", true);
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
             HomeMade_Delay(16); 
-            // Check if this RC code is supported
+            // Check if this RC code is supported -- 如果此訊號資料OK可以發射,就發射
             if (RedRatData.Signal_Type_Supported == true)
             {
-                // Use UART to transmit RC signal -- repeat 10 times
-                int rc_duration = SendOneRC(10) / 1000 + 1;
+                // Use UART to transmit RC signal -- repeat 10 times -- 目前的範例是repeat 10次 (等於總共發射11次)
+                int rc_duration = SendOneRC(SendOneRC_default_cnt) / 1000 + 1;
                 // Delay to wait for RC Tx finished
                 HomeMade_Delay(rc_duration);
 
-                // If you need to send double signal or toggle bit signal at next IR transmission
+                // If you need to send double signal or toggle bit signal at next IR transmission -- 這裡是示範如何發射Double Signal或Toggle Signal的第二個信號
                 if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
                 {
                     // Use UART to transmit RC signal -- repeat 10 times
                     RedRatData.RedRatSelectRCSignal("1", false);
-                    rc_duration = SendOneRC(10) / 1000 + 1;
+                    rc_duration = SendOneRC(SendOneRC_default_cnt) / 1000 + 1;
                     // Delay to wait for RC Tx finished
                     HomeMade_Delay(rc_duration);
                 }
             }
         }
 
+        // 強迫停止信號發射的指令
         private void Example_to_Stop_Running()
         {
             SendToSerial_v2(Prepare_STOP_CMD().ToArray());
@@ -1308,10 +1398,7 @@ namespace RedRatDatabaseViewer
             //
             // Example
             //
-            for (int i = 0; i < 100; i++)
-            { 
-                Example_to_Send_RC();
-            }
+            Example_to_Send_RC();
             Example_to_Stop_Running();
             Example_to_Test_If_Still_Alive();
             //
