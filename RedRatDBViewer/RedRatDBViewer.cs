@@ -483,10 +483,12 @@ namespace RedRatDatabaseViewer
             ENUM_CMD_STATE_MAX
         };
 
+        const uint CMD_CODE_LOWER_LIMIT = (0xc0);
         const uint CMD_SEND_COMMAND_CODE_WITH_DOUBLE_WORD = (0xc0);
         const uint CMD_SEND_COMMAND_CODE_WITH_WORD = (0xd0);
         const uint CMD_SEND_COMMAND_CODE_WITH_BYTE = (0xe0);
         const uint CMD_SEND_COMMAND_CODE_ONLY = (0xf0);
+        const uint CMD_CODE_UPPER_LIMIT = (0xfe);
 
         private List<byte> Convert_data_to_Byte(UInt32 input_data)
         {
@@ -607,7 +609,7 @@ namespace RedRatDatabaseViewer
             return data_to_sent;
         }
 
-        public List<byte> Prepare_Send_Repeat_Cnt_CMD(UInt32 cnt = 0)
+        public List<byte> Prepare_Send_Repeat_Cnt_Add_CMD(UInt32 cnt = 0)
         {
             List<byte> data_to_sent = new List<byte>();
 
@@ -629,9 +631,9 @@ namespace RedRatDatabaseViewer
 
         public List<byte> Prepare_Send_Input_CMD(byte input_cmd, UInt32 input_param = 0)
         {
-            if ((input_cmd < 0xc0) || (input_cmd == 0xff))
+            if ((input_cmd < CMD_CODE_LOWER_LIMIT) || (input_cmd > CMD_CODE_UPPER_LIMIT))
             {
-                return Prepare_Send_Repeat_Cnt_CMD();
+                return Prepare_Do_Nothing_CMD();
             }
 
             List<byte> data_to_sent = new List<byte>();
@@ -1206,7 +1208,7 @@ namespace RedRatDatabaseViewer
             }
         }
 
-        private void TEST_StressOneRC()
+        private void TEST_StressSendingOneRC()
         {
             // Testing: send "stress_cnt" times Single RC
             byte stress_cnt = 250;
@@ -1227,49 +1229,26 @@ namespace RedRatDatabaseViewer
             }
         }
 
-        private void TEST_StressRCRepeatCount()
+        private void TEST_StressSendingRepeatCount()
         {
             // Testing: send "repeat_cnt" times Single RC
-            const int segment_size = 5;
-            int repeat_cnt = 99;
+            const byte repeat_count_threshold = 5;
+            int repeat_cnt = 300;
 
             int rc_duration;
-            if (repeat_cnt > segment_size)
+            if (repeat_cnt >= repeat_count_threshold)
             {
-                rc_duration = SendOneRC(segment_size);
-                rc_duration = rc_duration * repeat_cnt / segment_size;
-                repeat_cnt -= segment_size;
+                rc_duration = SendOneRC(repeat_count_threshold-1);
+                HomeMade_Delay(1);
+                repeat_cnt -= repeat_count_threshold;
+                rc_duration = rc_duration * repeat_cnt / repeat_count_threshold;
             }
             else
             {
                 rc_duration = SendOneRC(Convert.ToByte(repeat_cnt));
-                repeat_cnt = 0;
             }
 
             rc_duration /= 1000 + 1;
-            while (repeat_cnt > 0)
-            {
-                HomeMade_Delay(32);
-                if (rc_duration > 32)
-                {
-                    rc_duration -= 32;
-                }
-                else
-                {
-                    rc_duration = 0;
-                }
-                if (repeat_cnt> segment_size)
-                {
-                    SendToSerial_v2(Prepare_Send_Repeat_Cnt_CMD(segment_size).ToArray());
-                    repeat_cnt -= segment_size;
-                }
-                else
-                {
-                    SendToSerial_v2(Prepare_Send_Repeat_Cnt_CMD(Convert.ToByte(repeat_cnt)).ToArray());
-                    repeat_cnt = 0;
-                }
-            }
-
             HomeMade_Delay(rc_duration);
         }
 
@@ -1345,9 +1324,8 @@ namespace RedRatDatabaseViewer
         }
 
         // 發射一個信號的範例
-        private void Example_to_Send_RC()
+        private void Example_to_Send_RC_without_Repeat_Count()
         {
-            const byte SendOneRC_default_cnt = 5;
             // Load RedRat database - 載入資料庫
             RedRatData.RedRatLoadSignalDB("C:\\Users\\jeremy.hsiao\\Downloads\\SDK-V4-Samples\\Samples\\RC DB\\DeviceDB - 複製.xml");
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
@@ -1355,15 +1333,50 @@ namespace RedRatDatabaseViewer
             // Select Device  - 選擇RC Device
             RedRatData.RedRatSelectDevice("HP-MCE");
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
-            HomeMade_Delay(16);
+            //HomeMade_Delay(16);
             // Select RC - 選擇RC (使用名稱或Index No)
             RedRatData.RedRatSelectRCSignal("1", true);
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
-            HomeMade_Delay(16); 
+            //HomeMade_Delay(16); 
             // Check if this RC code is supported -- 如果此訊號資料OK可以發射,就發射
             if (RedRatData.Signal_Type_Supported == true)
             {
-                // Use UART to transmit RC signal -- repeat 10 times -- 目前的範例是repeat 10次 (等於總共發射11次)
+                // Use UART to transmit RC signal -- repeat (SendOneRC_default_cnt) times == total transmit (SendOneRC_default_cnt+1) times
+                int rc_duration = SendOneRC() / 1000 + 1;
+                // Delay to wait for RC Tx finished
+                HomeMade_Delay(rc_duration);
+
+                // If you need to send double signal or toggle bit signal at next IR transmission -- 這裡是示範如何發射Double Signal或Toggle Signal的第二個信號
+                if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
+                {
+                    // Use UART to transmit RC signal -- repeat 10 times
+                    RedRatData.RedRatSelectRCSignal("1", false);
+                    rc_duration = SendOneRC() / 1000 + 1;
+                    // Delay to wait for RC Tx finished
+                    HomeMade_Delay(rc_duration);
+                }
+            }
+        }
+
+        private void Example_to_Send_RC_with_Repeat_Count() // repeat count <= 0xff
+        {
+            const byte SendOneRC_default_cnt = 2;
+            // Load RedRat database - 載入資料庫
+            RedRatData.RedRatLoadSignalDB("C:\\Users\\jeremy.hsiao\\Downloads\\SDK-V4-Samples\\Samples\\RC DB\\DeviceDB - 複製.xml");
+            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            HomeMade_Delay(16);
+            // Select Device  - 選擇RC Device
+            RedRatData.RedRatSelectDevice("HP-MCE");
+            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            //HomeMade_Delay(16);
+            // Select RC - 選擇RC (使用名稱或Index No)
+            RedRatData.RedRatSelectRCSignal("1", true);
+            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            //HomeMade_Delay(16);
+            // Check if this RC code is supported -- 如果此訊號資料OK可以發射,就發射
+            if (RedRatData.Signal_Type_Supported == true)
+            {
+                // Use UART to transmit RC signal -- repeat (SendOneRC_default_cnt) times == total transmit (SendOneRC_default_cnt+1) times
                 int rc_duration = SendOneRC(SendOneRC_default_cnt) / 1000 + 1;
                 // Delay to wait for RC Tx finished
                 HomeMade_Delay(rc_duration);
@@ -1380,7 +1393,50 @@ namespace RedRatDatabaseViewer
             }
         }
 
-        // 強迫停止信號發射的指令
+        private void Example_to_Send_RC_with_Large_Repeat_Count()
+        {
+            int repeat = 300; // max value is 4,294,967,295 (0xffffffff)
+            const byte recommended_first_repeat_cnt_value = 100;    // must be <= 0xff
+            // Load RedRat database - 載入資料庫
+            RedRatData.RedRatLoadSignalDB("C:\\Users\\jeremy.hsiao\\Downloads\\SDK-V4-Samples\\Samples\\RC DB\\DeviceDB - 複製.xml");
+            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            HomeMade_Delay(16);
+            // Select Device  - 選擇RC Device
+            RedRatData.RedRatSelectDevice("HP-MCE");
+            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            //HomeMade_Delay(16);
+            // Select RC - 選擇RC (使用名稱或Index No)
+            RedRatData.RedRatSelectRCSignal("1", true);
+            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            //HomeMade_Delay(16);
+            // Check if this RC code is supported -- 如果此訊號資料OK可以發射,就發射
+            if (RedRatData.Signal_Type_Supported == true)
+            {
+                // Use UART to transmit RC signal -- repeat (recommended_first_repeat_cnt_value-1) times == total transmit (recommended_first_repeat_cnt_value) times
+                int rc_duration = SendOneRC(recommended_first_repeat_cnt_value-1) / 1000;                                                                                                                                                                                                                                                           
+                // Delay to wait for RC Tx finished
+                HomeMade_Delay(1);
+                // 將剩下的Repeat_Count輸出
+                SendToSerial_v2(Prepare_Send_Repeat_Cnt_Add_CMD(Convert.ToUInt32(repeat-recommended_first_repeat_cnt_value)).ToArray());
+                rc_duration = ((rc_duration * repeat) / Convert.ToInt32(recommended_first_repeat_cnt_value));
+                HomeMade_Delay(rc_duration);
+
+                // If you need to send double signal or toggle bit signal at next IR transmission -- 這裡是示範如何發射Double Signal或Toggle Signal的第二個信號
+                if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
+                {
+                    // Use UART to transmit RC signal -- repeat 10 times
+                    RedRatData.RedRatSelectRCSignal("1", false);
+                    rc_duration = SendOneRC(recommended_first_repeat_cnt_value-1) / 1000;
+                    // Delay to wait for RC Tx finished
+                    HomeMade_Delay(1);
+                    SendToSerial_v2(Prepare_Send_Repeat_Cnt_Add_CMD(Convert.ToUInt32(repeat - recommended_first_repeat_cnt_value)).ToArray());
+                    rc_duration = ((rc_duration * repeat) / Convert.ToInt32(recommended_first_repeat_cnt_value));
+                    HomeMade_Delay(rc_duration);
+                }
+            }
+        }
+
+        // 強迫停止信號發射的指令 -- 也可以用來PC端程式開啟時,用來將小藍鼠的狀態設定為預設狀態
         private void Example_to_Stop_Running()
         {
             SendToSerial_v2(Prepare_STOP_CMD().ToArray());
@@ -1398,20 +1454,32 @@ namespace RedRatDatabaseViewer
             //
             // Example
             //
-            Example_to_Send_RC();
-            Example_to_Stop_Running();
+            Example_to_Stop_Running(); // 順便將可能因為測試而正在執行的動作中斷
+            Example_to_Test_If_Still_Alive();
+            Example_to_Send_RC_without_Repeat_Count();
+            Example_to_Test_If_Still_Alive();
+            Example_to_Send_RC_with_Repeat_Count();
+            Example_to_Test_If_Still_Alive();
+            Example_to_Send_RC_with_Large_Repeat_Count();
             Example_to_Test_If_Still_Alive();
             //
             // Self-testing code
             //
+
             TEST_WalkThroughAllCMDwithData();
+            Example_to_Stop_Running();
+            Example_to_Test_If_Still_Alive();
             TEST_GPIO_Output();
+            Example_to_Stop_Running();
+            Example_to_Test_If_Still_Alive();
             TEST_GPIO_Input();
+            Example_to_Stop_Running();
+            Example_to_Test_If_Still_Alive();
             if ((RedRatData != null) && (RedRatData.SignalDB != null))
             {
-                TEST_StressRCRepeatCount();
+                TEST_StressSendingRepeatCount();
                 TEST_WalkThroughAllRCKeys();
-                TEST_StressOneRC();
+                TEST_StressSendingOneRC();
             }
 
             UndoTemoparilyDisbleAllRCFunctionButtons();
