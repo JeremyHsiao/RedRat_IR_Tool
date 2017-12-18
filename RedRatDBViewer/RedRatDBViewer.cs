@@ -431,7 +431,7 @@ namespace RedRatDatabaseViewer
             ENUM_CMD_CODE_0XCC = 0xcc,
             ENUM_CMD_CODE_0XCD = 0xcd,
             ENUM_CMD_CODE_0XCE = 0xce,
-            ENUM_CMD_CODE_0XCF = 0xcf,
+            ENUM_CMD_ENTER_ISP_MODE = 0xcf,
             ENUM_CMD_SET_GPIO_SINGLE_BIT = 0xd0,
             ENUM_CMD_CODE_0XD1 = 0xd1,
             ENUM_CMD_CODE_0XD2 = 0xd2,
@@ -489,6 +489,7 @@ namespace RedRatDatabaseViewer
         const uint CMD_SEND_COMMAND_CODE_WITH_BYTE = (0xe0);
         const uint CMD_SEND_COMMAND_CODE_ONLY = (0xf0);
         const uint CMD_CODE_UPPER_LIMIT = (0xfe);
+        const uint ISP_PASSWORD = (0x46574154);
 
         private List<byte> Convert_data_to_Byte(UInt32 input_data)
         {
@@ -606,6 +607,27 @@ namespace RedRatDatabaseViewer
             data_to_sent.Add(Convert.ToByte(ENUM_CMD_STATUS.GPIOOutputByteCMD));
             UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.GPIOOutputByteCMD));
             data_to_sent.Add(GetCheckSum());
+            return data_to_sent;
+        }
+
+        public List<byte> Prepare_Enter_ISP_CMD()
+        {
+            List<byte> data_to_sent = new List<byte>();
+
+            ClearCheckSum();
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            // No need to calculate checksum for headers
+            data_to_sent.Add(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_ENTER_ISP_MODE));
+            UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_ENTER_ISP_MODE));
+            List<byte> input_param_in_byte = Convert_data_to_Byte(ISP_PASSWORD);
+            foreach (byte temp in input_param_in_byte)
+            {
+                data_to_sent.Add(temp);
+                UpdateCheckSum(temp);
+            }
+            data_to_sent.Add(GetCheckSum());
+            //data_to_sent.Add(GetCheckSum());
             return data_to_sent;
         }
 
@@ -1447,6 +1469,11 @@ namespace RedRatDatabaseViewer
             SendToSerial_v2(Prepare_Do_Nothing_CMD().ToArray());
         }
 
+        private void Example_Entering_ISP()
+        {
+            SendToSerial_v2(Prepare_Enter_ISP_CMD().ToArray());
+        }
+
         private void btnRepeatRC_Click(object sender, EventArgs e)
         {
             TemoparilyDisbleAllRCFunctionButtons();
@@ -1456,6 +1483,8 @@ namespace RedRatDatabaseViewer
             //
             Example_to_Stop_Running(); // 順便將可能因為測試而正在執行的動作中斷
             Example_to_Test_If_Still_Alive();
+            Example_Entering_ISP();
+/*
             Example_to_Send_RC_without_Repeat_Count();
             Example_to_Test_If_Still_Alive();
             Example_to_Send_RC_with_Repeat_Count();
@@ -1481,7 +1510,7 @@ namespace RedRatDatabaseViewer
                 TEST_WalkThroughAllRCKeys();
                 TEST_StressSendingOneRC();
             }
-
+*/
             UndoTemoparilyDisbleAllRCFunctionButtons();
         }
     }
