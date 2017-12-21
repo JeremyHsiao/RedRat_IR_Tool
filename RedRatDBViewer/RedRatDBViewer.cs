@@ -899,6 +899,9 @@ namespace RedRatDatabaseViewer
         const uint CMD_CODE_UPPER_LIMIT = (0xfe);
         const uint ISP_PASSWORD = (0x46574154);
 
+        //
+        // Input parameter is 32-bit unsigned data
+        //
         private List<byte> Convert_data_to_Byte(UInt32 input_data)
         {
             Stack<Byte> byte_data = new Stack<Byte>();
@@ -918,6 +921,9 @@ namespace RedRatDatabaseViewer
             return data_to_sent;
         }
 
+        //
+        // Input parameter is 16-bit unsigned data
+        //
         private List<byte> Convert_data_to_Byte(UInt16 input_data)
         {
             Stack<Byte> byte_data = new Stack<Byte>();
@@ -933,6 +939,9 @@ namespace RedRatDatabaseViewer
             return data_to_sent;
         }
 
+        //
+        // Input parameter is 8-bit unsigned data
+        //
         private List<byte> Convert_data_to_Byte(byte input_data)
         {
             List<byte> data_to_sent = new List<byte>();
@@ -940,6 +949,9 @@ namespace RedRatDatabaseViewer
             return data_to_sent;
         }
 
+        //
+        // This is dedicated for witdh-data of IR signal
+        //
         private List<byte> Convert_data_to_Byte_modified(uint width_value)
         {
             Stack<Byte> byte_data = new Stack<Byte>();
@@ -969,6 +981,9 @@ namespace RedRatDatabaseViewer
             return data_to_sent;
         }
 
+        //
+        // Checksum is currently XOR all data (excluding sync header)
+        //
         private Byte CheckSum = 0;
         public void ClearCheckSum()
         {
@@ -990,6 +1005,9 @@ namespace RedRatDatabaseViewer
             return (CheckSum == 0) ? true : false;
         }
 
+        //
+        // To get UART data byte for each command
+        //
         public List<byte> Prepare_STOP_CMD()
         {
             List<byte> data_to_sent = new List<byte>();
