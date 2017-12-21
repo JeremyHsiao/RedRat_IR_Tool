@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using System.Timers;
 
 namespace RedRatDatabaseViewer
 {
@@ -1247,28 +1248,35 @@ namespace RedRatDatabaseViewer
             // Step 6
             SendToSerial_v2(data_to_sent.ToArray());
 
-            // Step 7
-            //if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
-            //{
-            //    RC_Select1stSignalForDoubleOrToggleSignal = !RC_Select1stSignalForDoubleOrToggleSignal;
-            //    RedRatData.RedRatSelectRCSignal(listboxRCKey.SelectedIndex, RC_Select1stSignalForDoubleOrToggleSignal);
-            //}
-
             return total_us; // return total_rc_time_duration
+        }
+
+        static bool TimeOutIndicator = false;
+
+        private static void OnTimedEvent(object source, ElapsedEventArgs e)
+        {
+            TimeOutIndicator = true;
+        }
+
+        private void ClearTimeOutIndicator()
+        {
+            TimeOutIndicator = false;
+        }
+
+        private bool GetTimeOutIndicator()
+        {
+            return TimeOutIndicator;
         }
 
         private void HomeMade_Delay(int delay_ms)
         {
-            const int home_made_delay_segment_time = 32;
-            while(delay_ms> home_made_delay_segment_time)
-            {
-                Application.DoEvents();
-                Thread.Sleep(home_made_delay_segment_time);
-                delay_ms -= home_made_delay_segment_time;
-            }
-            Application.DoEvents();
-            Thread.Sleep(delay_ms);
-            Application.DoEvents();
+            System.Timers.Timer aTimer = new System.Timers.Timer(delay_ms);
+            aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
+            ClearTimeOutIndicator();
+            aTimer.Enabled = true;
+            while (GetTimeOutIndicator() == false) { Application.DoEvents(); }
+            aTimer.Stop();
+            aTimer.Dispose();
         }
 
         private void TEST_WalkThroughAllRCKeys()
@@ -1311,32 +1319,52 @@ namespace RedRatDatabaseViewer
             }
         }
 
-        //private void TEST_StressSendingOneRC()
-        //{
-        //    // Testing: send "stress_cnt" times Single RC
-        //    byte stress_cnt = 250;
+        private void TEST_StressSendingAlreadySelectedRC()
+        {
+            // Testing: send "stress_cnt" times Single RC
+            // 
+            // Precondition
+            //   1. Load RC Database by RedRatLoadSignalDB()
+            //   2. Select Device by RedRatSelectDevice() using device_name or index_no
+            //   3. Select RC Signal by RedRatSelectRCSignal() using rc_name or index_no --> specify false at 2nd input parameter if need to Tx 2nd signal of Double signal / Toggle Bits Signal
+            Contract.Requires(RedRatData != null);
+            Contract.Requires(RedRatData.SignalDB != null);
+            Contract.Requires(RedRatData.SelectedDevice != null);
+            Contract.Requires(RedRatData.SelectedSignal != null);
+            Contract.Requires(RedRatData.Signal_Type_Supported == true);
 
-        //    while (stress_cnt-- > 0)
-        //    {
-        //        // Use UART to transmit RC signal
-        //        int rc_duration = SendOneRC() / 1000 + 1;
-        //        HomeMade_Delay(rc_duration);
+            byte stress_cnt = 250;
 
-        //        // Update 2nd Signal checkbox
-        //        if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
-        //        {
-        //            // Switch to the other signal in display
-        //            ThisTimeDoNotUpdateMessageBox = true;
-        //            RC_Select1stSignalForDoubleOrToggleSignal = !RC_Select1stSignalForDoubleOrToggleSignal;
-        //            RedRatData.RedRatSelectRCSignal(listboxRCKey.SelectedIndex, RC_Select1stSignalForDoubleOrToggleSignal);
-        //            chkSelect2ndSignal.Checked = RC_Select1stSignalForDoubleOrToggleSignal;
-        //        }
-        //    }
-        //}
+            while (stress_cnt-- > 0)
+            {
+                // Use UART to transmit RC signal
+                int rc_duration = SendOneRC() / 1000 + 1;
+                HomeMade_Delay(rc_duration);
+
+                // Update 2nd Signal checkbox
+                if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
+                {
+                    // Switch to the other signal in display
+                    ThisTimeDoNotUpdateMessageBox = true;
+                    RC_Select1stSignalForDoubleOrToggleSignal = !RC_Select1stSignalForDoubleOrToggleSignal;
+                    RedRatData.RedRatSelectRCSignal(listboxRCKey.SelectedIndex, RC_Select1stSignalForDoubleOrToggleSignal);
+                    chkSelect2ndSignal.Checked = RC_Select1stSignalForDoubleOrToggleSignal;
+                }
+            }
+        }
 
         private void TEST_StressSendingRepeatCount()
         {
             // Testing: send "repeat_cnt" times Single RC
+            // Precondition
+            //   1. Load RC Database by RedRatLoadSignalDB()
+            //   2. Select Device by RedRatSelectDevice() using device_name or index_no
+            //   3. Select RC Signal by RedRatSelectRCSignal() using rc_name or index_no --> specify false at 2nd input parameter if need to Tx 2nd signal of Double signal / Toggle Bits Signal
+            Contract.Requires(RedRatData != null);
+            Contract.Requires(RedRatData.SignalDB != null);
+            Contract.Requires(RedRatData.SelectedDevice != null);
+            Contract.Requires(RedRatData.SelectedSignal != null);
+            Contract.Requires(RedRatData.Signal_Type_Supported == true);
             const byte repeat_count_threshold = 5;
             int repeat_cnt = 300;
 
@@ -1520,25 +1548,25 @@ namespace RedRatDatabaseViewer
             if (RedRatData.Signal_Type_Supported == true)
             {
                 // Use UART to transmit RC signal -- repeat (recommended_first_repeat_cnt_value-1) times == total transmit (recommended_first_repeat_cnt_value) times
-                int rc_duration = SendOneRC(recommended_first_repeat_cnt_value-1) / 1000;                                                                                                                                                                                                                                                           
+                int rc_duration = SendOneRC(recommended_first_repeat_cnt_value-1) / 1000 + 1;                                                                                                                                                                                                                                                           
                 // Delay to wait for RC Tx finished
                 HomeMade_Delay(1);
                 // 將剩下的Repeat_Count輸出
                 SendToSerial_v2(Prepare_Send_Repeat_Cnt_Add_CMD(Convert.ToUInt32(repeat-recommended_first_repeat_cnt_value)).ToArray());
                 rc_duration = ((rc_duration * repeat) / Convert.ToInt32(recommended_first_repeat_cnt_value));
-                HomeMade_Delay(rc_duration);
+                HomeMade_Delay(rc_duration-1);
 
                 // If you need to send double signal or toggle bit signal at next IR transmission -- 這裡是示範如何發射Double Signal或Toggle Signal的第二個信號
                 if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
                 {
                     // Use UART to transmit RC signal -- repeat 10 times
                     RedRatData.RedRatSelectRCSignal("1", false);
-                    rc_duration = SendOneRC(recommended_first_repeat_cnt_value-1) / 1000;
+                    rc_duration = SendOneRC(recommended_first_repeat_cnt_value-1) / 1000 + 1;
                     // Delay to wait for RC Tx finished
                     HomeMade_Delay(1);
                     SendToSerial_v2(Prepare_Send_Repeat_Cnt_Add_CMD(Convert.ToUInt32(repeat - recommended_first_repeat_cnt_value)).ToArray());
                     rc_duration = ((rc_duration * repeat) / Convert.ToInt32(recommended_first_repeat_cnt_value));
-                    HomeMade_Delay(rc_duration);
+                    HomeMade_Delay(rc_duration-1);
                 }
             }
         }
@@ -1595,28 +1623,27 @@ namespace RedRatDatabaseViewer
             Example_to_Send_RC_with_Repeat_Count();
             Example_to_Test_If_Still_Alive();
             Example_to_Send_RC_with_Large_Repeat_Count();
-            Example_to_Test_If_Still_Alive();
+           Example_to_Test_If_Still_Alive();
             
             ////
             // Self-testing code
             //
 
-//            TEST_WalkThroughAllCMDwithData();
-//            Example_to_Stop_Running();
-//            Example_to_Test_If_Still_Alive();
-//            TEST_GPIO_Output();
-//            Example_to_Stop_Running();
-//            Example_to_Test_If_Still_Alive();
-//            TEST_GPIO_Input();
-            //Example_to_Stop_Running();
-            //Example_to_Test_If_Still_Alive();
-            //if ((RedRatData != null) && (RedRatData.SignalDB != null))
-            //{
-            //    TEST_StressSendingRepeatCount();
-            //    TEST_WalkThroughAllRCKeys();
-            //    TEST_StressSendingOneRC();
-            //}
-            //// Example_Entering_ISP();
+            TEST_WalkThroughAllCMDwithData();
+            Example_to_Stop_Running();
+            Example_to_Test_If_Still_Alive();
+            TEST_GPIO_Output();
+            Example_to_Stop_Running();
+            Example_to_Test_If_Still_Alive();
+            TEST_GPIO_Input();
+            Example_to_Stop_Running();
+            Example_to_Test_If_Still_Alive();
+            if ((RedRatData != null) && (RedRatData.SignalDB != null))
+            {
+                TEST_StressSendingRepeatCount();
+                TEST_WalkThroughAllRCKeys();
+            }
+             Example_Entering_ISP();
             UndoTemoparilyDisbleAllRCFunctionButtons();
         }
     }
