@@ -1553,8 +1553,23 @@ namespace RedRatDatabaseViewer
                 HomeMade_Delay(1);
                 // 將剩下的Repeat_Count輸出
                 SendToSerial_v2(Prepare_Send_Repeat_Cnt_Add_CMD(Convert.ToUInt32(repeat-recommended_first_repeat_cnt_value)).ToArray());
-                rc_duration = ((rc_duration * repeat) / Convert.ToInt32(recommended_first_repeat_cnt_value));
-                HomeMade_Delay(rc_duration-1);
+                rc_duration = ((rc_duration * repeat) / Convert.ToInt32(recommended_first_repeat_cnt_value)) - 1;
+
+                //HomeMade_Delay(rc_duration-1);
+                // 這裏是另一種delay的做法,如果需要在等待時,讓系統做一些別的事情
+                System.Timers.Timer aTimer = new System.Timers.Timer(rc_duration);
+                aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
+                ClearTimeOutIndicator();
+                aTimer.Enabled = true;
+                // 一直循環等到 GetTimeOutIndicator() == true為止
+                // 在這等待的同時,就可以安排其它要做的事情
+                // 這裏至少要放Applicaiton.DoEvents()讓其它event有機會完成
+                while (GetTimeOutIndicator() == false)
+                {
+                    Application.DoEvents();
+                }
+                aTimer.Stop();
+                aTimer.Dispose();
 
                 // If you need to send double signal or toggle bit signal at next IR transmission -- 這裡是示範如何發射Double Signal或Toggle Signal的第二個信號
                 if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
@@ -1643,7 +1658,7 @@ namespace RedRatDatabaseViewer
                 TEST_StressSendingRepeatCount();
                 TEST_WalkThroughAllRCKeys();
             }
-             Example_Entering_ISP();
+            // Example_Entering_ISP();
             UndoTemoparilyDisbleAllRCFunctionButtons();
         }
     }
