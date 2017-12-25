@@ -461,7 +461,7 @@ namespace RedRatDatabaseViewer
             //btnCheckHeartBeat.Enabled = false;
             //btnStopRCButton.Enabled = false;
             TemoparilyDisbleAllRCFunctionButtons();
-            SendToSerial_v2(Prepare_Do_Nothing_CMD().ToArray());
+            SendToSerial_v2(Prepare_Say_HI_CMD().ToArray());
             UndoTemoparilyDisbleAllRCFunctionButtons();
             //btnCheckHeartBeat.Enabled = true;
             //btnStopRCButton.Enabled = true;
@@ -750,9 +750,9 @@ namespace RedRatDatabaseViewer
             }
         }
 
-//
-// 跟小藍鼠有關係的程式代碼與範例程式區 -- 開始
-//
+        //
+        // 跟小藍鼠有關係的程式代碼與範例程式區 -- 開始
+        //
         enum ENUM_CMD_STATUS
         {
             ENUM_CMD_IDLE = 0,
@@ -878,17 +878,19 @@ namespace RedRatDatabaseViewer
             ENUM_CMD_CODE_0XF5 = 0xf5,
             ENUM_CMD_CODE_0XF6 = 0xf6,
             ENUM_CMD_CODE_0XF7 = 0xf7,
-            ENUM_CMD_CODE_0XF8 = 0xf8,
-            ENUM_CMD_CODE_0XF9 = 0xf9,
-            ENUM_CMD_CODE_0XFA = 0xfa,
+            ENUM_CMD_GET_TX_CURRENT_REPEAT_COUNT = 0xf8,
+            ENUM_CMD_GET_TX_RUNNING_STATUS = 0xf9,
+            ENUM_CMD_RETURN_SW_VER = 0xfa,
             ENUM_CMD_RETURN_BUILD_TIME = 0xfb,
             ENUM_CMD_RETURN_CMD_VERSION = 0xfc,
-            ENUM_CMD_DO_NOTHING = 0xfd,
+            ENUM_CMD_SAY_HI = 0xfd,
             ENUM_CMD_STOP_ALL = 0xfe,
             ENUM_SYNC_BYTE_VALUE = 0xff,
             ENUM_CMD_VERSION_V100 = 0x100,
             ENUM_CMD_VERSION_V200 = 0x200,
-            ENUM_CMD_VERSION_V201 = 0x201,                      // 最後這一個,代表目前的command set版次
+            ENUM_CMD_VERSION_V201 = 0x201,
+            ENUM_CMD_VERSION_V202 = 0x202,
+            ENUM_CMD_VERSION_CURRENT_PLUS_1,
             ENUM_CMD_STATE_MAX
         };
 
@@ -1023,7 +1025,7 @@ namespace RedRatDatabaseViewer
             return data_to_sent;
         }
 
-        public List<byte> Prepare_Do_Nothing_CMD()
+        public List<byte> Prepare_Say_HI_CMD()
         {
             List<byte> data_to_sent = new List<byte>();
 
@@ -1031,8 +1033,36 @@ namespace RedRatDatabaseViewer
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
             // No need to calculate checksum for headers
-            data_to_sent.Add(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_DO_NOTHING));
-            UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_DO_NOTHING));
+            data_to_sent.Add(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SAY_HI));
+            UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SAY_HI));
+            data_to_sent.Add(GetCheckSum());
+            return data_to_sent;
+        }
+
+        public List<byte> Prepare_Get_RC_Repeat_Count()
+        {
+            List<byte> data_to_sent = new List<byte>();
+
+            ClearCheckSum();
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            // No need to calculate checksum for headers
+            data_to_sent.Add(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_TX_CURRENT_REPEAT_COUNT));
+            UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_TX_CURRENT_REPEAT_COUNT));
+            data_to_sent.Add(GetCheckSum());
+            return data_to_sent;
+        }
+
+         public List<byte> Prepare_Get_RC_Current_Running_Status()
+        {
+            List<byte> data_to_sent = new List<byte>();
+
+            ClearCheckSum();
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            // No need to calculate checksum for headers
+            data_to_sent.Add(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_TX_RUNNING_STATUS));
+            UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_TX_RUNNING_STATUS));
             data_to_sent.Add(GetCheckSum());
             return data_to_sent;
         }
@@ -1082,7 +1112,7 @@ namespace RedRatDatabaseViewer
         {
             if ((input_cmd < CMD_CODE_LOWER_LIMIT) || (input_cmd > CMD_CODE_UPPER_LIMIT))
             {
-                return Prepare_Do_Nothing_CMD();
+                return Prepare_Say_HI_CMD();
             }
 
             List<byte> data_to_sent = new List<byte>();
@@ -1311,7 +1341,7 @@ namespace RedRatDatabaseViewer
         private void TEST_WalkThroughAllCMDwithData()
         {
             // Testing: send all CMD with input parameter
-            for (byte cmd = Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_STOP_ALL); cmd > Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_INPUT_TX_SIGNAL); cmd--)
+            for (byte cmd = Convert.ToByte(CMD_CODE_UPPER_LIMIT); cmd >= Convert.ToByte(CMD_CODE_LOWER_LIMIT) ; cmd--)
             //byte cmd = 0xdf;
             {
                 SendToSerial_v2(Prepare_Send_Input_CMD(cmd, 0x1010101U * cmd).ToArray());
@@ -1368,21 +1398,27 @@ namespace RedRatDatabaseViewer
             const byte repeat_count_threshold = 5;
             int repeat_cnt = 300;
 
-            int rc_duration;
-            if (repeat_cnt >= repeat_count_threshold)
-            {
-                rc_duration = SendOneRC(repeat_count_threshold-1);
-                HomeMade_Delay(1);
-                repeat_cnt -= repeat_count_threshold;
-                rc_duration = rc_duration * repeat_cnt / repeat_count_threshold;
-            }
-            else
-            {
-                rc_duration = SendOneRC(Convert.ToByte(repeat_cnt));
-            }
+            if (RedRatData.Signal_Type_Supported != true)
+                return;
 
-            rc_duration /= 1000 + 1;
-            HomeMade_Delay(rc_duration);
+            while (repeat_cnt > 0)
+                {
+                int rc_duration;
+                if (repeat_cnt >= repeat_count_threshold)
+                {
+                    rc_duration = SendOneRC(repeat_count_threshold - 1);
+                    HomeMade_Delay(1);
+                    repeat_cnt -= repeat_count_threshold;
+                    rc_duration = rc_duration * repeat_cnt / repeat_count_threshold;
+                }
+                else
+                {
+                    rc_duration = SendOneRC(Convert.ToByte(repeat_cnt));
+                }
+
+                rc_duration /= 1000 + 1;
+                HomeMade_Delay(rc_duration);
+            }
         }
 
         private void TEST_GPIO_Output()
@@ -1442,15 +1478,69 @@ namespace RedRatDatabaseViewer
                 while(UART_READ_MSG_QUEUE.Count>0)
                 {
                     String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                    if (in_str.Contains("0x"))
+                    if (in_str.Contains("IN:"))
                     {
-                        GPIO_Read_Data = Convert.ToUInt32(in_str, 16);
+                        string value_str = in_str.Substring(in_str.IndexOf(":")+1);
+                        GPIO_Read_Data = Convert.ToUInt32(value_str, 16);
                     }
                 }
                 SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), ~GPIO_Read_Data).ToArray());
                 HomeMade_Delay(delay_time);
                 SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), 0xff).ToArray());
                 HomeMade_Delay(delay_time);
+            }
+        }
+
+        private void TEST_Return_Repeat_Count_and_Tx_Status()
+        {
+            int repeat = 300; // max value is 4,294,967,295 (0xffffffff)
+            const byte recommended_first_repeat_cnt_value = 100;    // must be <= 0xff
+            // Load RedRat database - 載入資料庫
+            RedRatData.RedRatLoadSignalDB("C:\\Users\\jeremy.hsiao\\Downloads\\SDK-V4-Samples\\Samples\\RC DB\\DeviceDB - 複製.xml");
+            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            HomeMade_Delay(16);
+            // Select Device  - 選擇RC Device
+            RedRatData.RedRatSelectDevice("HP-MCE");
+            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            //HomeMade_Delay(16);
+            // Select RC - 選擇RC (使用名稱或Index No)
+            RedRatData.RedRatSelectRCSignal("1", true);
+            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            //HomeMade_Delay(16);
+            // Check if this RC code is supported -- 如果此訊號資料OK可以發射,就發射
+            if (RedRatData.Signal_Type_Supported == true)
+            {
+                // Use UART to transmit RC signal -- repeat (recommended_first_repeat_cnt_value-1) times == total transmit (recommended_first_repeat_cnt_value) times
+                int rc_duration = SendOneRC(recommended_first_repeat_cnt_value - 1) / 1000 + 1;
+                // Delay to wait for RC Tx finished
+                HomeMade_Delay(1);
+                // 將剩下的Repeat_Count輸出
+                SendToSerial_v2(Prepare_Send_Repeat_Cnt_Add_CMD(Convert.ToUInt32(repeat - recommended_first_repeat_cnt_value)).ToArray());
+                rc_duration = ((rc_duration * repeat) / Convert.ToInt32(recommended_first_repeat_cnt_value)) - 1;
+
+                //HomeMade_Delay(rc_duration-1);
+                // 這裏是另一種delay的做法,如果需要在等待時,讓系統做一些別的事情
+                System.Timers.Timer aTimer = new System.Timers.Timer(rc_duration);
+                aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
+                ClearTimeOutIndicator();
+                aTimer.Enabled = true;
+                // 一直循環等到 GetTimeOutIndicator() == true為止
+                // 在這等待的同時,就可以安排其它要做的事情
+                // 這裏至少要放Applicaiton.DoEvents()讓其它event有機會完成
+                while (GetTimeOutIndicator() == false)
+                {
+                    Application.DoEvents();
+                    Thread.Sleep(200);
+                    Example_Get_Remaining_Repeat_Count();
+                    Application.DoEvents();
+                    Thread.Sleep(200);                      
+                    Example_Get_Current_Tx_Status();         
+                }
+                aTimer.Stop();
+                aTimer.Dispose();
+
+                Example_Get_Remaining_Repeat_Count();        
+                Example_Get_Current_Tx_Status();            
             }
         }
 
@@ -1566,6 +1656,7 @@ namespace RedRatDatabaseViewer
                 // 這裏至少要放Applicaiton.DoEvents()讓其它event有機會完成
                 while (GetTimeOutIndicator() == false)
                 {
+                    // 這裏至少要放Applicaiton.DoEvents()讓其它event有機會完成
                     Application.DoEvents();
                 }
                 aTimer.Stop();
@@ -1595,7 +1686,7 @@ namespace RedRatDatabaseViewer
         // 單純回應"HI"的指令,可用來試試看系統是否還有在接受指令
         private void Example_to_Test_If_Still_Alive()
         {
-            SendToSerial_v2(Prepare_Do_Nothing_CMD().ToArray());
+            SendToSerial_v2(Prepare_Say_HI_CMD().ToArray());
         }
 
         // 讓系統進入等待軟體更新的狀態
@@ -1604,25 +1695,35 @@ namespace RedRatDatabaseViewer
             SendToSerial_v2(Prepare_Enter_ISP_CMD().ToArray());
         }
 
-		//private void Example_Get_All_GPIO_Input()
-		//{
-		//	UInt32 GPIO_Read_Data=0;
-		//	Get_UART_Input = 1;
-		//	SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)).ToArray());
-		//	HomeMade_Delay(16);
-		//	while (UART_READ_MSG_QUEUE.Count > 0)
-		//	{
-		//		String in_str = UART_READ_MSG_QUEUE.Dequeue();
-		//		if (in_str.Contains("0x"))
-		//		{
-		//			GPIO_Read_Data = Convert.ToUInt32(in_str, 16);
-		//		}
-		//	}
-		//}
+        private void Example_Get_Remaining_Repeat_Count()
+        {
+            SendToSerial_v2(Prepare_Get_RC_Repeat_Count().ToArray());
+        }
 
-//
-// 跟小藍鼠有關係的程式代碼與範例程式區--結尾
-//
+        private void Example_Get_Current_Tx_Status()
+        {
+            SendToSerial_v2(Prepare_Get_RC_Current_Running_Status().ToArray());
+        }
+
+        //private void Example_Get_All_GPIO_Input()
+        //{
+        //	UInt32 GPIO_Read_Data=0;
+        //	Get_UART_Input = 1;
+        //	SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)).ToArray());
+        //	HomeMade_Delay(16);
+        //	while (UART_READ_MSG_QUEUE.Count > 0)
+        //	{
+        //		String in_str = UART_READ_MSG_QUEUE.Dequeue();
+        //		if (in_str.Contains("0x"))
+        //		{
+        //			GPIO_Read_Data = Convert.ToUInt32(in_str, 16);
+        //		}
+        //	}
+        //}
+
+        //
+        // 跟小藍鼠有關係的程式代碼與範例程式區--結尾
+        //
 
         private void btnRepeatRC_Click(object sender, EventArgs e)
         {
@@ -1638,12 +1739,14 @@ namespace RedRatDatabaseViewer
             Example_to_Send_RC_with_Repeat_Count();
             Example_to_Test_If_Still_Alive();
             Example_to_Send_RC_with_Large_Repeat_Count();
-           Example_to_Test_If_Still_Alive();
-            
+            Example_to_Test_If_Still_Alive();
+
             ////
             // Self-testing code
             //
 
+            TEST_Return_Repeat_Count_and_Tx_Status();
+            Example_to_Test_If_Still_Alive();
             TEST_WalkThroughAllCMDwithData();
             Example_to_Stop_Running();
             Example_to_Test_If_Still_Alive();
@@ -1655,8 +1758,8 @@ namespace RedRatDatabaseViewer
             Example_to_Test_If_Still_Alive();
             if ((RedRatData != null) && (RedRatData.SignalDB != null))
             {
-                TEST_StressSendingRepeatCount();
                 TEST_WalkThroughAllRCKeys();
+                TEST_StressSendingRepeatCount();
             }
             // Example_Entering_ISP();
             UndoTemoparilyDisbleAllRCFunctionButtons();
