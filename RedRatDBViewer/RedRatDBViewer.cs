@@ -1704,21 +1704,42 @@ namespace RedRatDatabaseViewer
             SendToSerial_v2(Prepare_Get_RC_Current_Running_Status().ToArray());
         }
 
-        //private void Example_Get_All_GPIO_Input()
-        //{
-        //	UInt32 GPIO_Read_Data=0;
-        //	Get_UART_Input = 1;
-        //	SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)).ToArray());
-        //	HomeMade_Delay(16);
-        //	while (UART_READ_MSG_QUEUE.Count > 0)
-        //	{
-        //		String in_str = UART_READ_MSG_QUEUE.Dequeue();
-        //		if (in_str.Contains("0x"))
-        //		{
-        //			GPIO_Read_Data = Convert.ToUInt32(in_str, 16);
-        //		}
-        //	}
-        //}
+        private void Example_Get_All_GPIO_Input()
+        {
+            UInt32 GPIO_Read_Data = 0;
+            Get_UART_Input = 1;
+            SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)).ToArray());
+            HomeMade_Delay(5);
+            if (UART_READ_MSG_QUEUE.Count > 0)
+            {
+                String in_str = UART_READ_MSG_QUEUE.Dequeue();
+                if (in_str.Contains("IN:"))
+                {
+                    string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                    GPIO_Read_Data = Convert.ToUInt32(value_str, 16);
+                    Console.WriteLine(GPIO_Read_Data.ToString());           // output to console
+                }
+            }
+        }
+
+        private void Example_Check_System_Alive()
+        {
+            Get_UART_Input = 1;
+            SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SAY_HI)).ToArray());
+            HomeMade_Delay(5);
+            if (UART_READ_MSG_QUEUE.Count > 0)
+            {
+                String in_str = UART_READ_MSG_QUEUE.Dequeue();
+                if (in_str.Equals("HI"))
+                {
+                    Console.WriteLine("Alive");          
+                }
+                else 
+                {
+                    Console.WriteLine("?????");
+                }
+            }
+        }
 
         //
         // 跟小藍鼠有關係的程式代碼與範例程式區--結尾
@@ -1732,6 +1753,8 @@ namespace RedRatDatabaseViewer
             // Example
             //
             Example_to_Stop_Running(); // 順便將可能因為測試而正在執行的動作中斷
+            Example_Check_System_Alive();
+            Example_Get_All_GPIO_Input();
             Example_to_Test_If_Still_Alive();
             Example_to_Send_RC_without_Repeat_Count();
             Example_to_Test_If_Still_Alive();
