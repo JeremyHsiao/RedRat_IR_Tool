@@ -1402,18 +1402,17 @@ namespace RedRatDatabaseViewer
                 return;
 
             while (repeat_cnt > 0)
-                {
+            {
                 int rc_duration;
                 if (repeat_cnt >= repeat_count_threshold)
                 {
                     rc_duration = SendOneRC(repeat_count_threshold - 1);
-                    HomeMade_Delay(1);
                     repeat_cnt -= repeat_count_threshold;
-                    rc_duration = rc_duration * repeat_cnt / repeat_count_threshold;
                 }
                 else
                 {
                     rc_duration = SendOneRC(Convert.ToByte(repeat_cnt));
+                    repeat_cnt = 0;
                 }
 
                 rc_duration /= 1000 + 1;
@@ -1748,19 +1747,19 @@ namespace RedRatDatabaseViewer
             TEST_Return_Repeat_Count_and_Tx_Status();
             Example_to_Test_If_Still_Alive();
             TEST_WalkThroughAllCMDwithData();
-            Example_to_Stop_Running();
             Example_to_Test_If_Still_Alive();
             TEST_GPIO_Output();
-            Example_to_Stop_Running();
             Example_to_Test_If_Still_Alive();
             TEST_GPIO_Input();
-            Example_to_Stop_Running();
             Example_to_Test_If_Still_Alive();
+
             if ((RedRatData != null) && (RedRatData.SignalDB != null))
             {
                 TEST_WalkThroughAllRCKeys();
+                Example_to_Test_If_Still_Alive();
                 TEST_StressSendingRepeatCount();
             }
+
             // Example_Entering_ISP();
             UndoTemoparilyDisbleAllRCFunctionButtons();
         }
