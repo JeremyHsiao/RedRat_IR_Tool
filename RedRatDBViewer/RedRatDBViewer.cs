@@ -1298,13 +1298,18 @@ namespace RedRatDatabaseViewer
             return TimeOutIndicator;
         }
 
+        static bool HomeMade_TimeOutIndicator = false;
+        private static void HomeMade_Delay_OnTimedEvent(object source, ElapsedEventArgs e)
+        {
+            HomeMade_TimeOutIndicator = true;
+        }
         private void HomeMade_Delay(int delay_ms)
         {
             System.Timers.Timer aTimer = new System.Timers.Timer(delay_ms);
-            aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
-            ClearTimeOutIndicator();
+            aTimer.Elapsed += new ElapsedEventHandler(HomeMade_Delay_OnTimedEvent);
+            HomeMade_TimeOutIndicator = false;
             aTimer.Enabled = true;
-            while (GetTimeOutIndicator() == false) { Application.DoEvents(); }
+            while (HomeMade_TimeOutIndicator == false) { Application.DoEvents(); }
             aTimer.Stop();
             aTimer.Dispose();
         }
@@ -1528,12 +1533,10 @@ namespace RedRatDatabaseViewer
                 // 這裏至少要放Applicaiton.DoEvents()讓其它event有機會完成
                 while (GetTimeOutIndicator() == false)
                 {
-                    Application.DoEvents();
-                    Thread.Sleep(200);
+                    HomeMade_Delay(500);
                     Example_Get_Remaining_Repeat_Count();
-                    Application.DoEvents();
-                    Thread.Sleep(200);                      
-                    Example_Get_Current_Tx_Status();         
+                    HomeMade_Delay(500);
+                    Console.WriteLine(Example_Get_Current_Tx_Status().ToString());         
                 }
                 aTimer.Stop();
                 aTimer.Dispose();
@@ -1694,14 +1697,56 @@ namespace RedRatDatabaseViewer
             SendToSerial_v2(Prepare_Enter_ISP_CMD().ToArray());
         }
 
-        private void Example_Get_Remaining_Repeat_Count()
+        private int Example_Get_Remaining_Repeat_Count()
         {
+            int repeat_cnt = 0;
+            Get_UART_Input = 1;
             SendToSerial_v2(Prepare_Get_RC_Repeat_Count().ToArray());
+            HomeMade_Delay(5);
+            if (UART_READ_MSG_QUEUE.Count > 0)
+            {
+                String in_str = UART_READ_MSG_QUEUE.Dequeue();
+                if (in_str.Contains("CNT:"))
+                {
+
+                    string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                    repeat_cnt = Convert.ToInt32(value_str, 16);
+                    return repeat_cnt;
+                }
+            }
+            else
+            {
+                // Should not reach here unless system is abnormal
+            }
+            return 0;
         }
 
-        private void Example_Get_Current_Tx_Status()
+        private bool Example_Get_Current_Tx_Status()
         {
+            Get_UART_Input = 1;
             SendToSerial_v2(Prepare_Get_RC_Current_Running_Status().ToArray());
+            HomeMade_Delay(5);
+            if (UART_READ_MSG_QUEUE.Count > 0)
+            {
+                String in_str = UART_READ_MSG_QUEUE.Dequeue();
+                if (in_str.Contains("TX:"))
+                {
+                    string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                    if (Convert.ToInt32(value_str, 16) != 0)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                // Should not reach here unless system is abnormal
+            }
+            return false;
         }
 
         private void Example_Get_All_GPIO_Input()
@@ -1752,6 +1797,8 @@ namespace RedRatDatabaseViewer
             //
             // Example
             //
+
+            TEST_Return_Repeat_Count_and_Tx_Status();
             Example_to_Stop_Running(); // 順便將可能因為測試而正在執行的動作中斷
             Example_Check_System_Alive();
             Example_Get_All_GPIO_Input();
