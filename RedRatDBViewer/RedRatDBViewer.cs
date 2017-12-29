@@ -900,11 +900,15 @@ namespace RedRatDatabaseViewer
             // Example
             //
 
-            TEST_Return_Repeat_Count_and_Tx_Status();
+            AppendSerialMessageLog(MyBlueRat.Get_SW_Version());
+            AppendSerialMessageLog(MyBlueRat.Get_BUILD_TIME());
+            AppendSerialMessageLog(MyBlueRat.Get_Command_Version());
+
+            //TEST_Return_Repeat_Count_and_Tx_Status();
 
             MyBlueRat.Stop_Current_Tx();
             MyBlueRat.CheckConnection();
-            //Example_Get_All_GPIO_Input();
+            MyBlueRat.Get_GPIO_Input();
             MyBlueRat.CheckConnection();
             Example_to_Send_RC_without_Repeat_Count();
             MyBlueRat.CheckConnection();
@@ -933,7 +937,7 @@ namespace RedRatDatabaseViewer
                 TEST_StressSendingRepeatCount();
             }
 
-            // Example_Entering_ISP();
+            //MyBlueRat.Enter_ISP_Mode();
             UndoTemoparilyDisbleAllRCFunctionButtons();
         }
 
