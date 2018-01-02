@@ -22,30 +22,43 @@ namespace RedRatDatabaseViewer
 
         public BlueRat() { Serial_InitialSetting(); }
 
-        public bool Connect(string com_name)
+        private bool Connect_BlueRat_Protocol()
         {
             bool ret = false;
-            if (Serial_OpenPort(com_name) == true)
+            if (this.CheckConnection() == true)
             {
+                ret = true;
+            }
+            else
+            {
+                HomeMade_Delay(10);
+                this.Force_Init_BlueRat();
                 HomeMade_Delay(10);
                 if (this.CheckConnection() == true)
                 {
                     ret = true;
                 }
-                else
-                {
-                    HomeMade_Delay(10);
-                    this.Force_Init_BlueRat();
-                    HomeMade_Delay(10);
-                    if (this.CheckConnection() == true)
-                    {
-                        ret = true;
-                    }
-                }
+            }
+            return ret;
+        }
+
+        public bool Connect(string com_name)
+        {
+            bool ret = false;
+            if (this.SerialPortConnection()==true)
+            {
+                ret = Connect_BlueRat_Protocol();
             }
             else
             {
-                Console.WriteLine("Cannot open serial port:" + com_name);
+                if (Serial_OpenPort(com_name) == true)
+                {
+                    ret = Connect_BlueRat_Protocol();
+                }
+                else
+                {
+                    Console.WriteLine("Cannot open serial port:" + com_name);
+                }
             }
             return ret;
         }
@@ -136,7 +149,7 @@ namespace RedRatDatabaseViewer
                 if (UART_READ_MSG_QUEUE.Count > 0)
                 {
                     String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                    if (in_str.Contains("CNT:"))
+                    if (in_str.Contains(_CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_))
                     {
                         string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
                         repeat_cnt = Convert.ToInt32(value_str, 16);
@@ -161,7 +174,7 @@ namespace RedRatDatabaseViewer
                 if (UART_READ_MSG_QUEUE.Count > 0)
                 {
                     String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                    if (in_str.Contains("TX:"))
+                    if (in_str.Contains(_CMD_GET_TX_RUNNING_STATUS_HEADER_))
                     {
                         string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
                         if (Convert.ToInt32(value_str, 16) != 0)
@@ -189,7 +202,7 @@ namespace RedRatDatabaseViewer
                 if (UART_READ_MSG_QUEUE.Count > 0)
                 {
                     String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                    if (in_str.Contains("SW:"))
+                    if (in_str.Contains(_CMD_RETURN_SW_VER_RETURN_HEADER_))
                     {
                         value_str = in_str.Substring(in_str.IndexOf(":") + 1);
                     }
@@ -237,7 +250,7 @@ namespace RedRatDatabaseViewer
                 if (UART_READ_MSG_QUEUE.Count > 0)
                 {
                     String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                    if (in_str.Contains("CMD_VER:"))
+                    if (in_str.Contains(_CMD_RETURN_CMD_VERSION_RETURN_HEADER_))
                     {
                         value_str = in_str.Substring(in_str.IndexOf(":") + 1);
                     }
@@ -710,6 +723,12 @@ namespace RedRatDatabaseViewer
         const uint CMD_CODE_UPPER_LIMIT = (0xfe);
         const uint ISP_PASSWORD = (0x46574154);
         const uint RESTART_PASSWORD = (0x46535050);
+
+        const string _CMD_RETURN_SW_VER_RETURN_HEADER_ = "SW:";
+        const string _CMD_BUILD_TIME_RETURN_HEADER_ = "";
+        const string _CMD_RETURN_CMD_VERSION_RETURN_HEADER_ = "CMD_VER:";
+        const string _CMD_GET_TX_RUNNING_STATUS_HEADER_ = "TX:";
+        const string _CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ = "CNT:";
 
         //
         // Input parameter is 32-bit unsigned data

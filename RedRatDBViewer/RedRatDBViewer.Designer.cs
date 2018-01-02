@@ -367,7 +367,6 @@
             // 
             // btnRepeatRC
             // 
-            this.btnRepeatRC.Enabled = false;
             this.btnRepeatRC.Location = new System.Drawing.Point(499, 12);
             this.btnRepeatRC.Name = "btnRepeatRC";
             this.btnRepeatRC.Size = new System.Drawing.Size(33, 46);
