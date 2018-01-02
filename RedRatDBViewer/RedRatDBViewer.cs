@@ -192,6 +192,8 @@ namespace RedRatDatabaseViewer
             {   // User to disconnect
                 if (MyBlueRat.CheckConnection() == true)
                 {
+                    MyBlueRat.Stop_Current_Tx();
+                    MyBlueRat.HomeMade_Delay(100);
                     //Stop_SerialReadThread();
                     if (MyBlueRat.Disconnect() == true)
                     {
@@ -505,11 +507,13 @@ namespace RedRatDatabaseViewer
 
         private void RedRatDBViewer_Closing(Object sender, FormClosingEventArgs e)
         {
-            //if (_serialPort.IsOpen == true)
+            if (MyBlueRat.CheckConnection() == true)
             {
-                //    Stop_SerialReadThread();
-                MyBlueRat.Disconnect();
+                MyBlueRat.Stop_Current_Tx();
+                MyBlueRat.HomeMade_Delay(100);
             }
+            MyBlueRat.Force_Init_BlueRat();
+            MyBlueRat.Disconnect();
         }
 
         public RedRatDBViewer()
@@ -744,10 +748,17 @@ namespace RedRatDatabaseViewer
                 // 這裏至少要放Applicaiton.DoEvents()讓其它event有機會完成
                 while (GetTimeOutIndicator() == false)
                 {
+                    int temp_repeat_cnt;
                     MyBlueRat.HomeMade_Delay(480);
-                    Console.WriteLine(MyBlueRat.Get_Remaining_Repeat_Count());
+                    temp_repeat_cnt = MyBlueRat.Get_Remaining_Repeat_Count();
+                    Console.WriteLine(temp_repeat_cnt.ToString());
                     MyBlueRat.HomeMade_Delay(480);
-                    Console.WriteLine(MyBlueRat.Get_Current_Tx_Status().ToString());
+                    bool temp_tx_status = MyBlueRat.Get_Current_Tx_Status();
+                    Console.WriteLine(temp_tx_status.ToString());
+                    if((temp_repeat_cnt==0)||(temp_tx_status==false))
+                    {
+                        break;
+                    }
                 }
                 aTimer.Stop();
                 aTimer.Dispose();
@@ -873,6 +884,11 @@ namespace RedRatDatabaseViewer
                 {
                     // 這裏至少要放Applicaiton.DoEvents()讓其它event有機會完成
                     Application.DoEvents();
+                    bool temp_tx_status = MyBlueRat.Get_Current_Tx_Status();
+                    if ((temp_tx_status == false))
+                    {
+                        break;                  // if Tx was forced to sto (by UI), leave immedately
+                    }
                 }
                 aTimer.Stop();
                 aTimer.Dispose();
@@ -899,10 +915,14 @@ namespace RedRatDatabaseViewer
             //
             // Example
             //
-
-            AppendSerialMessageLog(MyBlueRat.Get_SW_Version());
-            AppendSerialMessageLog(MyBlueRat.Get_BUILD_TIME());
-            AppendSerialMessageLog(MyBlueRat.Get_Command_Version());
+            string temp_string1, temp_string2, temp_string3;
+            temp_string1 = MyBlueRat.Get_SW_Version();
+            this.rtbSignalData.AppendText(temp_string1 + "\n");
+            temp_string2 = MyBlueRat.Get_Command_Version();
+            this.rtbSignalData.AppendText(temp_string2 + "\n");
+            temp_string3 = MyBlueRat.Get_BUILD_TIME();
+            this.rtbSignalData.AppendText(temp_string3 + "\n");
+            this.rtbSignalData.ScrollToCaret();
 
             //TEST_Return_Repeat_Count_and_Tx_Status();
 
@@ -938,6 +958,7 @@ namespace RedRatDatabaseViewer
             }
 
             //MyBlueRat.Enter_ISP_Mode();
+
             UndoTemoparilyDisbleAllRCFunctionButtons();
         }
 

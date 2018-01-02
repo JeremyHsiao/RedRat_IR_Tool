@@ -28,9 +28,18 @@ namespace RedRatDatabaseViewer
             if (Serial_OpenPort(com_name) == true)
             {
                 HomeMade_Delay(10);
-                if (this.Test_If_System_Can_Say_HI() == true)
+                if (this.CheckConnection() == true)
                 {
                     ret = true;
+                }
+                else
+                {
+                    HomeMade_Delay(10);
+                    this.Stop_Current_Tx();
+                    if (this.CheckConnection() == true)
+                    {
+                        ret = true;
+                    }
                 }
             }
             else
@@ -49,7 +58,7 @@ namespace RedRatDatabaseViewer
             }
             else
             {
-                Console.WriteLine("Cannot close serial port for blue rat.");
+                Console.WriteLine("Cannot close serial port for BlueRat.");
             }
             return ret;
         }
@@ -71,7 +80,13 @@ namespace RedRatDatabaseViewer
             return ret;
         }
 
-        // 強迫停止信號發射的指令 -- 也可以用來PC端程式開啟時,用來將小藍鼠的狀態設定為預設狀態
+        // 強迫立刻停止信號發射的指令 -- 也可以用來PC端程式開啟時,用來將小藍鼠的狀態設定為預設狀態
+        public bool Force_Init_BlueRat()
+        {
+            return SendToSerial_v2(Prepare_FORCE_RESTART_CMD().ToArray());
+        }
+
+        // 強迫目前這一次信號發射結束後立刻停止(清除repeat count)的指令
         public bool Stop_Current_Tx()
         {
             return SendToSerial_v2(Prepare_STOP_CMD().ToArray());
@@ -94,7 +109,7 @@ namespace RedRatDatabaseViewer
             aTimer.Elapsed += new ElapsedEventHandler(HomeMade_Delay_OnTimedEvent);
             HomeMade_TimeOutIndicator = false;
             aTimer.Enabled = true;
-            while (HomeMade_TimeOutIndicator == false) { Application.DoEvents(); }
+            while ((this.SerialPortConnection() == true)&&(HomeMade_TimeOutIndicator == false)) { Application.DoEvents(); }
             aTimer.Stop();
             aTimer.Dispose();
         }
@@ -127,7 +142,7 @@ namespace RedRatDatabaseViewer
         {
             Get_UART_Input = 1;
             SendToSerial_v2(Prepare_Get_RC_Current_Running_Status().ToArray());
-            HomeMade_Delay(5);
+            HomeMade_Delay(10);
             if (UART_READ_MSG_QUEUE.Count > 0)
             {
                 String in_str = UART_READ_MSG_QUEUE.Dequeue();
@@ -157,7 +172,7 @@ namespace RedRatDatabaseViewer
         
             Get_UART_Input = 1;
             SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_SW_VER)).ToArray());
-            HomeMade_Delay(5);
+            HomeMade_Delay(20);
             if (UART_READ_MSG_QUEUE.Count > 0)
             {
                 String in_str = UART_READ_MSG_QUEUE.Dequeue();
@@ -179,7 +194,7 @@ namespace RedRatDatabaseViewer
 
             Get_UART_Input = 1;
             SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_BUILD_TIME)).ToArray());
-            HomeMade_Delay(50);
+            HomeMade_Delay(200);
             if (UART_READ_MSG_QUEUE.Count > 0)
             {
                 String in_str = UART_READ_MSG_QUEUE.Dequeue();
@@ -201,7 +216,7 @@ namespace RedRatDatabaseViewer
 
             Get_UART_Input = 1;
             SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_CMD_VERSION)).ToArray());
-            HomeMade_Delay(5);
+            HomeMade_Delay(20);
             if (UART_READ_MSG_QUEUE.Count > 0)
             {
                 String in_str = UART_READ_MSG_QUEUE.Dequeue();
@@ -398,6 +413,7 @@ namespace RedRatDatabaseViewer
         static uint Get_UART_Input = 0;
         static Thread readThread = null;
         private Queue<string> UART_READ_MSG_QUEUE = new Queue<string>();
+        public Queue<string> BlueRat_LOG_QUEUE = new Queue<string>();
 
         private void Start_SerialReadThread()
         {
@@ -427,8 +443,8 @@ namespace RedRatDatabaseViewer
                     {
                         if (_serialPort.BytesToRead > 0)
                         {
-                            _serialPort.ReadTimeout = 500;
                             string message = _serialPort.ReadLine();
+                            BlueRat_LOG_QUEUE.Enqueue(message);
                             {
                                 if (Get_UART_Input > 0)
                                 {
@@ -437,6 +453,7 @@ namespace RedRatDatabaseViewer
                                 }
                                 //AppendSerialMessageLog(message);
                             }
+                            _serialPort.ReadTimeout = 500;
                         }
                     }
                     else
@@ -559,7 +576,7 @@ namespace RedRatDatabaseViewer
             ENUM_CMD_CODE_0X9B = 0x9b,
             ENUM_CMD_CODE_0X9C = 0x9c,
             ENUM_CMD_CODE_0X9D = 0x9d,
-            ENUM_CMD_CODE_0X9E = 0x9e,
+            ENUM_CMD_FORCE_RESTART = 0x9e,
             ENUM_CMD_ENTER_ISP_MODE = 0x9f,
             ENUM_CMD_SET_GPIO_SINGLE_BIT = 0xa0,    // End of command with 2-byte parameter
             ENUM_CMD_CODE_0XA1 = 0xa1,
@@ -672,6 +689,7 @@ namespace RedRatDatabaseViewer
         const uint CMD_SEND_COMMAND_CODE_ONLY = (0xe0);
         const uint CMD_CODE_UPPER_LIMIT = (0xfe);
         const uint ISP_PASSWORD = (0x46574154);
+        const uint RESTART_PASSWORD = (0x46535050);
 
         //
         // Input parameter is 32-bit unsigned data
@@ -792,6 +810,26 @@ namespace RedRatDatabaseViewer
             // No need to calculate checksum for header
             data_to_sent.Add((Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_STOP_ALL)));
             UpdateCheckSum((Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_STOP_ALL)));
+            data_to_sent.Add(GetCheckSum());
+            return data_to_sent;
+        }
+
+        private List<byte> Prepare_FORCE_RESTART_CMD()
+        {
+            List<byte> data_to_sent = new List<byte>();
+
+            ClearCheckSum();
+            data_to_sent.Add(0xff);
+            data_to_sent.Add(0xff);
+            // No need to calculate checksum for headers
+            data_to_sent.Add(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_FORCE_RESTART));
+            UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_FORCE_RESTART));
+            List<byte> input_param_in_byte = Convert_data_to_Byte(RESTART_PASSWORD);
+            foreach (byte temp in input_param_in_byte)
+            {
+                data_to_sent.Add(temp);
+                UpdateCheckSum(temp);
+            }
             data_to_sent.Add(GetCheckSum());
             return data_to_sent;
         }
