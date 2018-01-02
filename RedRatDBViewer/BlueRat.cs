@@ -35,7 +35,8 @@ namespace RedRatDatabaseViewer
                 else
                 {
                     HomeMade_Delay(10);
-                    this.Stop_Current_Tx();
+                    this.Force_Init_BlueRat();
+                    HomeMade_Delay(10);
                     if (this.CheckConnection() == true)
                     {
                         ret = true;
@@ -80,31 +81,42 @@ namespace RedRatDatabaseViewer
             return ret;
         }
 
-        // 強迫立刻停止信號發射的指令 -- 也可以用來PC端程式開啟時,用來將小藍鼠的狀態設定為預設狀態
+        // 強迫立刻停止信號發射的指令 -- 例如在PC端程式開啟時,可以用來將小藍鼠的狀態設定為預設狀態
         public bool Force_Init_BlueRat()
         {
-            return SendToSerial_v2(Prepare_FORCE_RESTART_CMD().ToArray());
+            bool ret = false;
+            ret = SendToSerial_v2(Prepare_FORCE_RESTART_CMD().ToArray());
+            HomeMade_TimeOutIndicator = true;
+            return ret;
         }
 
         // 強迫目前這一次信號發射結束後立刻停止(清除repeat count)的指令
         public bool Stop_Current_Tx()
         {
-            return SendToSerial_v2(Prepare_STOP_CMD().ToArray());
+            bool ret = false;
+            ret = SendToSerial_v2(Prepare_STOP_CMD().ToArray());
+            //HomeMade_TimeOutIndicator = true;
+            return ret;
         }
 
         public bool Add_Repeat_Count(UInt32 add_count)
         {
-            return SendToSerial_v2(Prepare_Send_Repeat_Cnt_Add_CMD(add_count).ToArray());
+            bool ret = false;
+            ret = SendToSerial_v2(Prepare_Send_Repeat_Cnt_Add_CMD(add_count).ToArray());
+            return ret;
         }
 
         // 讓系統進入等待軟體更新的狀態
         public bool Enter_ISP_Mode()
         {
-            return SendToSerial_v2(Prepare_Enter_ISP_CMD().ToArray());
+            bool ret = false;
+            ret = SendToSerial_v2(Prepare_Enter_ISP_CMD().ToArray());
+            return ret;
         }
 
-        public void HomeMade_Delay(int delay_ms)
+        private void HomeMade_Delay(int delay_ms)
         {
+            if (delay_ms <= 0) return;
             System.Timers.Timer aTimer = new System.Timers.Timer(delay_ms);
             aTimer.Elapsed += new ElapsedEventHandler(HomeMade_Delay_OnTimedEvent);
             HomeMade_TimeOutIndicator = false;
@@ -118,52 +130,52 @@ namespace RedRatDatabaseViewer
         {
             int repeat_cnt = 0;
             Get_UART_Input = 1;
-            SendToSerial_v2(Prepare_Get_RC_Repeat_Count().ToArray());
-            HomeMade_Delay(5);
-            if (UART_READ_MSG_QUEUE.Count > 0)
+            if (SendToSerial_v2(Prepare_Get_RC_Repeat_Count().ToArray()))
             {
-                String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                if (in_str.Contains("CNT:"))
+                HomeMade_Delay(5);
+                if (UART_READ_MSG_QUEUE.Count > 0)
                 {
-
-                    string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
-                    repeat_cnt = Convert.ToInt32(value_str, 16);
-                    return repeat_cnt;
+                    String in_str = UART_READ_MSG_QUEUE.Dequeue();
+                    if (in_str.Contains("CNT:"))
+                    {
+                        string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                        repeat_cnt = Convert.ToInt32(value_str, 16);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Check Get_Remaining_Repeat_Count()");
                 }
             }
-            else
-            {
-                // Should not reach here unless system is abnormal
-            }
-            return 0;
+            return repeat_cnt;
         }
 
         public bool Get_Current_Tx_Status()
         {
+            bool ret = false;
+
             Get_UART_Input = 1;
-            SendToSerial_v2(Prepare_Get_RC_Current_Running_Status().ToArray());
-            HomeMade_Delay(10);
-            if (UART_READ_MSG_QUEUE.Count > 0)
+            if (SendToSerial_v2(Prepare_Get_RC_Current_Running_Status().ToArray()))
             {
-                String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                if (in_str.Contains("TX:"))
+                HomeMade_Delay(10);
+                if (UART_READ_MSG_QUEUE.Count > 0)
                 {
-                    string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
-                    if (Convert.ToInt32(value_str, 16) != 0)
+                    String in_str = UART_READ_MSG_QUEUE.Dequeue();
+                    if (in_str.Contains("TX:"))
                     {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
+                        string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                        if (Convert.ToInt32(value_str, 16) != 0)
+                        {
+                            ret = true;
+                        }
                     }
                 }
+                else
+                {
+                    Console.WriteLine("Check Get_Current_Tx_Status()");
+                }
             }
-            else
-            {
-                // Should not reach here unless system is abnormal
-            }
-            return false;
+            return ret;
         }
 
         public string Get_SW_Version()
@@ -171,19 +183,21 @@ namespace RedRatDatabaseViewer
             string value_str = "";
         
             Get_UART_Input = 1;
-            SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_SW_VER)).ToArray());
-            HomeMade_Delay(20);
-            if (UART_READ_MSG_QUEUE.Count > 0)
+            if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_SW_VER)).ToArray()))
             {
-                String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                if (in_str.Contains("SW:"))
+                HomeMade_Delay(20);
+                if (UART_READ_MSG_QUEUE.Count > 0)
                 {
-                    value_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                    String in_str = UART_READ_MSG_QUEUE.Dequeue();
+                    if (in_str.Contains("SW:"))
+                    {
+                        value_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                    }
                 }
-            }
-            else
-            {
-                // Should not reach here unless system is abnormal
+                else
+                {
+                    Console.WriteLine("Check Get_SW_Version()");
+                }
             }
             return value_str;
         }
@@ -193,19 +207,21 @@ namespace RedRatDatabaseViewer
             string value_str = "";
 
             Get_UART_Input = 1;
-            SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_BUILD_TIME)).ToArray());
-            HomeMade_Delay(200);
-            if (UART_READ_MSG_QUEUE.Count > 0)
+            if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_BUILD_TIME)).ToArray()))
             {
-                String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                //if (in_str.Contains("SW:"))
+                HomeMade_Delay(200);
+                if (UART_READ_MSG_QUEUE.Count > 0)
                 {
-                    value_str = in_str;
+                    String in_str = UART_READ_MSG_QUEUE.Dequeue();
+                    //if (in_str.Contains("SW:"))
+                    {
+                        value_str = in_str;
+                    }
                 }
-            }
-            else
-            {
-                // Should not reach here unless system is abnormal
+                else
+                {
+                    Console.WriteLine("Check Get_BUILD_TIME()");
+                }
             }
             return value_str;
         }
@@ -215,19 +231,21 @@ namespace RedRatDatabaseViewer
             string value_str = "";
 
             Get_UART_Input = 1;
-            SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_CMD_VERSION)).ToArray());
-            HomeMade_Delay(20);
-            if (UART_READ_MSG_QUEUE.Count > 0)
+            if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_CMD_VERSION)).ToArray()))
             {
-                String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                if (in_str.Contains("CMD_VER:"))
+                HomeMade_Delay(20);
+                if (UART_READ_MSG_QUEUE.Count > 0)
                 {
-                    value_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                    String in_str = UART_READ_MSG_QUEUE.Dequeue();
+                    if (in_str.Contains("CMD_VER:"))
+                    {
+                        value_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                    }
                 }
-            }
-            else
-            {
-                // Should not reach here unless system is abnormal
+                else
+                {
+                    Console.WriteLine("Check Get_Command_Version()");
+                }
             }
             return value_str;
         }
@@ -236,16 +254,18 @@ namespace RedRatDatabaseViewer
         {
             UInt32 GPIO_Read_Data = 0;
             Get_UART_Input = 1;
-            SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)).ToArray());
-            HomeMade_Delay(5);
-            if (UART_READ_MSG_QUEUE.Count > 0)
+            if (SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)).ToArray()))
             {
-                String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                if (in_str.Contains("IN:"))
+                HomeMade_Delay(5);
+                if (UART_READ_MSG_QUEUE.Count > 0)
                 {
-                    string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
-                    GPIO_Read_Data = Convert.ToUInt32(value_str, 16);
-                    Console.WriteLine(GPIO_Read_Data.ToString());           // output to console
+                    String in_str = UART_READ_MSG_QUEUE.Dequeue();
+                    if (in_str.Contains("IN:"))
+                    {
+                        string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                        GPIO_Read_Data = Convert.ToUInt32(value_str, 16);
+                        Console.WriteLine(GPIO_Read_Data.ToString());           // output to console
+                    }
                 }
             }
         }
@@ -414,7 +434,7 @@ namespace RedRatDatabaseViewer
         static Thread readThread = null;
         private Queue<string> UART_READ_MSG_QUEUE = new Queue<string>();
         public Queue<string> BlueRat_LOG_QUEUE = new Queue<string>();
-
+ 
         private void Start_SerialReadThread()
         {
             _continue_serial_read_write = true;
@@ -985,7 +1005,7 @@ namespace RedRatDatabaseViewer
             Contract.Requires(RedRatData.SelectedSignal != null);
             Contract.Requires(RedRatData.Signal_Type_Supported == true);
 
-            if ((RedRatData == null))
+            if ((RedRatData == null)||(this.SerialPortConnection()==false))
             {
                 return 0;
             }
