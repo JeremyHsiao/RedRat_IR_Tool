@@ -192,20 +192,18 @@ namespace RedRatDatabaseViewer
         {
             if (btnConnectionControl.Text.Equals(CONNECT_UART_STRING_ON_BUTTON, StringComparison.Ordinal)) // Check if button is showing "Connect" at this moment.
             {   // User to connect
-                if (MyBlueRat.CheckConnection() == false)
+                string curItem = listBox1.SelectedItem.ToString();
+                if (MyBlueRat.Connect(curItem) == true)
                 {
-                    string curItem = listBox1.SelectedItem.ToString();
-                    if (MyBlueRat.Connect(curItem) == true)
-                    {
-                        UpdateToDisconnectButton();
-                        DisableRefreshCOMButton();
-                        UpdateRCFunctionButtonAfterConnection();
-                        //Start_SerialReadThread();
-                    }
-                    else
-                    {
-                        rtbSignalData.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " - Cannot connect to RS232.\n");
-                    }
+                    UpdateToDisconnectButton();
+                    DisableRefreshCOMButton();
+                    UpdateRCFunctionButtonAfterConnection();
+                    //Start_SerialReadThread();
+                }
+                else
+                {
+                    //MyBlueRat.Disconnect();
+                    rtbSignalData.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " - Cannot connect to BlueRat.\n");
                 }
             }
             else
@@ -824,7 +822,7 @@ namespace RedRatDatabaseViewer
         }
 
         // 如果一個RC要repeat不超過255次,可以使用一個byte來傳入repeat次數,就能夠直接傳入repeat次數
-        public void Example_to_Send_RC_with_Repeat_Count() // repeat count <= 0xff
+        private void Example_to_Send_RC_with_Repeat_Count() // repeat count <= 0xff
         {
             const byte SendOneRC_default_cnt = 2;
             // Load RedRat database - 載入資料庫
@@ -864,7 +862,7 @@ namespace RedRatDatabaseViewer
         // 就要在後面使用另一個指令,來追加要repeat的次數,
         // 該指令的傳入參數為4-byte (0~4,294,967,295 (0xffffffff))
         bool MyApplicationNeedToStopNow = false;        
-        public void Example_to_Send_RC_with_Large_Repeat_Count()
+        private void Example_to_Send_RC_with_Large_Repeat_Count()
         {
             int repeat = 300; // max value is 4,294,967,295 (0xffffffff)
             const byte recommended_first_repeat_cnt_value = 100;    // must be <= 0xff
@@ -929,6 +927,19 @@ namespace RedRatDatabaseViewer
             }
         }
 
+        private void Example_Auto_Serach_and_Connect_BlueRat()
+        {
+            foreach (string comport_s in SerialPort.GetPortNames())
+            {
+                if (MyBlueRat.Connect(comport_s))
+                {
+                    listBox1.SelectedItem = comport_s;      // This is the COM_PORT connecting to BlueRat
+                    MyBlueRat.Disconnect(); // 這裏關掉連線,單純是是為了執行後面的Connect;正式code可以連線完成就直接開始使用
+                    break;
+                }
+            }
+        }
+
         private void btnRepeatRC_Click(object sender, EventArgs e)
         {
             TemoparilyDisbleAllRCFunctionButtons();
@@ -936,56 +947,58 @@ namespace RedRatDatabaseViewer
             //
             // Example
             //
-
+            Example_Auto_Serach_and_Connect_BlueRat();
             //示範現在如何聯接UART -- 需傳入COM PORT名稱
             string com_port_name = listBox1.SelectedItem.ToString();
-            MyBlueRat.Connect(com_port_name);
-            // 在開始使用BlueRat跑Schedule之前,請執行這一行,確保BlueRat的起始狀態一致 -- 正常情況下不執行並不影響BlueRat運行,但為了找問題方便,還是請務必執行
-            MyBlueRat.Force_Init_BlueRat(); 
-            string temp_string1, temp_string2, temp_string3;
-            temp_string1 = MyBlueRat.Get_SW_Version();
-            this.rtbSignalData.AppendText("Get SW ver: " + temp_string1 + "\n");
-            temp_string2 = MyBlueRat.Get_Command_Version();
-            this.rtbSignalData.AppendText("Get CMD ver: " + temp_string2 + "\n");
-            temp_string3 = MyBlueRat.Get_BUILD_TIME();
-            this.rtbSignalData.AppendText("Get Build time: " + temp_string3 + "\n");
-            this.rtbSignalData.ScrollToCaret();
-
-            //TEST_Return_Repeat_Count_and_Tx_Status();
-
-            MyBlueRat.Stop_Current_Tx();
-            MyBlueRat.CheckConnection();
-            MyBlueRat.Get_GPIO_Input();
-            MyBlueRat.CheckConnection();
-            Example_to_Send_RC_without_Repeat_Count();
-            MyBlueRat.CheckConnection();
-            Example_to_Send_RC_with_Repeat_Count();
-            MyBlueRat.CheckConnection();
-            Example_to_Send_RC_with_Large_Repeat_Count();
-            MyBlueRat.CheckConnection();
-
-            if ((RedRatData != null) && (RedRatData.SignalDB != null))
+            if (MyBlueRat.Connect(com_port_name))
             {
-                TEST_WalkThroughAllRCKeys();
+                // 在開始使用BlueRat跑Schedule之前,請執行這一行,確保BlueRat的起始狀態一致 -- 正常情況下不執行並不影響BlueRat運行,但為了找問題方便,還是請務必執行
+                MyBlueRat.Force_Init_BlueRat();
+                string temp_string1, temp_string2, temp_string3;
+                temp_string1 = MyBlueRat.Get_SW_Version();
+                this.rtbSignalData.AppendText("Get SW ver: " + temp_string1 + "\n");
+                temp_string2 = MyBlueRat.Get_Command_Version();
+                this.rtbSignalData.AppendText("Get CMD ver: " + temp_string2 + "\n");
+                temp_string3 = MyBlueRat.Get_BUILD_TIME();
+                this.rtbSignalData.AppendText("Get Build time: " + temp_string3 + "\n");
+                this.rtbSignalData.ScrollToCaret();
+
+                //TEST_Return_Repeat_Count_and_Tx_Status();
+
+                MyBlueRat.Stop_Current_Tx();
                 MyBlueRat.CheckConnection();
-                TEST_StressSendingRepeatCount();
+                MyBlueRat.Get_GPIO_Input();
+                MyBlueRat.CheckConnection();
+                Example_to_Send_RC_without_Repeat_Count();
+                MyBlueRat.CheckConnection();
+                Example_to_Send_RC_with_Repeat_Count();
+                MyBlueRat.CheckConnection();
+                Example_to_Send_RC_with_Large_Repeat_Count();
+                MyBlueRat.CheckConnection();
+
+                if ((RedRatData != null) && (RedRatData.SignalDB != null))
+                {
+                    TEST_WalkThroughAllRCKeys();
+                    MyBlueRat.CheckConnection();
+                    TEST_StressSendingRepeatCount();
+                }
+
+                ////
+                // Self-testing code
+                //
+                TEST_Return_Repeat_Count_and_Tx_Status();
+                MyBlueRat.CheckConnection();
+                MyBlueRat.TEST_WalkThroughAllCMDwithData();
+                MyBlueRat.CheckConnection();
+                MyBlueRat.TEST_GPIO_Output();
+                MyBlueRat.CheckConnection();
+                MyBlueRat.TEST_GPIO_Input();
+                MyBlueRat.CheckConnection();
+                //MyBlueRat.Enter_ISP_Mode();
+
+                //示範現在如何結束聯接UART並釋放 
+                MyBlueRat.Disconnect();
             }
-
-            ////
-            // Self-testing code
-            //
-            TEST_Return_Repeat_Count_and_Tx_Status();
-            MyBlueRat.CheckConnection();
-            MyBlueRat.TEST_WalkThroughAllCMDwithData();
-            MyBlueRat.CheckConnection();
-            MyBlueRat.TEST_GPIO_Output();
-            MyBlueRat.CheckConnection();
-            MyBlueRat.TEST_GPIO_Input();
-            MyBlueRat.CheckConnection();
-            //MyBlueRat.Enter_ISP_Mode();
-
-            //示範現在如何結束聯接UART並釋放
-            MyBlueRat.Disconnect();
 
             UndoTemoparilyDisbleAllRCFunctionButtons();
         }

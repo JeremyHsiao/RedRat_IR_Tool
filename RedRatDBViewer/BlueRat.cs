@@ -60,6 +60,10 @@ namespace RedRatDatabaseViewer
                     Console.WriteLine("Cannot open serial port:" + com_name);
                 }
             }
+            if(ret==false)
+            {
+                Serial_ClosePort();
+            }
             return ret;
         }
 
