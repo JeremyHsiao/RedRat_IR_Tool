@@ -415,6 +415,7 @@ namespace RedRatDatabaseViewer
                 _serialPort.PortName = PortName;
                 _serialPort.Open();
                 Start_SerialReadThread();
+                _system_IO_exception = false;
                 ret = true;
             }
             catch (Exception ex232)
@@ -459,7 +460,8 @@ namespace RedRatDatabaseViewer
         static Thread readThread = null;
         private Queue<string> UART_READ_MSG_QUEUE = new Queue<string>();
         public Queue<string> BlueRat_LOG_QUEUE = new Queue<string>();
- 
+        static bool _system_IO_exception = false;
+
         private void Start_SerialReadThread()
         {
             _continue_serial_read_write = true;
@@ -508,6 +510,13 @@ namespace RedRatDatabaseViewer
                 }
                 catch (Exception ex)
                 {
+                    if (ex.TargetSite.Name=="WinIOError")
+                    {
+                        _system_IO_exception = true;
+                        _continue_serial_read_write = false;
+                        _serialPort.Close();
+                        OnUARTException(EventArgs.Empty);
+                    }
                     Console.WriteLine("ReadSerialPortThread - " + ex);
                     //AppendSerialMessageLog(ex.ToString());
                     //_continue_serial_read_write = false;
@@ -582,6 +591,20 @@ namespace RedRatDatabaseViewer
             //AppendSerialMessageLog("\n===Tx:" + Tx_CNT.ToString() + " ");
             return return_value;
         }
+        //
+        // To process UART IO Exception
+        //
+        protected virtual void OnUARTException(EventArgs e)
+        {
+            EventHandler handler = UARTException;
+            if (handler != null)
+            {
+                handler(this, e);
+            }
+        }
+
+        public event EventHandler UARTException;
+
 
         //
         // 跟小藍鼠有關係的程式代碼與範例程式區 -- 開始

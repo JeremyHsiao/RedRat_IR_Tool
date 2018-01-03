@@ -26,6 +26,13 @@ namespace RedRatDatabaseViewer
         private RedRatDBParser RedRatData = new RedRatDBParser();
         private BlueRat MyBlueRat = new BlueRat();
 
+        static bool BlueRat_UART_Exception_status = false;
+
+        static void BlueRat_UARTException(Object sender, EventArgs e)
+        {
+            BlueRat_UART_Exception_status = true;
+         }
+
         static bool TimeOutIndicator = false;
 
         private static void OnTimedEvent(object source, ElapsedEventArgs e)
@@ -195,31 +202,30 @@ namespace RedRatDatabaseViewer
                 string curItem = listBox1.SelectedItem.ToString();
                 if (MyBlueRat.Connect(curItem) == true)
                 {
+                    BlueRat_UART_Exception_status = false;
                     UpdateToDisconnectButton();
                     DisableRefreshCOMButton();
                     UpdateRCFunctionButtonAfterConnection();
-                    //Start_SerialReadThread();
                 }
                 else
                 {
-                    //MyBlueRat.Disconnect();
                     rtbSignalData.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " - Cannot connect to BlueRat.\n");
                 }
             }
             else
             {   // User to disconnect
-                if (MyBlueRat.CheckConnection() == true)
+                if (MyBlueRat.Disconnect() == true)
                 {
-                    if (MyBlueRat.Disconnect() == true)
-                    {
-                        UpdateToConnectButton();
-                        EnableRefreshCOMButton();
-                        UpdateRCFunctionButtonAfterDisconnection();
-                    }
-                    else
-                    {
-                        rtbSignalData.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " - Cannot disconnect from RS232.\n");
-                    }
+                    UpdateToConnectButton();
+                    EnableRefreshCOMButton();
+                    UpdateRCFunctionButtonAfterDisconnection();
+                    if (BlueRat_UART_Exception_status)
+                    { Serial_UpdatePortName(); }
+                    BlueRat_UART_Exception_status = false;
+                }
+                else
+                {
+                    rtbSignalData.AppendText(DateTime.Now.ToString("h:mm:ss tt") + " - Cannot disconnect from RS232.\n");
                 }
             }
         }
@@ -519,6 +525,7 @@ namespace RedRatDatabaseViewer
             //_serialPort = new SerialPort();
             //Serial_InitialSetting();
             Serial_UpdatePortName();
+            MyBlueRat.UARTException += BlueRat_UARTException;
         }
 
         private void RedRatDBViewer_Closing(Object sender, FormClosingEventArgs e)
