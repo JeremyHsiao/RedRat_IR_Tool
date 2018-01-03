@@ -210,9 +210,6 @@ namespace RedRatDatabaseViewer
             {   // User to disconnect
                 if (MyBlueRat.CheckConnection() == true)
                 {
-                    MyBlueRat.Stop_Current_Tx();
-                    RedRatDBViewer_Delay(100);
-                    //Stop_SerialReadThread();
                     if (MyBlueRat.Disconnect() == true)
                     {
                         UpdateToConnectButton();
@@ -952,7 +949,7 @@ namespace RedRatDatabaseViewer
             string com_port_name = listBox1.SelectedItem.ToString();
             if (MyBlueRat.Connect(com_port_name))
             {
-                // 在開始使用BlueRat跑Schedule之前,請執行這一行,確保BlueRat的起始狀態一致 -- 正常情況下不執行並不影響BlueRat運行,但為了找問題方便,還是請務必執行
+                // 在第一次/或長時間未使用之後,要開始使用BlueRat跑Schedule之前,建議執行這一行,確保BlueRat的起始狀態一致 -- 正常情況下不執行並不影響BlueRat運行,但為了找問題方便,還是請務必執行
                 MyBlueRat.Force_Init_BlueRat();
                 string temp_string1, temp_string2, temp_string3;
                 temp_string1 = MyBlueRat.Get_SW_Version();

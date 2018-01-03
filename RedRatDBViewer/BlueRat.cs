@@ -21,6 +21,7 @@ namespace RedRatDatabaseViewer
         //
 
         public BlueRat() { Serial_InitialSetting(); }
+        ~BlueRat() { Serial_ClosePort();  }
 
         private bool Connect_BlueRat_Protocol()
         {
@@ -70,6 +71,12 @@ namespace RedRatDatabaseViewer
         public bool Disconnect()
         {
             bool ret = false;
+            if (this.SerialPortConnection() == true)
+            {
+                Stop_Current_Tx();
+                HomeMade_Delay(300);
+                Force_Init_BlueRat();
+            }
             if (Serial_ClosePort() == true)
             {
                 ret = true;
@@ -424,6 +431,7 @@ namespace RedRatDatabaseViewer
             string PortName = "Invalid _serialPort.PortName";
             try
             {
+                Stop_SerialReadThread();
                 PortName = _serialPort.PortName;
                 _serialPort.Close();
                 ret = true;
