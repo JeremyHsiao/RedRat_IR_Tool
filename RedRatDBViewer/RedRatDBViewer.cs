@@ -563,7 +563,7 @@ namespace RedRatDatabaseViewer
                         //Console.WriteLine("RedRat Found. Loading DB file...");
                         //RedRatData = new RedRatDBParser();
                         RedRatData.RedRatLoadSignalDB(openFileDialog1.FileName); // Device 0 Signal 0 will be selected after RC database loaded
-                        //HomeMade_Delay(16);
+                        //RedRatDBViewer_Delay(16);
                         Application.DoEvents();
                         //
                         // Update Form Display Data according to content of RedRatData.SelectedSignal
@@ -578,7 +578,7 @@ namespace RedRatDatabaseViewer
                             if (listboxAVDeviceList.Items.Count > 0)
                             {
                                 listboxAVDeviceList.SelectedIndex = 0;
-                                //HomeMade_Delay(16);
+                                //RedRatDBViewer_Delay(16);
                                 Application.DoEvents();
                                 RedRatData.RedRatSelectDevice(0);
                             }
@@ -590,7 +590,7 @@ namespace RedRatDatabaseViewer
                                 if (listboxRCKey.Items.Count > 0)
                                 {
                                     listboxRCKey.SelectedIndex = 0;
-                                    //HomeMade_Delay(16);
+                                    //RedRatDBViewer_Delay(16);
                                     Application.DoEvents();
                                     RedRatData.RedRatSelectRCSignal(0);
                                     if (RedRatData.SelectedSignal != null)
@@ -743,11 +743,11 @@ namespace RedRatDatabaseViewer
             // Select Device  - 選擇RC Device
             RedRatData.RedRatSelectDevice("HP-MCE");
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
-            //HomeMade_Delay(16);
+            //RedRatDBViewer_Delay(16);
             // Select RC - 選擇RC (使用名稱或Index No)
             RedRatData.RedRatSelectRCSignal("1", true);
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
-            //HomeMade_Delay(16);
+            //RedRatDBViewer_Delay(16);
             // Check if this RC code is supported -- 如果此訊號資料OK可以發射,就發射
             if (RedRatData.Signal_Type_Supported == true)
             {
@@ -759,7 +759,7 @@ namespace RedRatDatabaseViewer
                 MyBlueRat.Add_Repeat_Count(Convert.ToUInt32(repeat - recommended_first_repeat_cnt_value));
                 rc_duration = ((rc_duration * repeat) / Convert.ToInt32(recommended_first_repeat_cnt_value)) - 1;
 
-                //HomeMade_Delay(rc_duration-1);
+                //RedRatDBViewer_Delay(rc_duration-1);
                 // 這裏是另一種delay的做法,如果需要在等待時,讓系統做一些別的事情
                 System.Timers.Timer aTimer = new System.Timers.Timer(rc_duration);
                 aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
@@ -800,11 +800,11 @@ namespace RedRatDatabaseViewer
             // Select Device  - 選擇RC Device
             RedRatData.RedRatSelectDevice("HP-MCE");
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
-            //HomeMade_Delay(16);
+            //RedRatDBViewer_Delay(16);
             // Select RC - 選擇RC (使用名稱或Index No)
             RedRatData.RedRatSelectRCSignal("1", true);
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
-            //HomeMade_Delay(16); 
+            //RedRatDBViewer_Delay(16); 
             // Check if this RC code is supported -- 如果此訊號資料OK可以發射,就發射
             if (RedRatData.Signal_Type_Supported == true)
             {
@@ -832,16 +832,16 @@ namespace RedRatDatabaseViewer
             // Load RedRat database - 載入資料庫
             RedRatData.RedRatLoadSignalDB("C:\\Users\\jeremy.hsiao\\Downloads\\SDK-V4-Samples\\Samples\\RC DB\\DeviceDB - 複製.xml");
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
-            //HomeMade_Delay(16);
+            //RedRatDBViewer_Delay(16);
             Application.DoEvents();
             // Select Device  - 選擇RC Device
             RedRatData.RedRatSelectDevice("HP-MCE");
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
-            //HomeMade_Delay(16);
+            //RedRatDBViewer_Delay(16);
             // Select RC - 選擇RC (使用名稱或Index No)
             RedRatData.RedRatSelectRCSignal("1", true);
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
-            //HomeMade_Delay(16);
+            //RedRatDBViewer_Delay(16);
             // Check if this RC code is supported -- 如果此訊號資料OK可以發射,就發射
             if (RedRatData.Signal_Type_Supported == true)
             {
@@ -873,16 +873,16 @@ namespace RedRatDatabaseViewer
             // Load RedRat database - 載入資料庫
             RedRatData.RedRatLoadSignalDB("C:\\Users\\jeremy.hsiao\\Downloads\\SDK-V4-Samples\\Samples\\RC DB\\DeviceDB - 複製.xml");
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
-            //HomeMade_Delay(16);
+            //RedRatDBViewer_Delay(16);
             Application.DoEvents();
             // Select Device  - 選擇RC Device
             RedRatData.RedRatSelectDevice("HP-MCE");
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
-            //HomeMade_Delay(16);
+            //RedRatDBViewer_Delay(16);
             // Select RC - 選擇RC (使用名稱或Index No)
             RedRatData.RedRatSelectRCSignal("1", true);
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
-            //HomeMade_Delay(16);
+            //RedRatDBViewer_Delay(16);
             // Check if this RC code is supported -- 如果此訊號資料OK可以發射,就發射
             if (RedRatData.Signal_Type_Supported == true)
             {
@@ -894,7 +894,7 @@ namespace RedRatDatabaseViewer
                 MyBlueRat.Add_Repeat_Count(Convert.ToUInt32(repeat - recommended_first_repeat_cnt_value));
                 rc_duration = ((rc_duration * repeat) / Convert.ToInt32(recommended_first_repeat_cnt_value)) - 1;
 
-                //HomeMade_Delay(rc_duration-1);
+                //RedRatDBViewer_Delay(rc_duration-1);
                 // 這裏是另一種delay的做法,如果需要在等待時,讓系統做一些別的事情
                 System.Timers.Timer aTimer = new System.Timers.Timer(rc_duration);
                 aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
