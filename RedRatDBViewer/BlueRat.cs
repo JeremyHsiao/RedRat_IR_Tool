@@ -23,6 +23,24 @@ namespace RedRatDatabaseViewer
         public BlueRat() { Serial_InitialSetting(); }
         ~BlueRat() { Serial_ClosePort();  }
 
+        private UInt32 BlueRatCMDVersion = 0;
+
+        public UInt32 GetCommandVersion()
+        {
+            if(BlueRatCMDVersion==0)
+            {
+                if (this.CheckConnection() == true)
+                {
+                    this.Get_Command_Version();
+                }
+                else
+                {
+                    Console.WriteLine("Need to setup connection to BlueRat to get CMD_VER");
+                }
+            }
+            return BlueRatCMDVersion;
+        }
+
         private bool Connect_BlueRat_Protocol()
         {
             bool ret = false;
@@ -37,6 +55,7 @@ namespace RedRatDatabaseViewer
                 HomeMade_Delay(10);
                 if (this.CheckConnection() == true)
                 {
+                    this.Get_Command_Version();
                     ret = true;
                 }
             }
@@ -283,10 +302,12 @@ namespace RedRatDatabaseViewer
                     if (_CMD_RETURN_CMD_VERSION_RETURN_HEADER_ == "")
                     {
                         value_str = in_str;
+                        BlueRatCMDVersion = Convert.ToUInt32(value_str);
                     }
                     else if (in_str.Contains(_CMD_RETURN_CMD_VERSION_RETURN_HEADER_))
                     {
                         value_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                        BlueRatCMDVersion = Convert.ToUInt32(value_str);
                     }
                 }
                 else
