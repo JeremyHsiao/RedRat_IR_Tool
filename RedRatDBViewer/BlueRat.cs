@@ -160,7 +160,11 @@ namespace RedRatDatabaseViewer
                 if (UART_READ_MSG_QUEUE.Count > 0)
                 {
                     String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                    if (in_str.Contains(_CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_))
+                    if (_CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ == "")
+                    {
+                        repeat_cnt = Convert.ToInt32(in_str, 16);
+                    }
+                    else if (in_str.Contains(_CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_))
                     {
                         string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
                         repeat_cnt = Convert.ToInt32(value_str, 16);
@@ -185,8 +189,15 @@ namespace RedRatDatabaseViewer
                 if (UART_READ_MSG_QUEUE.Count > 0)
                 {
                     String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                    if (in_str.Contains(_CMD_GET_TX_RUNNING_STATUS_HEADER_))
+                    if (_CMD_GET_TX_RUNNING_STATUS_HEADER_ == "") 
                     {
+                        if (Convert.ToInt32(in_str, 16) != 0)
+                        {
+                            ret = true;
+                        }
+                    }
+                    else if (in_str.Contains(_CMD_GET_TX_RUNNING_STATUS_HEADER_))
+                    { 
                         string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
                         if (Convert.ToInt32(value_str, 16) != 0)
                         {
@@ -204,7 +215,7 @@ namespace RedRatDatabaseViewer
 
         public string Get_SW_Version()
         {
-            string value_str = "";
+            string value_str = "0";
         
             Get_UART_Input = 1;
             if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_SW_VER)).ToArray()))
@@ -213,7 +224,11 @@ namespace RedRatDatabaseViewer
                 if (UART_READ_MSG_QUEUE.Count > 0)
                 {
                     String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                    if (in_str.Contains(_CMD_RETURN_SW_VER_RETURN_HEADER_))
+                    if (_CMD_RETURN_SW_VER_RETURN_HEADER_ == "")
+                    {
+                        value_str = in_str;
+                    }
+                    else if (in_str.Contains(_CMD_RETURN_SW_VER_RETURN_HEADER_))
                     {
                         value_str = in_str.Substring(in_str.IndexOf(":") + 1);
                     }
@@ -237,9 +252,13 @@ namespace RedRatDatabaseViewer
                 if (UART_READ_MSG_QUEUE.Count > 0)
                 {
                     String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                    //if (in_str.Contains("SW:"))
+                    if (_CMD_BUILD_TIME_RETURN_HEADER_ == "")
                     {
                         value_str = in_str;
+                    }
+                    else if (in_str.Contains(_CMD_BUILD_TIME_RETURN_HEADER_))
+                    {
+                        value_str = in_str.Substring(in_str.IndexOf(":") + 1);
                     }
                 }
                 else
@@ -261,7 +280,11 @@ namespace RedRatDatabaseViewer
                 if (UART_READ_MSG_QUEUE.Count > 0)
                 {
                     String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                    if (in_str.Contains(_CMD_RETURN_CMD_VERSION_RETURN_HEADER_))
+                    if (_CMD_RETURN_CMD_VERSION_RETURN_HEADER_ == "")
+                    {
+                        value_str = in_str;
+                    }
+                    else if (in_str.Contains(_CMD_RETURN_CMD_VERSION_RETURN_HEADER_))
                     {
                         value_str = in_str.Substring(in_str.IndexOf(":") + 1);
                     }
@@ -274,9 +297,9 @@ namespace RedRatDatabaseViewer
             return value_str;
         }
 
-        public void Get_GPIO_Input()
+        public UInt32 Get_GPIO_Input()
         {
-            UInt32 GPIO_Read_Data = 0;
+            UInt32 GPIO_Read_Data = 0xffffffff;
             Get_UART_Input = 1;
             if (SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)).ToArray()))
             {
@@ -284,16 +307,49 @@ namespace RedRatDatabaseViewer
                 if (UART_READ_MSG_QUEUE.Count > 0)
                 {
                     String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                    if (in_str.Contains("IN:"))
+                    if (_CMD_GPIO_INPUT_RETURN_HEADER_ == "")
+                    {
+                        GPIO_Read_Data = Convert.ToUInt32(in_str, 16);
+                    }
+                    else if (in_str.Contains(_CMD_GPIO_INPUT_RETURN_HEADER_))
                     {
                         string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
                         GPIO_Read_Data = Convert.ToUInt32(value_str, 16);
                         Console.WriteLine(GPIO_Read_Data.ToString());           // output to console
                     }
                 }
+                else
+                {
+                    Console.WriteLine("Check Get_GPIO_Input()");
+                }
             }
+            return GPIO_Read_Data;
         }
 
+        public bool Set_GPIO_Output(byte output_value)
+        {
+            bool ret = false;
+
+            if(SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), output_value).ToArray()))
+            {
+                ret = true;
+            }
+            return ret;
+        }
+
+        public bool Set_GPIO_Output_SinglePort(byte port_no, byte output_value)
+        {
+            bool ret = false;
+
+            UInt32 temp_parameter;
+            if (output_value != 0) { temp_parameter = 1; } else { temp_parameter = 0; }
+            temp_parameter |= Convert.ToUInt32(port_no) << 8;
+            if (SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), temp_parameter).ToArray()))
+            {
+                ret = true;
+            }
+            return ret;
+        }
         // For testing purpose
         public void TEST_WalkThroughAllCMDwithData()
         {
@@ -309,18 +365,18 @@ namespace RedRatDatabaseViewer
         // For testing purpose
         public void TEST_GPIO_Output()
         {
-            const int delay_time = 50;
+            const int delay_time = 100;
             // Testing: send GPIO output with byte parameter -- Set output port value at once
-            for (uint output_value = 0; output_value <= 0xff; output_value++)
+            for (byte output_value = 0; output_value <= 0xff; output_value++)
             {
-                SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), output_value).ToArray());
+                Set_GPIO_Output(output_value);
                 HomeMade_Delay(delay_time / 2);
             }
 
             int run_time = 10;
             const UInt32 IO_value_mask = 0x0, reverse_IO_value_mask = 0x1;
 
-            SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), ~reverse_IO_value_mask).ToArray());
+            Set_GPIO_Output(Convert.ToByte((~reverse_IO_value_mask)&0xff));
             HomeMade_Delay(delay_time);
 
             while (run_time-- > 0)
@@ -359,18 +415,7 @@ namespace RedRatDatabaseViewer
             int run_time = 20;
             while (run_time-- > 0)
             {
-                Get_UART_Input = 4;
-                SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)).ToArray());
-                HomeMade_Delay(16);
-                while (UART_READ_MSG_QUEUE.Count > 0)
-                {
-                    String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                    if (in_str.Contains("IN:"))
-                    {
-                        string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
-                        GPIO_Read_Data = Convert.ToUInt32(value_str, 16);
-                    }
-                }
+                GPIO_Read_Data = Get_GPIO_Input();
                 SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), ~GPIO_Read_Data).ToArray());
                 HomeMade_Delay(delay_time);
                 SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), 0xff).ToArray());
@@ -759,11 +804,21 @@ namespace RedRatDatabaseViewer
         const uint ISP_PASSWORD = (0x46574154);
         const uint RESTART_PASSWORD = (0x46535050);
 
-        const string _CMD_RETURN_SW_VER_RETURN_HEADER_ = "SW:";
-        const string _CMD_BUILD_TIME_RETURN_HEADER_ = "";
-        const string _CMD_RETURN_CMD_VERSION_RETURN_HEADER_ = "CMD_VER:";
-        const string _CMD_GET_TX_RUNNING_STATUS_HEADER_ = "TX:";
-        const string _CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ = "CNT:";
+        const string _CMD_SAY_HI_RETURN_HEADER_ = "HI";
+        //const string _CMD_RETURN_SW_VER_RETURN_HEADER_ = "SW:"; 
+        const string _CMD_RETURN_SW_VER_RETURN_HEADER_ = ""; // for compatibility of firmware: BlueRat - 20171221_001.bin -- please update it whenever we have chance to upgrade firmware.
+        //const string _CMD_BUILD_TIME_RETURN_HEADER_ = "AT";      
+        const string _CMD_BUILD_TIME_RETURN_HEADER_ = "";       //  please update it whenever we have chance to upgrade firmware.
+        //const string _CMD_RETURN_CMD_VERSION_RETURN_HEADER_ = "CMD_VER:"; 
+        const string _CMD_RETURN_CMD_VERSION_RETURN_HEADER_ = ""; // for compatibility of firmware: BlueRat - 20171221_001.bin -- please update it whenever we have chance to upgrade firmware.
+        //        const string _CMD_GET_TX_RUNNING_STATUS_HEADER_ = "TX:";
+        const string _CMD_GET_TX_RUNNING_STATUS_HEADER_ = ""; // for compatibility of firmware: BlueRat - 20171221_001.bin -- please update it whenever we have chance to upgrade firmware.
+        //const string _CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ = "CNT:";
+        const string _CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ = ""; // for compatibility of firmware: BlueRat - 20171221_001.bin -- please update it whenever we have chance to upgrade firmware.
+        //const string _CMD_GPIO_INPUT_RETURN_HEADER_ = "IN:"; 
+        const string _CMD_GPIO_INPUT_RETURN_HEADER_ = "";       //  please update it whenever we have chance to upgrade firmware.
+        //const string _CMD_SENSOR_INPUT_RETURN_HEADER_ = "SS:";
+        const string _CMD_SENSOR_INPUT_RETURN_HEADER_ = "";  //  please update it whenever we have chance to upgrade firmware.
 
         //
         // Input parameter is 32-bit unsigned data
@@ -1195,7 +1250,7 @@ namespace RedRatDatabaseViewer
             if (UART_READ_MSG_QUEUE.Count > 0)
             {
                 String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                if (in_str.Equals("HI"))
+                if (in_str.Contains(_CMD_SAY_HI_RETURN_HEADER_))
                 {
                     ret = true;
                 }
