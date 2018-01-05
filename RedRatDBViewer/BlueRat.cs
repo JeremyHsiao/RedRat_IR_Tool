@@ -9,6 +9,35 @@ using System.Windows.Forms;
 
 namespace RedRatDatabaseViewer
 {
+    class BlueRatCheckSum
+    {
+        //
+        // Checksum is currently XOR all data (excluding sync header)
+        //
+        private Byte CheckSum;
+
+        public BlueRatCheckSum() { CheckSum = 0; }
+        public void ClearCheckSum()
+        {
+            CheckSum = 0;
+        }
+
+        public void UpdateCheckSum(byte value)
+        {
+            CheckSum ^= value;
+        }
+
+        public byte GetCheckSum()
+        {
+            return CheckSum;
+        }
+
+        public bool CompareCheckSum()
+        {
+            return (CheckSum == 0) ? true : false;
+        }
+    }
+
     class BlueRat
     {
         // Static private variable
@@ -1052,164 +1081,151 @@ namespace RedRatDatabaseViewer
         }
 
         //
-        // Checksum is currently XOR all data (excluding sync header)
-        //
-        private Byte CheckSum = 0;
-        private void ClearCheckSum()
-        {
-            CheckSum = 0;
-        }
-
-        private void UpdateCheckSum(byte value)
-        {
-            CheckSum ^= value;
-        }
-
-        private byte GetCheckSum()
-        {
-            return CheckSum;
-        }
-
-        private bool CompareCheckSum()
-        {
-            return (CheckSum == 0) ? true : false;
-        }
-
-        //
         // To get UART data byte for each command
         //
-        private List<byte> Prepare_STOP_CMD()
+        //
+        // Checksum is currently excluding sync header
+        //
+        static private List<byte> Prepare_STOP_CMD()
         {
             List<byte> data_to_sent = new List<byte>();
+            BlueRatCheckSum MyCheckSum = new BlueRatCheckSum();
 
-            ClearCheckSum();
+            MyCheckSum.ClearCheckSum();
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
             // No need to calculate checksum for header
             data_to_sent.Add((Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_STOP_ALL)));
-            UpdateCheckSum((Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_STOP_ALL)));
-            data_to_sent.Add(GetCheckSum());
+            MyCheckSum.UpdateCheckSum((Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_STOP_ALL)));
+            data_to_sent.Add(MyCheckSum.GetCheckSum());
             return data_to_sent;
         }
 
-        private List<byte> Prepare_FORCE_RESTART_CMD()
+        static private List<byte> Prepare_FORCE_RESTART_CMD()
         {
             List<byte> data_to_sent = new List<byte>();
+            BlueRatCheckSum MyCheckSum = new BlueRatCheckSum();
 
-            ClearCheckSum();
+            MyCheckSum.ClearCheckSum();
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
             // No need to calculate checksum for headers
             data_to_sent.Add(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_FORCE_RESTART));
-            UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_FORCE_RESTART));
+            MyCheckSum.UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_FORCE_RESTART));
             List<byte> input_param_in_byte = Convert_data_to_Byte(RESTART_PASSWORD);
             foreach (byte temp in input_param_in_byte)
             {
                 data_to_sent.Add(temp);
-                UpdateCheckSum(temp);
+                MyCheckSum.UpdateCheckSum(temp);
             }
-            data_to_sent.Add(GetCheckSum());
+            data_to_sent.Add(MyCheckSum.GetCheckSum());
             return data_to_sent;
         }
 
-        private List<byte> Prepare_Say_HI_CMD()
+        static private List<byte> Prepare_Say_HI_CMD()
         {
             List<byte> data_to_sent = new List<byte>();
+            BlueRatCheckSum MyCheckSum = new BlueRatCheckSum();
 
-            ClearCheckSum();
+            MyCheckSum.ClearCheckSum();
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
             // No need to calculate checksum for headers
             data_to_sent.Add(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SAY_HI));
-            UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SAY_HI));
-            data_to_sent.Add(GetCheckSum());
+            MyCheckSum.UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SAY_HI));
+            data_to_sent.Add(MyCheckSum.GetCheckSum());
             return data_to_sent;
         }
 
-        private List<byte> Prepare_Get_RC_Repeat_Count()
+        static private List<byte> Prepare_Get_RC_Repeat_Count()
         {
             List<byte> data_to_sent = new List<byte>();
+            BlueRatCheckSum MyCheckSum = new BlueRatCheckSum();
 
-            ClearCheckSum();
+            MyCheckSum.ClearCheckSum();
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
             // No need to calculate checksum for headers
             data_to_sent.Add(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_TX_CURRENT_REPEAT_COUNT));
-            UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_TX_CURRENT_REPEAT_COUNT));
-            data_to_sent.Add(GetCheckSum());
+            MyCheckSum.UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_TX_CURRENT_REPEAT_COUNT));
+            data_to_sent.Add(MyCheckSum.GetCheckSum());
             return data_to_sent;
         }
 
-        private List<byte> Prepare_Get_RC_Current_Running_Status()
+        static private List<byte> Prepare_Get_RC_Current_Running_Status()
         {
             List<byte> data_to_sent = new List<byte>();
+            BlueRatCheckSum MyCheckSum = new BlueRatCheckSum();
 
-            ClearCheckSum();
+            MyCheckSum.ClearCheckSum();
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
             // No need to calculate checksum for headers
             data_to_sent.Add(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_TX_RUNNING_STATUS));
-            UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_TX_RUNNING_STATUS));
-            data_to_sent.Add(GetCheckSum());
+            MyCheckSum.UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_TX_RUNNING_STATUS));
+            data_to_sent.Add(MyCheckSum.GetCheckSum());
             return data_to_sent;
         }
 
-        private List<byte> Prepare_Enter_ISP_CMD()
+        static private List<byte> Prepare_Enter_ISP_CMD()
         {
             List<byte> data_to_sent = new List<byte>();
+            BlueRatCheckSum MyCheckSum = new BlueRatCheckSum();
 
-            ClearCheckSum();
+            MyCheckSum.ClearCheckSum();
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
             // No need to calculate checksum for headers
             data_to_sent.Add(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_ENTER_ISP_MODE));
-            UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_ENTER_ISP_MODE));
+            MyCheckSum.UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_ENTER_ISP_MODE));
             List<byte> input_param_in_byte = Convert_data_to_Byte(ISP_PASSWORD);
             foreach (byte temp in input_param_in_byte)
             {
                 data_to_sent.Add(temp);
-                UpdateCheckSum(temp);
+                MyCheckSum.UpdateCheckSum(temp);
             }
-            data_to_sent.Add(GetCheckSum());
+            data_to_sent.Add(MyCheckSum.GetCheckSum());
             //data_to_sent.Add(GetCheckSum());
             return data_to_sent;
         }
 
-        private List<byte> Prepare_Send_Repeat_Cnt_Add_CMD(UInt32 cnt = 0)
+        static private List<byte> Prepare_Send_Repeat_Cnt_Add_CMD(UInt32 cnt = 0)
         {
             List<byte> data_to_sent = new List<byte>();
+            BlueRatCheckSum MyCheckSum = new BlueRatCheckSum();
 
-            ClearCheckSum();
+            MyCheckSum.ClearCheckSum();
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
             // No need to calculate checksum for headers
             data_to_sent.Add(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_ADD_REPEAT_COUNT));
-            UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_ADD_REPEAT_COUNT));
+            MyCheckSum.UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_ADD_REPEAT_COUNT));
             List<byte> input_param_in_byte = Convert_data_to_Byte(cnt);
             foreach (byte temp in input_param_in_byte)
             {
                 data_to_sent.Add(temp);
-                UpdateCheckSum(temp);
+                MyCheckSum.UpdateCheckSum(temp);
             }
-            data_to_sent.Add(GetCheckSum());
+            data_to_sent.Add(MyCheckSum.GetCheckSum());
             return data_to_sent;
         }
 
-        private List<byte> Prepare_Send_Input_CMD_without_Parameter(byte input_cmd)
+        static private List<byte> Prepare_Send_Input_CMD_without_Parameter(byte input_cmd)
         {
             List<byte> data_to_sent = new List<byte>();
+            BlueRatCheckSum MyCheckSum = new BlueRatCheckSum();
 
-            ClearCheckSum();
+            MyCheckSum.ClearCheckSum();
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
             // No need to calculate checksum for headers
             data_to_sent.Add(input_cmd);
-            UpdateCheckSum(input_cmd);
-            data_to_sent.Add(GetCheckSum());
+            MyCheckSum.UpdateCheckSum(input_cmd);
+            data_to_sent.Add(MyCheckSum.GetCheckSum());
             return data_to_sent;
         }
 
-        private List<byte> Prepare_Send_Input_CMD(byte input_cmd, UInt32 input_param = 0)
+        static private List<byte> Prepare_Send_Input_CMD(byte input_cmd, UInt32 input_param = 0)
         {
             if ((input_cmd < CMD_CODE_LOWER_LIMIT) || (input_cmd > CMD_CODE_UPPER_LIMIT))
             {
@@ -1217,17 +1233,18 @@ namespace RedRatDatabaseViewer
             }
 
             List<byte> data_to_sent = new List<byte>();
-            ClearCheckSum();
+            BlueRatCheckSum MyCheckSum = new BlueRatCheckSum();
+            MyCheckSum.ClearCheckSum();
             data_to_sent.Add(0xff);
             data_to_sent.Add(0xff);
             // No need to calculate checksum for header
             data_to_sent.Add(input_cmd);
-            UpdateCheckSum(input_cmd);
+            MyCheckSum.UpdateCheckSum(input_cmd);
             if ((input_cmd >= CMD_SEND_COMMAND_CODE_WITH_BYTE) && (input_cmd < CMD_SEND_COMMAND_CODE_ONLY))
             {
                 byte temp = Convert.ToByte(input_param & 0xff);
                 data_to_sent.Add(Convert.ToByte(temp & 0xff));
-                UpdateCheckSum(temp);
+                MyCheckSum.UpdateCheckSum(temp);
             }
             else if ((input_cmd >= CMD_SEND_COMMAND_CODE_WITH_WORD) && (input_cmd < CMD_SEND_COMMAND_CODE_WITH_BYTE))
             {
@@ -1235,7 +1252,7 @@ namespace RedRatDatabaseViewer
                 foreach (byte temp in input_param_in_byte)
                 {
                     data_to_sent.Add(temp);
-                    UpdateCheckSum(temp);
+                    MyCheckSum.UpdateCheckSum(temp);
                 }
             }
             else if ((input_cmd >= CMD_SEND_COMMAND_CODE_WITH_DOUBLE_WORD) && (input_cmd < CMD_SEND_COMMAND_CODE_WITH_WORD))
@@ -1244,10 +1261,10 @@ namespace RedRatDatabaseViewer
                 foreach (byte temp in input_param_in_byte)
                 {
                     data_to_sent.Add(temp);
-                    UpdateCheckSum(temp);
+                    MyCheckSum.UpdateCheckSum(temp);
                 }
             }
-            data_to_sent.Add(GetCheckSum());
+            data_to_sent.Add(MyCheckSum.GetCheckSum());
             return data_to_sent;
         }
 
@@ -1277,6 +1294,7 @@ namespace RedRatDatabaseViewer
             List<byte> data_to_sent = new List<byte>();
             List<byte> pulse_packet = new List<byte>();
             List<double> pulse_width = RedRatData.GetTxPulseWidth();
+            BlueRatCheckSum MyCheckSum = new BlueRatCheckSum();
             int total_us = 0;
             foreach (var val in pulse_width)
             {
@@ -1292,12 +1310,12 @@ namespace RedRatDatabaseViewer
             {
                 data_to_sent.Add(0xff);
                 data_to_sent.Add(0xff);
-                ClearCheckSum();
+                MyCheckSum.ClearCheckSum();
             }
 
             // (2) Command
             data_to_sent.Add(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_INPUT_TX_SIGNAL));
-            UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_INPUT_TX_SIGNAL));
+            MyCheckSum.UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_INPUT_TX_SIGNAL));
 
             // (3) how many times to repeat RC (max 0xff)
             {
@@ -1305,14 +1323,14 @@ namespace RedRatDatabaseViewer
                 if (default_repeat_cnt <= repeat_count_max)
                 {
                     data_to_sent.Add(default_repeat_cnt);        // Repeat_No
-                    UpdateCheckSum(default_repeat_cnt);
+                    MyCheckSum.UpdateCheckSum(default_repeat_cnt);
                     total_us *= (default_repeat_cnt > 0) ? (default_repeat_cnt + 1) : 1;
                 }
                 else
                 {
                     Console.WriteLine("Repeat Count is out of range (>" + repeat_count_max.ToString() + "), using " + repeat_count_max.ToString() + " instead.");
                     data_to_sent.Add(repeat_count_max);        // Repeat_No
-                    UpdateCheckSum(repeat_count_max);
+                    MyCheckSum.UpdateCheckSum(repeat_count_max);
                     total_us *= (repeat_count_max > 0) ? (repeat_count_max + 1) : 1;
                 }
             }
@@ -1322,13 +1340,13 @@ namespace RedRatDatabaseViewer
                 if (duty_cycle <= max_duty_cycle)
                 {
                     data_to_sent.Add(duty_cycle);
-                    UpdateCheckSum(duty_cycle);
+                    MyCheckSum.UpdateCheckSum(duty_cycle);
                 }
                 else
                 {
                     Console.WriteLine("Duty Cycle is out of range (>" + max_duty_cycle.ToString() + "), using  " + default_duty_cycle.ToString() + "  instead.");
                     data_to_sent.Add(default_duty_cycle);
-                    UpdateCheckSum(default_duty_cycle);
+                    MyCheckSum.UpdateCheckSum(default_duty_cycle);
                 }
             }
             // (5) Frequency is between 200 KHz - 20Hz, or 0 Hz (no carrier)
@@ -1355,26 +1373,26 @@ namespace RedRatDatabaseViewer
                 }
                 temp_byte = Convert.ToByte(period / 256);
                 data_to_sent.Add(temp_byte);
-                UpdateCheckSum(temp_byte);
+                MyCheckSum.UpdateCheckSum(temp_byte);
                 temp_byte = Convert.ToByte(period % 256);
                 data_to_sent.Add(temp_byte);
-                UpdateCheckSum(temp_byte);
+                MyCheckSum.UpdateCheckSum(temp_byte);
             }
             // (6) Add RC width data
             {
                 foreach (var val in pulse_packet)
                 {
-                    UpdateCheckSum(val);
+                    MyCheckSum.UpdateCheckSum(val);
                 }
                 data_to_sent.AddRange(pulse_packet);
             }
             // (7) Add 0xff as last data byte
             {
                 data_to_sent.Add(0xff);
-                UpdateCheckSum(0xff);
+                MyCheckSum.UpdateCheckSum(0xff);
             }
             // (8) Finally add checksum at end of packet
-            data_to_sent.Add(GetCheckSum());
+            data_to_sent.Add(MyCheckSum.GetCheckSum());
 
             // Step 6
             SendToSerial_v2(data_to_sent.ToArray());
