@@ -44,85 +44,16 @@ namespace RedRatDatabaseViewer
         private static int BlueRatInstanceNumber = 0;
         private static List<string> BlueRatCOMPortString = new List<string>();
 
+        // Private member variable
+        private UInt32 BlueRatCMDVersion = 0;
+        static SerialPort _serialPort = new SerialPort();
+
         //
         // Function for external use
         //
         public BlueRat() { Serial_InitialSetting(ref _serialPort); BlueRatInstanceNumber++; }
+        public BlueRat(string com_port) { _serialPort.PortName = com_port; Serial_InitialSetting(ref _serialPort); BlueRatInstanceNumber++; }
         ~BlueRat() { BlueRat_ClosePort(); BlueRatInstanceNumber--; }
-
-        /*
-        static public bool CheckBlueRatExisting(string com_port)
-        {
-            bool ret = false;
-            if (_serialPort.IsOpen == true)
-            {
-                if (this.Test_If_System_Can_Say_HI() == true)
-                {
-                    SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SAY_HI)).ToArray());
-                    HomeMade_Delay(5);
-                    if (UART_READ_MSG_QUEUE.Count > 0)
-                    {
-                        String in_str = UART_READ_MSG_QUEUE.Dequeue();
-                        if (in_str.Contains(_CMD_SAY_HI_RETURN_HEADER_))
-                        {
-                            ret = true;
-                        }
-                        else
-                        {
-                            Console.WriteLine("BlueRat no resonse to HI Command");
-                        }
-                    }
-                }
-                else
-                {
-                }
-
-            }
-            else
-            {
-                if (Serial_OpenPort(com_name) == true)
-                {
-                    ret = Connect_BlueRat_Protocol();
-                }
-                else
-                {
-                    Console.WriteLine("Cannot open serial port:" + com_name);
-                }
-            }
-            if (ret == false)
-            {
-                Serial_ClosePort();
-            }
-            return ret;
-        }
-        */
-        private UInt32 BlueRatCMDVersion = 0;
-        private string MyBlueRatCOMPort = "";
-/*
-        public string GetCOMPort(string com_port) { return MyBlueRatCOMPort; }
-        public bool SetCOMPort(string com_port)
-        {
-            bool bRet = false;
-
-            if(com_port!="")
-            {
-                if(_serialPort.PortName!=com_port)
-                {
-                    if (Serial_OpenPort(com_port) == true)
-                    {
-                        MyBlueRatCOMPort = com_port;
-                        Serial_ClosePort();
-                        bRet = true;
-                    }
-                }
-                else
-                {
-                    bRet = true;
-                }
-            }
-            return bRet;
-        }
-*/
 
         public UInt32 GetCommandVersion()
         {
@@ -138,27 +69,6 @@ namespace RedRatDatabaseViewer
                 }
             }
             return BlueRatCMDVersion;
-        }
-
-        private bool Connect_BlueRat_Protocol()
-        {
-            bool ret = false;
-            if (this.CheckConnection() == true)
-            {
-                ret = true;
-            }
-            else
-            {
-                HomeMade_Delay(10);
-                this.Force_Init_BlueRat();
-                HomeMade_Delay(10);
-                if (this.CheckConnection() == true)
-                {
-                    this.Get_Command_Version();
-                    ret = true;
-                }
-            }
-            return ret;
         }
 
         public bool Connect(string com_name)
@@ -484,6 +394,28 @@ namespace RedRatDatabaseViewer
             return total_us; // return total_rc_time_duration
         }
 
+        // This one is private
+        private bool Connect_BlueRat_Protocol()
+        {
+            bool ret = false;
+            if (this.CheckConnection() == true)
+            {
+                ret = true;
+            }
+            else
+            {
+                HomeMade_Delay(10);
+                this.Force_Init_BlueRat();
+                HomeMade_Delay(10);
+                if (this.CheckConnection() == true)
+                {
+                    this.Get_Command_Version();
+                    ret = true;
+                }
+            }
+            return ret;
+        }
+
         //
         // 跟小藍鼠有關係的程式代碼與範例程式區--結尾
         //
@@ -495,12 +427,9 @@ namespace RedRatDatabaseViewer
         //
         // Add UART Part
         //
-        static SerialPort _serialPort = new SerialPort();
-
         static private void Serial_InitialSetting(ref SerialPort port_object)
         {
             // Allow the user to set the appropriate properties.
-            //_serialPort.PortName = "COM14";
             port_object.BaudRate = 115200; // as default;
             port_object.Parity = Parity.None;
             port_object.DataBits = 8;
@@ -663,30 +592,7 @@ namespace RedRatDatabaseViewer
                 }
             }
         }
-/*
-        private void SendToSerial(byte[] byte_to_sent)
-        {
-            if (_serialPort.IsOpen == true)
-            {
-                //AppendSerialMessageLog("Start Tx\n");
-                Application.DoEvents();
-                try
-                {
-                    // _serialPort.Write("This is a Test\n");
-                    _serialPort.Write(byte_to_sent, 0, byte_to_sent.Length);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("SendToSerial - " + ex);
-                    //AppendSerialMessageLog(ex.ToString());
-                }
-            }
-            else
-            {
-                //AppendSerialMessageLog("COM is closed and cannot send byte data\n");
-            }
-        }
-*/
+
         private static bool BlueRatSendToSerial(SerialPort _serialPort, byte[] byte_to_sent)
         {
             bool return_value = false;
@@ -728,7 +634,7 @@ namespace RedRatDatabaseViewer
             return return_value;
         }
 
-        private int Tx_CNT = 0;
+        //private int Tx_CNT = 0;
         private bool SendToSerial_v2(byte[] byte_to_sent)
         {
             bool return_value = false;
