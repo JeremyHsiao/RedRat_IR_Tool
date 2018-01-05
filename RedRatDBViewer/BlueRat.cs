@@ -47,8 +47,8 @@ namespace RedRatDatabaseViewer
         //
         // Function for external use
         //
-        public BlueRat() { Serial_InitialSetting(); BlueRatInstanceNumber++; }
-        ~BlueRat() { Serial_ClosePort(); BlueRatInstanceNumber--; }
+        public BlueRat() { Serial_InitialSetting(ref _serialPort); BlueRatInstanceNumber++; }
+        ~BlueRat() { BlueRat_ClosePort(); BlueRatInstanceNumber--; }
 
         /*
         static public bool CheckBlueRatExisting(string com_port)
@@ -164,7 +164,7 @@ namespace RedRatDatabaseViewer
         public bool Connect(string com_name)
         {
             bool ret = false;
-            if (this.SerialPortConnection()==true)
+            if (SerialPortConnection(_serialPort) ==true)
             {
                 ret = Connect_BlueRat_Protocol();
             }
@@ -189,13 +189,13 @@ namespace RedRatDatabaseViewer
         public bool Disconnect()
         {
             bool ret = false;
-            if (this.SerialPortConnection() == true)
+            if (SerialPortConnection(_serialPort) == true)
             {
                 Stop_Current_Tx();
                 HomeMade_Delay(300);
                 Force_Init_BlueRat();
             }
-            if (Serial_ClosePort() == true)
+            if (BlueRat_ClosePort() == true)
             {
                 ret = true;
             }
@@ -209,7 +209,7 @@ namespace RedRatDatabaseViewer
         public bool CheckConnection()
         {
             bool ret = false;
-            if (this.SerialPortConnection() == true)
+            if (SerialPortConnection(_serialPort) == true)
             {
                 if (this.Test_If_System_Can_Say_HI() == true)
                 {
@@ -263,7 +263,7 @@ namespace RedRatDatabaseViewer
             aTimer.Elapsed += new ElapsedEventHandler(HomeMade_Delay_OnTimedEvent);
             HomeMade_TimeOutIndicator = false;
             aTimer.Enabled = true;
-            while ((this.SerialPortConnection() == true)&&(HomeMade_TimeOutIndicator == false)) { Application.DoEvents(); }
+            while ((SerialPortConnection(_serialPort) == true)&&(HomeMade_TimeOutIndicator == false)) { Application.DoEvents(); }
             aTimer.Stop();
             aTimer.Dispose();
         }
@@ -483,7 +483,7 @@ namespace RedRatDatabaseViewer
             Contract.Requires(RedRatData.SelectedSignal != null);
             Contract.Requires(RedRatData.Signal_Type_Supported == true);
 
-            if ((RedRatData == null) || (this.SerialPortConnection() == false))
+            if ((RedRatData == null) || (SerialPortConnection(_serialPort) == false))
             {
                 return 0;
             }
@@ -583,28 +583,27 @@ namespace RedRatDatabaseViewer
         //
         static SerialPort _serialPort = new SerialPort();
 
-        private void Serial_InitialSetting()
+        static private void Serial_InitialSetting(ref SerialPort port_object)
         {
             // Allow the user to set the appropriate properties.
             //_serialPort.PortName = "COM14";
-            _serialPort.BaudRate = 115200; // as default;
-            _serialPort.Parity = Parity.None;
-            _serialPort.DataBits = 8;
-            _serialPort.StopBits = StopBits.One;
-            _serialPort.Handshake = Handshake.None;
-            _serialPort.Encoding = Encoding.UTF8;
+            port_object.BaudRate = 115200; // as default;
+            port_object.Parity = Parity.None;
+            port_object.DataBits = 8;
+            port_object.StopBits = StopBits.One;
+            port_object.Handshake = Handshake.None;
+            port_object.Encoding = Encoding.UTF8;
 
             // Set the read/write timeouts
-            _serialPort.ReadTimeout = 2000;
-            _serialPort.WriteTimeout = 2000;
+            port_object.ReadTimeout = 2000;
+            port_object.WriteTimeout = 2000;
         }
 
-        private Boolean Serial_OpenPort(string PortName)
+        private Boolean Serial_OpenPort()
         {
             Boolean ret = false;
             try
             {
-                _serialPort.PortName = PortName;
                 _serialPort.Open();
                 Start_SerialReadThread();
                 _system_IO_exception = false;
@@ -612,13 +611,36 @@ namespace RedRatDatabaseViewer
             }
             catch (Exception ex232)
             {
-                Console.WriteLine("Serial_OpenPort Exception at PORT: " + PortName + " - " + ex232);
+                Console.WriteLine("Serial_OpenPort Exception at PORT: " + _serialPort.PortName + " - " + ex232);
                 ret = false;
             }
             return ret;
         }
 
+        private Boolean Serial_OpenPort(string PortName)
+        {
+            Boolean ret = false;
+            _serialPort.PortName = PortName;
+            ret = Serial_OpenPort();
+            return ret;
+        }
+
         private Boolean Serial_ClosePort()
+        {
+            Boolean ret = false;
+            try
+            {
+                _serialPort.Close();
+                ret = true;
+            }
+            catch (Exception ex232)
+            {
+                Console.WriteLine("Serial_ClosePort Exception at PORT: " + _serialPort.PortName + " - " + ex232);
+                ret = false;
+            }
+            return ret;
+        }
+        private Boolean BlueRat_ClosePort()
         {
             Boolean ret = false;
             string PortName = "Invalid _serialPort.PortName";
@@ -637,10 +659,10 @@ namespace RedRatDatabaseViewer
             return ret;
         }
 
-        private Boolean SerialPortConnection()
+        static private Boolean SerialPortConnection(SerialPort serial_object)
         {
             Boolean ret = false;
-            if (_serialPort.IsOpen == true)
+            if (serial_object.IsOpen == true)
             {
                 ret = true;
             }
@@ -800,44 +822,6 @@ namespace RedRatDatabaseViewer
             return_value = BlueRatSendToSerial(_serialPort, byte_to_sent);
             // Console.WriteLine("\n===Tx:" + Tx_CNT.ToString() + " ");
             // Tx_CNT++;
-/*
-            if (_serialPort.IsOpen == true)
-            {
-                Tx_CNT++;
-                Application.DoEvents();
-                try
-                {
-                    int temp_index = 0;
-                    const int fixed_length = 16;
-
-                    while (temp_index < byte_to_sent.Length)
-                    {
-                        if ((temp_index + fixed_length) < byte_to_sent.Length)
-                        {
-                            _serialPort.Write(byte_to_sent, temp_index, fixed_length);
-                            temp_index += fixed_length;
-                        }
-                        else
-                        {
-                            _serialPort.Write(byte_to_sent, temp_index, (byte_to_sent.Length - temp_index));
-                            temp_index = byte_to_sent.Length;
-                        }
-                    }
-                    return_value = true;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("SendToSerial_v2 - " + ex);
-                    return_value = false;
-                }
-            }
-            else
-            {
-                //AppendSerialMessageLog("COM is closed and cannot send byte data\n");
-                return_value = false;
-            }
-            //AppendSerialMessageLog("\n===Tx:" + Tx_CNT.ToString() + " ");
-            */
             return return_value;
         }
 
