@@ -256,18 +256,6 @@ namespace RedRatDatabaseViewer
             return ret;
         }
 
-        private void HomeMade_Delay(int delay_ms)
-        {
-            if (delay_ms <= 0) return;
-            System.Timers.Timer aTimer = new System.Timers.Timer(delay_ms);
-            aTimer.Elapsed += new ElapsedEventHandler(HomeMade_Delay_OnTimedEvent);
-            HomeMade_TimeOutIndicator = false;
-            aTimer.Enabled = true;
-            while ((SerialPortConnection(_serialPort) == true)&&(HomeMade_TimeOutIndicator == false)) { Application.DoEvents(); }
-            aTimer.Stop();
-            aTimer.Dispose();
-        }
-
         public int Get_Remaining_Repeat_Count()
         {
             int repeat_cnt = 0;
@@ -494,87 +482,6 @@ namespace RedRatDatabaseViewer
             SendToSerial_v2(data_to_sent.ToArray());    // Send to BlueRat
 
             return total_us; // return total_rc_time_duration
-        }
-
-
-        // For testing purpose
-        public void TEST_WalkThroughAllCMDwithData()
-        {
-            // Testing: send all CMD with input parameter
-            for (byte cmd = Convert.ToByte(CMD_CODE_UPPER_LIMIT); cmd >= Convert.ToByte(CMD_CODE_LOWER_LIMIT); cmd--)
-            //byte cmd = 0xdf;
-            {
-                SendToSerial_v2(Prepare_Send_Input_CMD(cmd, 0x1010101U * cmd).ToArray());
-                HomeMade_Delay(32);
-            }
-        }
-
-        // For testing purpose
-        public void TEST_GPIO_Output()
-        {
-            const int delay_time = 100;
-            // Testing: send GPIO output with byte parameter -- Set output port value at once
-            for (byte output_value = 0; output_value <= 0xff; output_value++)
-            {
-                Set_GPIO_Output(output_value);
-                HomeMade_Delay(delay_time / 2);
-            }
-
-            int run_time = 10;
-            const UInt32 IO_value_mask = 0x0, reverse_IO_value_mask = 0x1;
-
-            Set_GPIO_Output(Convert.ToByte((~reverse_IO_value_mask)&0xff));
-            HomeMade_Delay(delay_time);
-
-            while (run_time-- > 0)
-            {
-                for (Byte output_bit = 0; output_bit < 7;)
-                {
-                    //UInt32 temp_parameter = (output_bit << 8) | reverse_IO_value_mask;
-                    //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
-                    Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(reverse_IO_value_mask));
-                    HomeMade_Delay(16);
-                    output_bit++;
-                    //temp_parameter = (((output_bit) << 8) | IO_value_mask);
-                    //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
-                    Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(IO_value_mask));
-                    HomeMade_Delay(delay_time);
-                }
-                for (Byte output_bit = 7; output_bit > 0;)
-                {
-                    //UInt32 temp_parameter = (output_bit << 8) | reverse_IO_value_mask;
-                    //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
-                    Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(reverse_IO_value_mask));
-                    HomeMade_Delay(16);
-                    output_bit--;
-                    //temp_parameter = (((output_bit) << 8) | IO_value_mask);
-                    //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
-                    Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(IO_value_mask));
-                    HomeMade_Delay(delay_time);
-                }
-            }
-        }
-
-        // For testing purpose
-        public void TEST_GPIO_Input()
-        {
-            const int delay_time = 500;
-            //byte GPIO_Read_Data = 0;
-
-            // For reading an UART input, please make sure previous return data has been already received
-
-            int run_time = 20;
-            while (run_time-- > 0)
-            {
-                byte GPIO_Read_Data = Convert.ToByte(Get_GPIO_Input() & 0xff);
-                GPIO_Read_Data ^= 0xff;
-                //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), ~GPIO_Read_Data).ToArray());
-                Set_GPIO_Output(GPIO_Read_Data);
-                HomeMade_Delay(delay_time);
-                //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), 0xff).ToArray());
-                Set_GPIO_Output(0xff);
-                HomeMade_Delay(delay_time);
-            }
         }
 
         //
@@ -1397,12 +1304,25 @@ namespace RedRatDatabaseViewer
 
         // 小藍鼠專用的delay的內部資料與function
         static bool HomeMade_TimeOutIndicator = false;
-        private static void HomeMade_Delay_OnTimedEvent(object source, ElapsedEventArgs e)
+        static private void HomeMade_Delay_OnTimedEvent(object source, ElapsedEventArgs e)
         {
             HomeMade_TimeOutIndicator = true;
         }
 
-        // 單純回應"HI"的指令,可用來試試看系統是否還有在接受指令
+        static private void HomeMade_Delay(int delay_ms)
+        {
+            if (delay_ms <= 0) return;
+            System.Timers.Timer aTimer = new System.Timers.Timer(delay_ms);
+            aTimer.Elapsed += new ElapsedEventHandler(HomeMade_Delay_OnTimedEvent);
+            HomeMade_TimeOutIndicator = false;
+            aTimer.Enabled = true;
+            while ((SerialPortConnection(_serialPort) == true) && (HomeMade_TimeOutIndicator == false)) { Application.DoEvents(); }
+            aTimer.Stop();
+            aTimer.Dispose();
+        }
+        //
+
+        // 單純回應"HI"的指令,可用來試試看系統是否還有在接受指令 -- 目前不對外開放
         private Boolean Test_If_System_Can_Say_HI()
         {
             Boolean ret = false;
@@ -1424,7 +1344,85 @@ namespace RedRatDatabaseViewer
             return ret;
         }
 
-        //
+        // For self testing purpose
+        public void TEST_WalkThroughAllCMDwithData()
+        {
+            // Testing: send all CMD with input parameter
+            for (byte cmd = Convert.ToByte(CMD_CODE_UPPER_LIMIT); cmd >= Convert.ToByte(CMD_CODE_LOWER_LIMIT); cmd--)
+            //byte cmd = 0xdf;
+            {
+                SendToSerial_v2(Prepare_Send_Input_CMD(cmd, 0x1010101U * cmd).ToArray());
+                HomeMade_Delay(32);
+            }
+        }
+
+        // For self testing purpose
+        public void TEST_GPIO_Output()
+        {
+            const int delay_time = 100;
+            // Testing: send GPIO output with byte parameter -- Set output port value at once
+            for (byte output_value = 0; output_value <= 0xff; output_value++)
+            {
+                Set_GPIO_Output(output_value);
+                HomeMade_Delay(delay_time / 2);
+            }
+
+            int run_time = 10;
+            const UInt32 IO_value_mask = 0x0, reverse_IO_value_mask = 0x1;
+
+            Set_GPIO_Output(Convert.ToByte((~reverse_IO_value_mask) & 0xff));
+            HomeMade_Delay(delay_time);
+
+            while (run_time-- > 0)
+            {
+                for (Byte output_bit = 0; output_bit < 7;)
+                {
+                    //UInt32 temp_parameter = (output_bit << 8) | reverse_IO_value_mask;
+                    //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
+                    Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(reverse_IO_value_mask));
+                    HomeMade_Delay(16);
+                    output_bit++;
+                    //temp_parameter = (((output_bit) << 8) | IO_value_mask);
+                    //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
+                    Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(IO_value_mask));
+                    HomeMade_Delay(delay_time);
+                }
+                for (Byte output_bit = 7; output_bit > 0;)
+                {
+                    //UInt32 temp_parameter = (output_bit << 8) | reverse_IO_value_mask;
+                    //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
+                    Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(reverse_IO_value_mask));
+                    HomeMade_Delay(16);
+                    output_bit--;
+                    //temp_parameter = (((output_bit) << 8) | IO_value_mask);
+                    //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
+                    Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(IO_value_mask));
+                    HomeMade_Delay(delay_time);
+                }
+            }
+        }
+
+        // For self testing purpose
+        public void TEST_GPIO_Input()
+        {
+            const int delay_time = 500;
+            //byte GPIO_Read_Data = 0;
+
+            // For reading an UART input, please make sure previous return data has been already received
+
+            int run_time = 20;
+            while (run_time-- > 0)
+            {
+                byte GPIO_Read_Data = Convert.ToByte(Get_GPIO_Input() & 0xff);
+                GPIO_Read_Data ^= 0xff;
+                //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), ~GPIO_Read_Data).ToArray());
+                Set_GPIO_Output(GPIO_Read_Data);
+                HomeMade_Delay(delay_time);
+                //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), 0xff).ToArray());
+                Set_GPIO_Output(0xff);
+                HomeMade_Delay(delay_time);
+            }
+        }
         ///
         ///
     }
