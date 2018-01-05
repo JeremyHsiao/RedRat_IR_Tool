@@ -1,29 +1,99 @@
-﻿using RedRat;
-using RedRat.IR;
-using RedRat.RedRat3;
-using RedRat.Util;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO.Ports;
-using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Windows.Forms;
 using System.Timers;
+using System.Windows.Forms;
 
 namespace RedRatDatabaseViewer
 {
     class BlueRat
     {
+        // Static private variable
+        private static int BlueRatInstanceNumber = 0;
+        private static List<string> BlueRatCOMPortString = new List<string>();
+
         //
         // Function for external use
         //
+        public BlueRat() { Serial_InitialSetting(); BlueRatInstanceNumber++; }
+        ~BlueRat() { Serial_ClosePort(); BlueRatInstanceNumber--; }
 
-        public BlueRat() { Serial_InitialSetting(); }
-        ~BlueRat() { Serial_ClosePort();  }
+        /*
+        static public bool CheckBlueRatExisting(string com_port)
+        {
+            bool ret = false;
+            if (_serialPort.IsOpen == true)
+            {
+                if (this.Test_If_System_Can_Say_HI() == true)
+                {
+                    SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SAY_HI)).ToArray());
+                    HomeMade_Delay(5);
+                    if (UART_READ_MSG_QUEUE.Count > 0)
+                    {
+                        String in_str = UART_READ_MSG_QUEUE.Dequeue();
+                        if (in_str.Contains(_CMD_SAY_HI_RETURN_HEADER_))
+                        {
+                            ret = true;
+                        }
+                        else
+                        {
+                            Console.WriteLine("BlueRat no resonse to HI Command");
+                        }
+                    }
+                }
+                else
+                {
+                }
 
+            }
+            else
+            {
+                if (Serial_OpenPort(com_name) == true)
+                {
+                    ret = Connect_BlueRat_Protocol();
+                }
+                else
+                {
+                    Console.WriteLine("Cannot open serial port:" + com_name);
+                }
+            }
+            if (ret == false)
+            {
+                Serial_ClosePort();
+            }
+            return ret;
+        }
+        */
         private UInt32 BlueRatCMDVersion = 0;
+        private string MyBlueRatCOMPort = "";
+/*
+        public string GetCOMPort(string com_port) { return MyBlueRatCOMPort; }
+        public bool SetCOMPort(string com_port)
+        {
+            bool bRet = false;
+
+            if(com_port!="")
+            {
+                if(_serialPort.PortName!=com_port)
+                {
+                    if (Serial_OpenPort(com_port) == true)
+                    {
+                        MyBlueRatCOMPort = com_port;
+                        Serial_ClosePort();
+                        bRet = true;
+                    }
+                }
+                else
+                {
+                    bRet = true;
+                }
+            }
+            return bRet;
+        }
+*/
 
         public UInt32 GetCommandVersion()
         {
@@ -460,7 +530,7 @@ namespace RedRatDatabaseViewer
         private void Serial_InitialSetting()
         {
             // Allow the user to set the appropriate properties.
-            _serialPort.PortName = "COM14";
+            //_serialPort.PortName = "COM14";
             _serialPort.BaudRate = 115200; // as default;
             _serialPort.Parity = Parity.None;
             _serialPort.DataBits = 8;
@@ -528,6 +598,18 @@ namespace RedRatDatabaseViewer
         public Queue<string> BlueRat_LOG_QUEUE = new Queue<string>();
         static bool _system_IO_exception = false;
 
+        class BlueRatReadThreadClass
+        {
+            public double Base;
+            public double Height;
+            public double Area;
+            public void CalcArea()
+            {
+                Area = 0.5 * Base * Height;
+                MessageBox.Show("The area is: " + Area.ToString());
+            }
+        }
+
         private void Start_SerialReadThread()
         {
             _continue_serial_read_write = true;
@@ -589,7 +671,7 @@ namespace RedRatDatabaseViewer
                 }
             }
         }
-
+/*
         private void SendToSerial(byte[] byte_to_sent)
         {
             if (_serialPort.IsOpen == true)
@@ -612,13 +694,57 @@ namespace RedRatDatabaseViewer
                 //AppendSerialMessageLog("COM is closed and cannot send byte data\n");
             }
         }
+*/
+        public static bool BlueRatSendToSerial(SerialPort _serialPort, byte[] byte_to_sent)
+        {
+            bool return_value = false;
+
+            if (_serialPort.IsOpen == true)
+            {
+                Application.DoEvents();
+                try
+                {
+                    int temp_index = 0;
+                    const int fixed_length = 16;
+
+                    while (temp_index < byte_to_sent.Length)
+                    {
+                        if ((temp_index + fixed_length) < byte_to_sent.Length)
+                        {
+                            _serialPort.Write(byte_to_sent, temp_index, fixed_length);
+                            temp_index += fixed_length;
+                        }
+                        else
+                        {
+                            _serialPort.Write(byte_to_sent, temp_index, (byte_to_sent.Length - temp_index));
+                            temp_index = byte_to_sent.Length;
+                        }
+                    }
+                    return_value = true;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("BlueRatSendToSerial - " + ex);
+                    return_value = false;
+                }
+            }
+            else
+            {
+                Console.WriteLine("COM is closed and cannot send byte data\n");
+                return_value = false;
+            }
+            return return_value;
+        }
 
         private int Tx_CNT = 0;
-
         private bool SendToSerial_v2(byte[] byte_to_sent)
         {
             bool return_value = false;
 
+            return_value = BlueRatSendToSerial(_serialPort, byte_to_sent);
+            // Console.WriteLine("\n===Tx:" + Tx_CNT.ToString() + " ");
+            // Tx_CNT++;
+/*
             if (_serialPort.IsOpen == true)
             {
                 Tx_CNT++;
@@ -655,8 +781,10 @@ namespace RedRatDatabaseViewer
                 return_value = false;
             }
             //AppendSerialMessageLog("\n===Tx:" + Tx_CNT.ToString() + " ");
+            */
             return return_value;
         }
+
         //
         // To process UART IO Exception
         //
@@ -844,7 +972,7 @@ namespace RedRatDatabaseViewer
         //
         // Input parameter is 32-bit unsigned data
         //
-        private List<byte> Convert_data_to_Byte(UInt32 input_data)
+        static private List<byte> Convert_data_to_Byte(UInt32 input_data)
         {
             Stack<Byte> byte_data = new Stack<Byte>();
             UInt32 value = input_data;
@@ -866,7 +994,7 @@ namespace RedRatDatabaseViewer
         //
         // Input parameter is 16-bit unsigned data
         //
-        private List<byte> Convert_data_to_Byte(UInt16 input_data)
+        static private List<byte> Convert_data_to_Byte(UInt16 input_data)
         {
             Stack<Byte> byte_data = new Stack<Byte>();
             UInt16 value = input_data;
@@ -884,7 +1012,7 @@ namespace RedRatDatabaseViewer
         //
         // Input parameter is 8-bit unsigned data
         //
-        private List<byte> Convert_data_to_Byte(byte input_data)
+        static private List<byte> Convert_data_to_Byte(byte input_data)
         {
             List<byte> data_to_sent = new List<byte>();
             data_to_sent.Add(input_data);
@@ -894,7 +1022,7 @@ namespace RedRatDatabaseViewer
         //
         // This is dedicated for witdh-data of IR signal
         //
-        private List<byte> Convert_data_to_Byte_modified(uint width_value)
+        static private List<byte> Convert_data_to_Byte_modified(uint width_value)
         {
             Stack<Byte> byte_data = new Stack<Byte>();
             if (width_value > 0x7fff)
