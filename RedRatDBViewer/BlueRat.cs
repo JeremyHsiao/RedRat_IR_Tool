@@ -470,6 +470,33 @@ namespace RedRatDatabaseViewer
             }
             return ret;
         }
+
+        public int SendOneRC(RedRatDBParser RedRatData, byte default_repeat_cnt = 0)
+        {
+            // Precondition
+            //   1. Load RC Database by RedRatLoadSignalDB()
+            //   2. Select Device by RedRatSelectDevice() using device_name or index_no
+            //   3. Select RC Signal by RedRatSelectRCSignal() using rc_name or index_no --> specify false at 2nd input parameter if need to Tx 2nd signal of Double signal / Toggle Bits Signal
+            Contract.Requires(RedRatData != null);
+            Contract.Requires(RedRatData.SignalDB != null);
+            Contract.Requires(RedRatData.SelectedDevice != null);
+            Contract.Requires(RedRatData.SelectedSignal != null);
+            Contract.Requires(RedRatData.Signal_Type_Supported == true);
+
+            if ((RedRatData == null) || (this.SerialPortConnection() == false))
+            {
+                return 0;
+            }
+
+            List<byte> data_to_sent = new List<byte>();
+            int total_us;
+            data_to_sent = Prepare_RC_Data_CMD(RedRatData, default_repeat_cnt, out total_us);  // prepare RC-data packet for BlueRat
+            SendToSerial_v2(data_to_sent.ToArray());    // Send to BlueRat
+
+            return total_us; // return total_rc_time_duration
+        }
+
+
         // For testing purpose
         public void TEST_WalkThroughAllCMDwithData()
         {
@@ -724,7 +751,7 @@ namespace RedRatDatabaseViewer
             }
         }
 */
-        public static bool BlueRatSendToSerial(SerialPort _serialPort, byte[] byte_to_sent)
+        private static bool BlueRatSendToSerial(SerialPort _serialPort, byte[] byte_to_sent)
         {
             bool return_value = false;
 
@@ -1375,145 +1402,6 @@ namespace RedRatDatabaseViewer
             // (8) Finally add checksum at end of packet
             data_to_sent.Add(MyCheckSum.GetCheckSum());
             return data_to_sent;
-        }
-
-        public int SendOneRC(RedRatDBParser RedRatData, byte default_repeat_cnt = 0)
-        {
-            // Precondition
-            //   1. Load RC Database by RedRatLoadSignalDB()
-            //   2. Select Device by RedRatSelectDevice() using device_name or index_no
-            //   3. Select RC Signal by RedRatSelectRCSignal() using rc_name or index_no --> specify false at 2nd input parameter if need to Tx 2nd signal of Double signal / Toggle Bits Signal
-            Contract.Requires(RedRatData != null);
-            Contract.Requires(RedRatData.SignalDB != null);
-            Contract.Requires(RedRatData.SelectedDevice != null);
-            Contract.Requires(RedRatData.SelectedSignal != null);
-            Contract.Requires(RedRatData.Signal_Type_Supported == true);
-
-            if ((RedRatData == null)||(this.SerialPortConnection()==false))
-            {
-                return 0;
-            }
-            // Execution in this function
-            //   4. Get complete pulse width data by GetTxPulseWidth()
-            //   5. Combine pulse width data with other RC information into one array
-            //   6. UART Tx this array
-            //   7. For Double signal or Toggle Bit signal, switch to next one
-
-            /*
-            // Step 4
-            List<byte> data_to_sent = new List<byte>();
-            List<byte> pulse_packet = new List<byte>();
-            List<double> pulse_width = RedRatData.GetTxPulseWidth();
-            BlueRatCheckSum MyCheckSum = new BlueRatCheckSum();
-            int total_us = 0;
-            foreach (var val in pulse_width)
-            {
-                pulse_packet.AddRange(Convert_data_to_Byte_modified(Convert.ToUInt32(val)));
-                total_us += Convert.ToInt32(val);
-            }
-
-            // Step 5
-            Byte temp_byte, duty_cycle = 33;
-            double RC_ModutationFreq = RedRatData.RC_ModutationFreq();
-
-            // (1) Packet header -- must start with at least 2 times 0xff - no need to calcuate checksum for header
-            {
-                data_to_sent.Add(0xff);
-                data_to_sent.Add(0xff);
-                MyCheckSum.ClearCheckSum();
-            }
-
-            // (2) Command
-            data_to_sent.Add(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_INPUT_TX_SIGNAL));
-            MyCheckSum.UpdateCheckSum(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_INPUT_TX_SIGNAL));
-
-            // (3) how many times to repeat RC (max 0xff)
-            {
-                const byte repeat_count_max = 0xff;
-                if (default_repeat_cnt <= repeat_count_max)
-                {
-                    data_to_sent.Add(default_repeat_cnt);        // Repeat_No
-                    MyCheckSum.UpdateCheckSum(default_repeat_cnt);
-                    total_us *= (default_repeat_cnt > 0) ? (default_repeat_cnt + 1) : 1;
-                }
-                else
-                {
-                    Console.WriteLine("Repeat Count is out of range (>" + repeat_count_max.ToString() + "), using " + repeat_count_max.ToString() + " instead.");
-                    data_to_sent.Add(repeat_count_max);        // Repeat_No
-                    MyCheckSum.UpdateCheckSum(repeat_count_max);
-                    total_us *= (repeat_count_max > 0) ? (repeat_count_max + 1) : 1;
-                }
-            }
-            // (4) Duty Cycle range is 0-100, other values are reserved
-            {
-                const byte default_duty_cycle = 33, max_duty_cycle = 100;
-                if (duty_cycle <= max_duty_cycle)
-                {
-                    data_to_sent.Add(duty_cycle);
-                    MyCheckSum.UpdateCheckSum(duty_cycle);
-                }
-                else
-                {
-                    Console.WriteLine("Duty Cycle is out of range (>" + max_duty_cycle.ToString() + "), using  " + default_duty_cycle.ToString() + "  instead.");
-                    data_to_sent.Add(default_duty_cycle);
-                    MyCheckSum.UpdateCheckSum(default_duty_cycle);
-                }
-            }
-            // (5) Frequency is between 200 KHz - 20Hz, or 0 Hz (no carrier)
-            {
-                const double max_freq = 200000, min_freq = 20, default_freq = 38000;
-                UInt16 period;
-                if (RC_ModutationFreq > max_freq)
-                {
-                    Console.WriteLine("Duty Cycle is out of range (> " + max_freq.ToString() + " Hz), using " + max_freq.ToString() + " instead.");
-                    period = Convert.ToUInt16(8000000 / max_freq);
-                }
-                else if (RC_ModutationFreq >= min_freq)
-                {
-                    period = Convert.ToUInt16(8000000 / RC_ModutationFreq);
-                }
-                else if (RC_ModutationFreq == 0)
-                {
-                    period = 0;
-                }
-                else
-                {
-                    Console.WriteLine("Duty Cycle is out of range (< " + min_freq.ToString() + " Hz), using " + default_freq.ToString() + " instead.");
-                    period = Convert.ToUInt16(8000000 / default_freq);
-                }
-                temp_byte = Convert.ToByte(period / 256);
-                data_to_sent.Add(temp_byte);
-                MyCheckSum.UpdateCheckSum(temp_byte);
-                temp_byte = Convert.ToByte(period % 256);
-                data_to_sent.Add(temp_byte);
-                MyCheckSum.UpdateCheckSum(temp_byte);
-            }
-            // (6) Add RC width data
-            {
-                foreach (var val in pulse_packet)
-                {
-                    MyCheckSum.UpdateCheckSum(val);
-                }
-                data_to_sent.AddRange(pulse_packet);
-            }
-
-            // (7) Add 0xff as last data byte
-            {
-                data_to_sent.Add(0xff);
-                MyCheckSum.UpdateCheckSum(0xff);
-            }
-            // (8) Finally add checksum at end of packet
-            data_to_sent.Add(MyCheckSum.GetCheckSum());
-            */
-
-            List<byte> data_to_sent = new List<byte>();
-            int total_us;
-            data_to_sent = Prepare_RC_Data_CMD(RedRatData, default_repeat_cnt, out total_us);
-
-            // Step 6
-            SendToSerial_v2(data_to_sent.ToArray());
-
-            return total_us; // return total_rc_time_duration
         }
 
         // 小藍鼠專用的delay的內部資料與function
