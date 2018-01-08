@@ -46,14 +46,13 @@ namespace RedRatDatabaseViewer
 
         // Private member variable
         private UInt32 BlueRatCMDVersion = 0;
-        static SerialPort _serialPort = new SerialPort();
 
         //
         // Function for external use
         //
-        public BlueRat() { Serial_InitialSetting(ref _serialPort); BlueRatInstanceNumber++; }
-        public BlueRat(string com_port) { _serialPort.PortName = com_port; Serial_InitialSetting(ref _serialPort); BlueRatInstanceNumber++; }
-        ~BlueRat() { BlueRat_ClosePort(); BlueRatInstanceNumber--; }
+        public BlueRat() { BlueRatInstanceNumber++; }
+        public BlueRat(string com_port) { _serialPort.PortName = com_port; BlueRatInstanceNumber++; }
+        ~BlueRat() { Serial_ClosePort(); BlueRatInstanceNumber--; }
 
         public UInt32 GetCommandVersion()
         {
@@ -74,7 +73,7 @@ namespace RedRatDatabaseViewer
         public bool Connect(string com_name)
         {
             bool ret = false;
-            if (SerialPortConnection(_serialPort) ==true)
+            if (Serial_PortConnection() ==true)
             {
                 ret = Connect_BlueRat_Protocol();
             }
@@ -99,13 +98,14 @@ namespace RedRatDatabaseViewer
         public bool Disconnect()
         {
             bool ret = false;
-            if (SerialPortConnection(_serialPort) == true)
+            Stop_MyOwn_HomeMade_Delay();
+            if (Serial_PortConnection() == true)
             {
                 Stop_Current_Tx();
                 HomeMade_Delay(300);
                 Force_Init_BlueRat();
             }
-            if (BlueRat_ClosePort() == true)
+            if (Serial_ClosePort() == true)
             {
                 ret = true;
             }
@@ -119,7 +119,7 @@ namespace RedRatDatabaseViewer
         public bool CheckConnection()
         {
             bool ret = false;
-            if (SerialPortConnection(_serialPort) == true)
+            if (Serial_PortConnection() == true)
             {
                 if (this.Test_If_System_Can_Say_HI() == true)
                 {
@@ -138,7 +138,7 @@ namespace RedRatDatabaseViewer
         {
             bool ret = false;
             ret = SendToSerial_v2(Prepare_FORCE_RESTART_CMD().ToArray());
-            HomeMade_TimeOutIndicator = true;
+            //HomeMade_TimeOutIndicator = true;
             return ret;
         }
 
@@ -169,7 +169,8 @@ namespace RedRatDatabaseViewer
         public int Get_Remaining_Repeat_Count()
         {
             int repeat_cnt = 0;
-            Get_UART_Input = 1;
+            //Get_UART_Input = 1;
+            Wait_UART_ReadLine();
             if (SendToSerial_v2(Prepare_Get_RC_Repeat_Count().ToArray()))
             {
                 HomeMade_Delay(5);
@@ -198,7 +199,8 @@ namespace RedRatDatabaseViewer
         {
             bool ret = false;
 
-            Get_UART_Input = 1;
+            //Get_UART_Input = 1;
+            Wait_UART_ReadLine();
             if (SendToSerial_v2(Prepare_Get_RC_Current_Running_Status().ToArray()))
             {
                 HomeMade_Delay(10);
@@ -232,8 +234,9 @@ namespace RedRatDatabaseViewer
         public string Get_SW_Version()
         {
             string value_str = "0";
-        
-            Get_UART_Input = 1;
+
+            //Get_UART_Input = 1;
+            Wait_UART_ReadLine();
             if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_SW_VER)).ToArray()))
             {
                 HomeMade_Delay(20);
@@ -261,7 +264,8 @@ namespace RedRatDatabaseViewer
         {
             string value_str = "";
 
-            Get_UART_Input = 1;
+            //Get_UART_Input = 1;
+            Wait_UART_ReadLine();
             if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_BUILD_TIME)).ToArray()))
             {
                 HomeMade_Delay(200);
@@ -289,7 +293,8 @@ namespace RedRatDatabaseViewer
         {
             string value_str = "";
 
-            Get_UART_Input = 1;
+            //Get_UART_Input = 1;
+            Wait_UART_ReadLine();
             if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_CMD_VERSION)).ToArray()))
             {
                 HomeMade_Delay(20);
@@ -318,7 +323,8 @@ namespace RedRatDatabaseViewer
         public UInt32 Get_GPIO_Input()
         {
             UInt32 GPIO_Read_Data = 0xffffffff;
-            Get_UART_Input = 1;
+            //Get_UART_Input = 1;
+            Wait_UART_ReadLine();
             if (SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)).ToArray()))
             {
                 HomeMade_Delay(5);
@@ -381,7 +387,7 @@ namespace RedRatDatabaseViewer
             Contract.Requires(RedRatData.SelectedSignal != null);
             Contract.Requires(RedRatData.Signal_Type_Supported == true);
 
-            if ((RedRatData == null) || (SerialPortConnection(_serialPort) == false))
+            if ((RedRatData == null) || (Serial_PortConnection() == false))
             {
                 return 0;
             }
@@ -427,29 +433,25 @@ namespace RedRatDatabaseViewer
         //
         // Add UART Part
         //
-        static private void Serial_InitialSetting(ref SerialPort port_object)
-        {
-            // Allow the user to set the appropriate properties.
-            port_object.BaudRate = 115200; // as default;
-            port_object.Parity = Parity.None;
-            port_object.DataBits = 8;
-            port_object.StopBits = StopBits.One;
-            port_object.Handshake = Handshake.None;
-            port_object.Encoding = Encoding.UTF8;
-
-            // Set the read/write timeouts
-            port_object.ReadTimeout = 2000;
-            port_object.WriteTimeout = 2000;
-        }
+        public const int Serial_BaudRate = 115200;
+        public const Parity Serial_Parity = Parity.None;
+        public const int Serial_DataBits = 8;
+        public const StopBits Serial_StopBits = StopBits.One;
+        SerialPort _serialPort = new SerialPort("COM1", Serial_BaudRate, Serial_Parity, Serial_DataBits, Serial_StopBits);
 
         private Boolean Serial_OpenPort()
         {
             Boolean ret = false;
+            _serialPort.Handshake = Handshake.None;
+            _serialPort.Encoding = Encoding.UTF8;
+            _serialPort.ReadTimeout = 500;
+            _serialPort.WriteTimeout = 500;
+
             try
             {
                 _serialPort.Open();
                 Start_SerialReadThread();
-                _system_IO_exception = false;
+                //_system_IO_exception = false;
                 ret = true;
             }
             catch (Exception ex232)
@@ -473,6 +475,7 @@ namespace RedRatDatabaseViewer
             Boolean ret = false;
             try
             {
+                Stop_SerialReadThread();
                 _serialPort.Close();
                 ret = true;
             }
@@ -483,74 +486,54 @@ namespace RedRatDatabaseViewer
             }
             return ret;
         }
-        private Boolean BlueRat_ClosePort()
-        {
-            Boolean ret = false;
-            string PortName = "Invalid _serialPort.PortName";
-            try
-            {
-                Stop_SerialReadThread();
-                PortName = _serialPort.PortName;
-                _serialPort.Close();
-                ret = true;
-            }
-            catch (Exception ex232)
-            {
-                Console.WriteLine("Serial_ClosePort Exception at PORT: " + PortName + " - " + ex232);
-                ret = false;
-            }
-            return ret;
-        }
 
-        static private Boolean SerialPortConnection(SerialPort serial_object)
+        private Boolean Serial_PortConnection()
         {
             Boolean ret = false;
-            if (serial_object.IsOpen == true)
+            if((_serialPort.IsOpen==true)&&(readThread.IsAlive))
             {
                 ret = true;
             }
             return ret;
         }
 
-        static bool _continue_serial_read_write = false;
-        static uint Get_UART_Input = 0;
-        static Thread readThread = null;
+        //static bool _continue_serial_read_write = false;
+        //static uint Get_UART_Input = 0;
+        //static Thread readThread = null
+        Thread readThread = null;
+        private Queue<bool> Wait_UART_Input = new Queue<bool>();
+        private Queue<string> Temp_MSG_QUEUE = new Queue<string>();
         private Queue<string> UART_READ_MSG_QUEUE = new Queue<string>();
-        public Queue<string> BlueRat_LOG_QUEUE = new Queue<string>();
-        static bool _system_IO_exception = false;
-
-        class BlueRatReadThreadClass
-        {
-            public double Base;
-            public double Height;
-            public double Area;
-            public void CalcArea()
-            {
-                Area = 0.5 * Base * Height;
-                MessageBox.Show("The area is: " + Area.ToString());
-            }
-        }
+        public Queue<string> LOG_QUEUE = new Queue<string>();
+        //static bool _system_IO_exception = false;
 
         private void Start_SerialReadThread()
         {
-            _continue_serial_read_write = true;
+            //_continue_serial_read_write = true;
             readThread = new Thread(ReadSerialPortThread);
             readThread.Start();
         }
         private void Stop_SerialReadThread()
         {
-            _continue_serial_read_write = false;
+            //_continue_serial_read_write = false;
             if (readThread != null)
             {
                 if (readThread.IsAlive)
                 {
+                    readThread.Abort();
                     readThread.Join();
                 }
             }
         }
 
-        public void ReadSerialPortThread()
+        private void Wait_UART_ReadLine()
         {
+            Wait_UART_Input.Enqueue(true);
+        }
+
+        private void ReadSerialPortThread()
+        {
+            bool _continue_serial_read_write = true;
             while (_continue_serial_read_write)
             {
                 try
@@ -560,11 +543,12 @@ namespace RedRatDatabaseViewer
                         if (_serialPort.BytesToRead > 0)
                         {
                             string message = _serialPort.ReadLine();
-                            BlueRat_LOG_QUEUE.Enqueue(message);
+                            LOG_QUEUE.Enqueue(message);
                             {
-                                if (Get_UART_Input > 0)
+                                if (Wait_UART_Input.Count>0)// (Get_UART_Input > 0)
                                 {
-                                    Get_UART_Input--;
+                                    //Get_UART_Input--;
+                                    Wait_UART_Input.Dequeue();
                                     UART_READ_MSG_QUEUE.Enqueue(message);
                                 }
                                 //AppendSerialMessageLog(message);
@@ -581,8 +565,8 @@ namespace RedRatDatabaseViewer
                 {
                     if (ex.TargetSite.Name=="WinIOError")
                     {
-                        _system_IO_exception = true;
-                        _continue_serial_read_write = false;
+                        //_system_IO_exception = true;
+                        //_continue_serial_read_write = false;
                         _serialPort.Close();
                         OnUARTException(EventArgs.Empty);
                     }
@@ -605,7 +589,7 @@ namespace RedRatDatabaseViewer
                     int temp_index = 0;
                     const int fixed_length = 16;
 
-                    while (temp_index < byte_to_sent.Length)
+                    while ((temp_index < byte_to_sent.Length)&& (_serialPort.IsOpen == true))
                     {
                         if ((temp_index + fixed_length) < byte_to_sent.Length)
                         {
@@ -1209,32 +1193,52 @@ namespace RedRatDatabaseViewer
         }
 
         // 小藍鼠專用的delay的內部資料與function
-        static bool HomeMade_TimeOutIndicator = false;
-        static private void HomeMade_Delay_OnTimedEvent(object source, ElapsedEventArgs e)
+        static private List<object> TimeOutTimerList = new List<object>();
+        private List <object> MyOwnTimerList = new List<object>();
+
+        private void Stop_MyOwn_HomeMade_Delay()
         {
-            HomeMade_TimeOutIndicator = true;
+            foreach(var timer in MyOwnTimerList)
+            {
+                if(TimeOutTimerList.Contains(timer))
+                {
+                    TimeOutTimerList.Remove(timer);
+                    Application.DoEvents();
+                }
+            }
+            MyOwnTimerList.Clear();
         }
 
-        static private void HomeMade_Delay(int delay_ms)
+        static private void HomeMade_Delay_OnTimedEvent(object source, ElapsedEventArgs e)
+        {
+            //HomeMade_TimeOutIndicator = true;
+            TimeOutTimerList.Remove(source);
+        }
+
+        private void HomeMade_Delay(int delay_ms)
         {
             if (delay_ms <= 0) return;
             System.Timers.Timer aTimer = new System.Timers.Timer(delay_ms);
             aTimer.Elapsed += new ElapsedEventHandler(HomeMade_Delay_OnTimedEvent);
-            HomeMade_TimeOutIndicator = false;
+            //HomeMade_TimeOutIndicator = false;
+            TimeOutTimerList.Add(aTimer);
+            MyOwnTimerList.Add(aTimer);
             aTimer.Enabled = true;
-            while ((SerialPortConnection(_serialPort) == true) && (HomeMade_TimeOutIndicator == false)) { Application.DoEvents(); }
+            while ((Serial_PortConnection() == true) && (TimeOutTimerList.Contains(aTimer)==true)) { Application.DoEvents(); }
+            MyOwnTimerList.Remove(aTimer);
             aTimer.Stop();
             aTimer.Dispose();
         }
-        //
+        // END - 小藍鼠專用的delay的內部資料與function
 
         // 單純回應"HI"的指令,可用來試試看系統是否還有在接受指令 -- 目前不對外開放
         private Boolean Test_If_System_Can_Say_HI()
         {
             Boolean ret = false;
-            Get_UART_Input = 1;
+            //Get_UART_Input = 1;
+            Wait_UART_ReadLine();
             SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SAY_HI)).ToArray());
-            HomeMade_Delay(5);
+            HomeMade_Delay(10);
             if (UART_READ_MSG_QUEUE.Count > 0)
             {
                 String in_str = UART_READ_MSG_QUEUE.Dequeue();
