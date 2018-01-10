@@ -10,8 +10,11 @@ namespace RedRatDatabaseViewer
 {
     class BlueRatSerial
     {
+        // static member/function to shared aross all BlueRatSerial
+        static private Dictionary<string,Object> BlueRatSerialDictionary = new Dictionary<string, Object>();
+        static private void AddConnectionLUT(string com_port, object obj) { BlueRatSerialDictionary.Add(com_port, obj); }
         //
-        // Add UART Part
+        // public functions
         //
         public const int Serial_BaudRate = 115200;
         public const Parity Serial_Parity = Parity.None;
@@ -31,12 +34,14 @@ namespace RedRatDatabaseViewer
             _serialPort.Encoding = Encoding.UTF8;
             _serialPort.ReadTimeout = 500;
             _serialPort.WriteTimeout = 500;
+            //_serialPort.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
 
             try
             {
                 _serialPort.Open();
                 Start_SerialReadThread();
                 //_system_IO_exception = false;
+                BlueRatSerialDictionary.Add(_serialPort.PortName, this);
                 bRet = true;
             }
             catch (Exception ex232)
@@ -58,6 +63,7 @@ namespace RedRatDatabaseViewer
         public Boolean Serial_ClosePort()
         {
             Boolean bRet = false;
+            BlueRatSerialDictionary.Remove(_serialPort.PortName);
             try
             {
                 Stop_SerialReadThread();
@@ -81,6 +87,10 @@ namespace RedRatDatabaseViewer
             }
             return bRet;
         }
+
+        //
+        // Start of read part
+        //
 
         public Boolean ReadLine_Ready() { return (UART_READ_MSG_QUEUE.Count > 0) ? true : false; }
         public string ReadLine_Result() { return UART_READ_MSG_QUEUE.Dequeue(); }
@@ -112,22 +122,13 @@ namespace RedRatDatabaseViewer
                     readThread.Join();
                 }
             }
+            Wait_UART_Input.Clear();
         }
 
         public void Start_ReadLine()
         {
             Wait_UART_Input.Enqueue(true);
         }
-
-        /*
-        private static void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
-        {
-            SerialPort sp = (SerialPort)sender;
-            string indata = sp.ReadExisting();
-            Console.WriteLine("Data Received:");
-            Console.Write(indata);
-        }
-        */
 
         private void ReadSerialPortThread()
         {
@@ -174,6 +175,18 @@ namespace RedRatDatabaseViewer
                 }
             }
         }
+
+
+        private static void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
+        {
+            SerialPort sp = (SerialPort)sender;
+            //string indata = sp.ReadExisting();
+            Console.WriteLine("Data Received:");
+            //Console.Write(indata);
+        }
+        //
+        // End of read part
+        //
 
         public bool BlueRatSendToSerial(byte[] byte_to_sent)
         {
