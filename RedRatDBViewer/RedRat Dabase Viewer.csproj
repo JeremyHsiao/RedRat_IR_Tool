@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BlueRat.cs" />
+    <Compile Include="BlutRatSerial.cs" />
     <Compile Include="RedRatDBParser.cs" />
     <Compile Include="RedRatDBViewer.cs">
       <SubType>Form</SubType>
