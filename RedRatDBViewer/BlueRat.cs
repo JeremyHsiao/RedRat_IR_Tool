@@ -46,30 +46,20 @@ namespace RedRatDatabaseViewer
 
         // Private member variable
         private UInt32 BlueRatCMDVersion = 0;
+        private UInt32 BlueRatFWVersion = 0;
         //private string BlueRatCOMPortName;
         private BlueRatSerial MyBlueRatSerial;
+
+        // Public member variables
+        public UInt32 FW_VER { get { return BlueRatFWVersion; } }
+        public UInt32 CMD_VER { get { return BlueRatCMDVersion; } }
+
         //
         // Function for external use
         //
         public BlueRat() { MyBlueRatSerial = new BlueRatSerial(); BlueRatInstanceNumber++; }
         //public BlueRat(string com_port) { Connect(com_port); BlueRatInstanceNumber++; }
         ~BlueRat() { Disconnect(); MyBlueRatSerial = null; BlueRatInstanceNumber--; }
-
-       public UInt32 GetCommandVersion()
-        {
-            if(BlueRatCMDVersion==0)
-            {
-                if (this.CheckConnection() == true)
-                {
-                    this.Get_Command_Version();
-                }
-                else
-                {
-                    Console.WriteLine("Need to setup connection to BlueRat to get CMD_VER");
-                }
-            }
-            return BlueRatCMDVersion;
-        }
 
         public bool Connect(string com_name)
         {
@@ -123,6 +113,8 @@ namespace RedRatDatabaseViewer
             }
             // BlueRatCOMPortString.Remove(com_port);
             // BlueRatCOMPortName = "";
+            BlueRatFWVersion = 0;
+            BlueRatCMDVersion = 0;
             return bRet;
         }
 
@@ -250,17 +242,19 @@ namespace RedRatDatabaseViewer
             MyBlueRatSerial.Start_ReadLine();
             if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_SW_VER)).ToArray()))
             {
-                HomeMade_Delay(20);
+                HomeMade_Delay(30);
                 if (MyBlueRatSerial.ReadLine_Ready() == true)
                 {
                     String in_str = MyBlueRatSerial.ReadLine_Result();
                     if (_CMD_RETURN_SW_VER_RETURN_HEADER_ == "")
                     {
                         value_str = in_str;
+                        BlueRatFWVersion = Convert.ToUInt32(Convert.ToDouble(value_str) * 100);
                     }
                     else if (in_str.Contains(_CMD_RETURN_SW_VER_RETURN_HEADER_))
                     {
                         value_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                        BlueRatFWVersion = Convert.ToUInt32(Convert.ToDouble(value_str) * 100);
                     }
                 }
                 else
@@ -279,8 +273,12 @@ namespace RedRatDatabaseViewer
             MyBlueRatSerial.Start_ReadLine();
             if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_BUILD_TIME)).ToArray()))
             {
-                HomeMade_Delay(200);
-                if (MyBlueRatSerial.ReadLine_Ready() == true)
+                HomeMade_Delay(100);
+                if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
+                {
+                    Test_If_System_Can_Say_HI(); // this is workaround to force a '\n' before command version 201
+                }
+               if (MyBlueRatSerial.ReadLine_Ready() == true)
                 {
                     String in_str = MyBlueRatSerial.ReadLine_Result();
                     if (_CMD_BUILD_TIME_RETURN_HEADER_ == "")
@@ -308,7 +306,7 @@ namespace RedRatDatabaseViewer
             MyBlueRatSerial.Start_ReadLine();
             if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_CMD_VERSION)).ToArray()))
             {
-                HomeMade_Delay(20);
+                HomeMade_Delay(30);
                 if (MyBlueRatSerial.ReadLine_Ready() == true)
                 {
                     String in_str = MyBlueRatSerial.ReadLine_Result();
@@ -426,8 +424,18 @@ namespace RedRatDatabaseViewer
                 HomeMade_Delay(10);
                 if (this.CheckConnection() == true)
                 {
-                    this.Get_Command_Version();
-                    bRet = true;
+                   bRet = true;
+                }
+            }
+            if (bRet == true)
+            {
+                if (FW_VER == 0)
+                {
+                    Get_SW_Version();
+                }
+                if (CMD_VER == 0)
+                {
+                    Get_Command_Version();
                 }
             }
             return bRet;
