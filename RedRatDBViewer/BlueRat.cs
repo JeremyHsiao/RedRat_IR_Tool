@@ -72,32 +72,36 @@ namespace RedRatDatabaseViewer
 
         public bool Connect(string com_name)
         {
-            bool ret = false;
+            bool bRet = false;
             if (Serial_PortConnection() ==true)
             {
-                ret = Connect_BlueRat_Protocol();
+                bRet = Connect_BlueRat_Protocol();
             }
             else
             {
                 if (Serial_OpenPort(com_name) == true)
                 {
-                    ret = Connect_BlueRat_Protocol();
+                    bRet = Connect_BlueRat_Protocol();
                 }
                 else
                 {
                     Console.WriteLine("Cannot open serial port:" + com_name);
                 }
             }
-            if(ret==false)
+            if(bRet==true)
+            {
+                BlueRatCOMPortString.Add(com_name);
+            }
+            else
             {
                 Serial_ClosePort();
             }
-            return ret;
+            return bRet;
         }
 
         public bool Disconnect()
         {
-            bool ret = false;
+            bool bRet = false;
             Stop_MyOwn_HomeMade_Delay();
             if (Serial_PortConnection() == true)
             {
@@ -107,63 +111,63 @@ namespace RedRatDatabaseViewer
             }
             if (Serial_ClosePort() == true)
             {
-                ret = true;
+                bRet = true;
             }
             else
             {
                 Console.WriteLine("Cannot close serial port for BlueRat.");
             }
-            return ret;
+            return bRet;
         }
 
         public bool CheckConnection()
         {
-            bool ret = false;
+            bool bRet = false;
             if (Serial_PortConnection() == true)
             {
                 if (this.Test_If_System_Can_Say_HI() == true)
                 {
-                    ret = true;
+                    bRet = true;
                 }
                 else
                 {
                     Console.WriteLine("BlueRat no resonse to HI Command");
                 }
             }
-            return ret;
+            return bRet;
         }
 
         // 強迫立刻停止信號發射的指令 -- 例如在PC端程式開啟時,可以用來將小藍鼠的狀態設定為預設狀態
         public bool Force_Init_BlueRat()
         {
-            bool ret = false;
-            ret = SendToSerial_v2(Prepare_FORCE_RESTART_CMD().ToArray());
+            bool bRet = false;
+            bRet = SendToSerial_v2(Prepare_FORCE_RESTART_CMD().ToArray());
             //HomeMade_TimeOutIndicator = true;
-            return ret;
+            return bRet;
         }
 
         // 強迫目前這一次信號發射結束後立刻停止(清除repeat count)的指令
         public bool Stop_Current_Tx()
         {
-            bool ret = false;
-            ret = SendToSerial_v2(Prepare_STOP_CMD().ToArray());
+            bool bRet = false;
+            bRet = SendToSerial_v2(Prepare_STOP_CMD().ToArray());
             //HomeMade_TimeOutIndicator = true;
-            return ret;
+            return bRet;
         }
 
         public bool Add_Repeat_Count(UInt32 add_count)
         {
-            bool ret = false;
-            ret = SendToSerial_v2(Prepare_Send_Repeat_Cnt_Add_CMD(add_count).ToArray());
-            return ret;
+            bool bRet = false;
+            bRet = SendToSerial_v2(Prepare_Send_Repeat_Cnt_Add_CMD(add_count).ToArray());
+            return bRet;
         }
 
         // 讓系統進入等待軟體更新的狀態
         public bool Enter_ISP_Mode()
         {
-            bool ret = false;
-            ret = SendToSerial_v2(Prepare_Enter_ISP_CMD().ToArray());
-            return ret;
+            bool bRet = false;
+            bRet = SendToSerial_v2(Prepare_Enter_ISP_CMD().ToArray());
+            return bRet;
         }
 
         public int Get_Remaining_Repeat_Count()
@@ -197,7 +201,7 @@ namespace RedRatDatabaseViewer
 
         public bool Get_Current_Tx_Status()
         {
-            bool ret = false;
+            bool bRet = false;
 
             //Get_UART_Input = 1;
             Wait_UART_ReadLine();
@@ -211,7 +215,7 @@ namespace RedRatDatabaseViewer
                     {
                         if (Convert.ToInt32(in_str, 16) != 0)
                         {
-                            ret = true;
+                            bRet = true;
                         }
                     }
                     else if (in_str.Contains(_CMD_GET_TX_RUNNING_STATUS_HEADER_))
@@ -219,7 +223,7 @@ namespace RedRatDatabaseViewer
                         string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
                         if (Convert.ToInt32(value_str, 16) != 0)
                         {
-                            ret = true;
+                            bRet = true;
                         }
                     }
                 }
@@ -228,7 +232,7 @@ namespace RedRatDatabaseViewer
                     Console.WriteLine("Check Get_Current_Tx_Status()");
                 }
             }
-            return ret;
+            return bRet;
         }
 
         public string Get_SW_Version()
@@ -352,27 +356,27 @@ namespace RedRatDatabaseViewer
 
         public bool Set_GPIO_Output(byte output_value)
         {
-            bool ret = false;
+            bool bRet = false;
 
             if(SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), output_value).ToArray()))
             {
-                ret = true;
+                bRet = true;
             }
-            return ret;
+            return bRet;
         }
 
         public bool Set_GPIO_Output_SinglePort(byte port_no, byte output_value)
         {
-            bool ret = false;
+            bool bRet = false;
 
             UInt32 temp_parameter;
             if (output_value != 0) { temp_parameter = 1; } else { temp_parameter = 0; }
             temp_parameter |= Convert.ToUInt32(port_no) << 8;
             if (SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), temp_parameter).ToArray()))
             {
-                ret = true;
+                bRet = true;
             }
-            return ret;
+            return bRet;
         }
 
         public int SendOneRC(RedRatDBParser RedRatData, byte default_repeat_cnt = 0)
@@ -403,10 +407,10 @@ namespace RedRatDatabaseViewer
         // This one is private
         private bool Connect_BlueRat_Protocol()
         {
-            bool ret = false;
+            bool bRet = false;
             if (this.CheckConnection() == true)
             {
-                ret = true;
+                bRet = true;
             }
             else
             {
@@ -416,10 +420,10 @@ namespace RedRatDatabaseViewer
                 if (this.CheckConnection() == true)
                 {
                     this.Get_Command_Version();
-                    ret = true;
+                    bRet = true;
                 }
             }
-            return ret;
+            return bRet;
         }
 
         //
@@ -441,7 +445,7 @@ namespace RedRatDatabaseViewer
 
         private Boolean Serial_OpenPort()
         {
-            Boolean ret = false;
+            Boolean bRet = false;
             _serialPort.Handshake = Handshake.None;
             _serialPort.Encoding = Encoding.UTF8;
             _serialPort.ReadTimeout = 500;
@@ -452,49 +456,49 @@ namespace RedRatDatabaseViewer
                 _serialPort.Open();
                 Start_SerialReadThread();
                 //_system_IO_exception = false;
-                ret = true;
+                bRet = true;
             }
             catch (Exception ex232)
             {
                 Console.WriteLine("Serial_OpenPort Exception at PORT: " + _serialPort.PortName + " - " + ex232);
-                ret = false;
+                bRet = false;
             }
-            return ret;
+            return bRet;
         }
 
         private Boolean Serial_OpenPort(string PortName)
         {
-            Boolean ret = false;
+            Boolean bRet = false;
             _serialPort.PortName = PortName;
-            ret = Serial_OpenPort();
-            return ret;
+            bRet = Serial_OpenPort();
+            return bRet;
         }
 
         private Boolean Serial_ClosePort()
         {
-            Boolean ret = false;
+            Boolean bRet = false;
             try
             {
                 Stop_SerialReadThread();
                 _serialPort.Close();
-                ret = true;
+                bRet = true;
             }
             catch (Exception ex232)
             {
                 Console.WriteLine("Serial_ClosePort Exception at PORT: " + _serialPort.PortName + " - " + ex232);
-                ret = false;
+                bRet = false;
             }
-            return ret;
+            return bRet;
         }
 
         private Boolean Serial_PortConnection()
         {
-            Boolean ret = false;
+            Boolean bRet = false;
             if((_serialPort.IsOpen==true)&&(readThread.IsAlive))
             {
-                ret = true;
+                bRet = true;
             }
-            return ret;
+            return bRet;
         }
 
         //static bool _continue_serial_read_write = false;
@@ -530,6 +534,16 @@ namespace RedRatDatabaseViewer
         {
             Wait_UART_Input.Enqueue(true);
         }
+
+        /*
+        private static void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
+        {
+            SerialPort sp = (SerialPort)sender;
+            string indata = sp.ReadExisting();
+            Console.WriteLine("Data Received:");
+            Console.Write(indata);
+        }
+        */
 
         private void ReadSerialPortThread()
         {
@@ -1234,7 +1248,7 @@ namespace RedRatDatabaseViewer
         // 單純回應"HI"的指令,可用來試試看系統是否還有在接受指令 -- 目前不對外開放
         private Boolean Test_If_System_Can_Say_HI()
         {
-            Boolean ret = false;
+            Boolean bRet = false;
             //Get_UART_Input = 1;
             Wait_UART_ReadLine();
             SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SAY_HI)).ToArray());
@@ -1244,14 +1258,14 @@ namespace RedRatDatabaseViewer
                 String in_str = UART_READ_MSG_QUEUE.Dequeue();
                 if (in_str.Contains(_CMD_SAY_HI_RETURN_HEADER_))
                 {
-                    ret = true;
+                    bRet = true;
                 }
                 else
                 {
                     Console.WriteLine("BlueRat no resonse to HI Command");
                 }
             }
-            return ret;
+            return bRet;
         }
 
         // For self testing purpose
