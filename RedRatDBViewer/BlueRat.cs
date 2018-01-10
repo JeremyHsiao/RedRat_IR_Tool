@@ -38,23 +38,247 @@ namespace RedRatDatabaseViewer
         }
     }
 
+    class BlueRatSerial
+    {
+        //
+        // Add UART Part
+        //
+        public const int Serial_BaudRate = 115200;
+        public const Parity Serial_Parity = Parity.None;
+        public const int Serial_DataBits = 8;
+        public const StopBits Serial_StopBits = StopBits.One;
+        private SerialPort _serialPort;
+
+        public BlueRatSerial() { _serialPort = new SerialPort(); _serialPort.BaudRate = Serial_BaudRate; _serialPort.Parity = Serial_Parity; _serialPort.DataBits = Serial_DataBits; _serialPort.StopBits = Serial_StopBits; }
+        public BlueRatSerial(string com_port) { _serialPort = new SerialPort(com_port, Serial_BaudRate, Serial_Parity, Serial_DataBits, Serial_StopBits); }
+        public string GetPortName() { return _serialPort.PortName; }
+
+
+        public Boolean Serial_OpenPort()
+        {
+            Boolean bRet = false;
+            _serialPort.Handshake = Handshake.None;
+            _serialPort.Encoding = Encoding.UTF8;
+            _serialPort.ReadTimeout = 500;
+            _serialPort.WriteTimeout = 500;
+
+            try
+            {
+                _serialPort.Open();
+                Start_SerialReadThread();
+                //_system_IO_exception = false;
+                bRet = true;
+            }
+            catch (Exception ex232)
+            {
+                Console.WriteLine("Serial_OpenPort Exception at PORT: " + _serialPort.PortName + " - " + ex232);
+                bRet = false;
+            }
+            return bRet;
+        }
+
+        public Boolean Serial_OpenPort(string PortName)
+        {
+            Boolean bRet = false;
+            _serialPort.PortName = PortName;
+            bRet = Serial_OpenPort();
+            return bRet;
+        }
+
+        public Boolean Serial_ClosePort()
+        {
+            Boolean bRet = false;
+            try
+            {
+                Stop_SerialReadThread();
+                _serialPort.Close();
+                bRet = true;
+            }
+            catch (Exception ex232)
+            {
+                Console.WriteLine("Serial_ClosePort Exception at PORT: " + _serialPort.PortName + " - " + ex232);
+                bRet = false;
+            }
+            return bRet;
+        }
+
+        public Boolean Serial_PortConnection()
+        {
+            Boolean bRet = false;
+            if ((_serialPort.IsOpen == true) && (readThread.IsAlive))
+            {
+                bRet = true;
+            }
+            return bRet;
+        }
+
+        public Boolean ReadLine_Ready() { return (UART_READ_MSG_QUEUE.Count > 0) ? true : false; }
+        public string ReadLine_Result() { return UART_READ_MSG_QUEUE.Dequeue(); }
+
+        //static bool _continue_serial_read_write = false;
+        //static uint Get_UART_Input = 0;
+        //static Thread readThread = null
+        Thread readThread = null;
+        private Queue<bool> Wait_UART_Input = new Queue<bool>();
+        private Queue<string> Temp_MSG_QUEUE = new Queue<string>();
+        private Queue<string> UART_READ_MSG_QUEUE = new Queue<string>();
+        public Queue<string> LOG_QUEUE = new Queue<string>();
+        //static bool _system_IO_exception = false;
+
+        private void Start_SerialReadThread()
+        {
+            //_continue_serial_read_write = true;
+            readThread = new Thread(ReadSerialPortThread);
+            readThread.Start();
+        }
+        private void Stop_SerialReadThread()
+        {
+            //_continue_serial_read_write = false;
+            if (readThread != null)
+            {
+                if (readThread.IsAlive)
+                {
+                    readThread.Abort();
+                    readThread.Join();
+                }
+            }
+        }
+
+        public void Start_ReadLine()
+        {
+            Wait_UART_Input.Enqueue(true);
+        }
+
+        /*
+        private static void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
+        {
+            SerialPort sp = (SerialPort)sender;
+            string indata = sp.ReadExisting();
+            Console.WriteLine("Data Received:");
+            Console.Write(indata);
+        }
+        */
+
+        private void ReadSerialPortThread()
+        {
+            bool _continue_serial_read_write = true;
+            while (_continue_serial_read_write)
+            {
+                try
+                {
+                    if (_serialPort.IsOpen == true)
+                    {
+                        if (_serialPort.BytesToRead > 0)
+                        {
+                            string message = _serialPort.ReadLine();
+                            LOG_QUEUE.Enqueue(message);
+                            {
+                                if (Wait_UART_Input.Count > 0)// (Get_UART_Input > 0)
+                                {
+                                    //Get_UART_Input--;
+                                    Wait_UART_Input.Dequeue();
+                                    UART_READ_MSG_QUEUE.Enqueue(message);
+                                }
+                                //AppendSerialMessageLog(message);
+                            }
+                            _serialPort.ReadTimeout = 500;
+                        }
+                    }
+                    else
+                    {
+                        _continue_serial_read_write = false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (ex.TargetSite.Name == "WinIOError")
+                    {
+                        //_system_IO_exception = true;
+                        //_continue_serial_read_write = false;
+                        _serialPort.Close();
+                        OnUARTException(EventArgs.Empty);
+                    }
+                    Console.WriteLine("ReadSerialPortThread - " + ex);
+                    //AppendSerialMessageLog(ex.ToString());
+                    //_continue_serial_read_write = false;
+                }
+            }
+        }
+
+        public bool BlueRatSendToSerial(byte[] byte_to_sent)
+        {
+            bool return_value = false;
+
+            if (_serialPort.IsOpen == true)
+            {
+                Application.DoEvents();
+                try
+                {
+                    int temp_index = 0;
+                    const int fixed_length = 16;
+
+                    while ((temp_index < byte_to_sent.Length) && (_serialPort.IsOpen == true))
+                    {
+                        if ((temp_index + fixed_length) < byte_to_sent.Length)
+                        {
+                            _serialPort.Write(byte_to_sent, temp_index, fixed_length);
+                            temp_index += fixed_length;
+                        }
+                        else
+                        {
+                            _serialPort.Write(byte_to_sent, temp_index, (byte_to_sent.Length - temp_index));
+                            temp_index = byte_to_sent.Length;
+                        }
+                    }
+                    return_value = true;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("BlueRatSendToSerial - " + ex);
+                    return_value = false;
+                }
+            }
+            else
+            {
+                Console.WriteLine("COM is closed and cannot send byte data\n");
+                return_value = false;
+            }
+            return return_value;
+        }
+
+        //
+        // To process UART IO Exception
+        //
+        protected virtual void OnUARTException(EventArgs e)
+        {
+            EventHandler handler = UARTException;
+            if (handler != null)
+            {
+                handler(this, e);
+            }
+        }
+
+        public event EventHandler UARTException;
+    }
+
     class BlueRat
     {
         // Static private variable
         private static int BlueRatInstanceNumber = 0;
-        private static List<string> BlueRatCOMPortString = new List<string>();
+        //private static List<string> BlueRatCOMPortString = new List<string>();
 
         // Private member variable
         private UInt32 BlueRatCMDVersion = 0;
-
+        //private string BlueRatCOMPortName;
+        private BlueRatSerial MyBlueRatSerial;
         //
         // Function for external use
         //
-        public BlueRat() { BlueRatInstanceNumber++; }
-        public BlueRat(string com_port) { _serialPort.PortName = com_port; BlueRatInstanceNumber++; }
-        ~BlueRat() { Serial_ClosePort(); BlueRatInstanceNumber--; }
+        public BlueRat() { MyBlueRatSerial = new BlueRatSerial(); BlueRatInstanceNumber++; }
+        //public BlueRat(string com_port) { Connect(com_port); BlueRatInstanceNumber++; }
+        ~BlueRat() { Disconnect(); MyBlueRatSerial = null; BlueRatInstanceNumber--; }
 
-        public UInt32 GetCommandVersion()
+       public UInt32 GetCommandVersion()
         {
             if(BlueRatCMDVersion==0)
             {
@@ -73,13 +297,13 @@ namespace RedRatDatabaseViewer
         public bool Connect(string com_name)
         {
             bool bRet = false;
-            if (Serial_PortConnection() ==true)
+            if (MyBlueRatSerial.Serial_PortConnection() ==true)
             {
                 bRet = Connect_BlueRat_Protocol();
             }
             else
             {
-                if (Serial_OpenPort(com_name) == true)
+                if (MyBlueRatSerial.Serial_OpenPort(com_name) == true)
                 {
                     bRet = Connect_BlueRat_Protocol();
                 }
@@ -90,11 +314,12 @@ namespace RedRatDatabaseViewer
             }
             if(bRet==true)
             {
-                BlueRatCOMPortString.Add(com_name);
+                //BlueRatCOMPortString.Add(com_name);
+                //BlueRatCOMPortName = com_name;
             }
             else
             {
-                Serial_ClosePort();
+                MyBlueRatSerial.Serial_ClosePort();
             }
             return bRet;
         }
@@ -102,14 +327,16 @@ namespace RedRatDatabaseViewer
         public bool Disconnect()
         {
             bool bRet = false;
+            //string com_port = MyBlueRatSerial.GetPortName();
+
             Stop_MyOwn_HomeMade_Delay();
-            if (Serial_PortConnection() == true)
+            if (MyBlueRatSerial.Serial_PortConnection() == true)
             {
                 Stop_Current_Tx();
                 HomeMade_Delay(300);
                 Force_Init_BlueRat();
             }
-            if (Serial_ClosePort() == true)
+            if (MyBlueRatSerial.Serial_ClosePort() == true)
             {
                 bRet = true;
             }
@@ -117,13 +344,15 @@ namespace RedRatDatabaseViewer
             {
                 Console.WriteLine("Cannot close serial port for BlueRat.");
             }
+            // BlueRatCOMPortString.Remove(com_port);
+            // BlueRatCOMPortName = "";
             return bRet;
         }
 
         public bool CheckConnection()
         {
             bool bRet = false;
-            if (Serial_PortConnection() == true)
+            if (MyBlueRatSerial.Serial_PortConnection() == true)
             {
                 if (this.Test_If_System_Can_Say_HI() == true)
                 {
@@ -142,6 +371,7 @@ namespace RedRatDatabaseViewer
         {
             bool bRet = false;
             bRet = SendToSerial_v2(Prepare_FORCE_RESTART_CMD().ToArray());
+            HomeMade_Delay(20);
             //HomeMade_TimeOutIndicator = true;
             return bRet;
         }
@@ -174,13 +404,13 @@ namespace RedRatDatabaseViewer
         {
             int repeat_cnt = 0;
             //Get_UART_Input = 1;
-            Wait_UART_ReadLine();
+            MyBlueRatSerial.Start_ReadLine();
             if (SendToSerial_v2(Prepare_Get_RC_Repeat_Count().ToArray()))
             {
                 HomeMade_Delay(5);
-                if (UART_READ_MSG_QUEUE.Count > 0)
+                if (MyBlueRatSerial.ReadLine_Ready()==true)
                 {
-                    String in_str = UART_READ_MSG_QUEUE.Dequeue();
+                    String in_str = MyBlueRatSerial.ReadLine_Result();
                     if (_CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ == "")
                     {
                         repeat_cnt = Convert.ToInt32(in_str, 16);
@@ -204,13 +434,13 @@ namespace RedRatDatabaseViewer
             bool bRet = false;
 
             //Get_UART_Input = 1;
-            Wait_UART_ReadLine();
+            MyBlueRatSerial.Start_ReadLine();
             if (SendToSerial_v2(Prepare_Get_RC_Current_Running_Status().ToArray()))
             {
                 HomeMade_Delay(10);
-                if (UART_READ_MSG_QUEUE.Count > 0)
+                if (MyBlueRatSerial.ReadLine_Ready() == true)
                 {
-                    String in_str = UART_READ_MSG_QUEUE.Dequeue();
+                    String in_str = MyBlueRatSerial.ReadLine_Result();
                     if (_CMD_GET_TX_RUNNING_STATUS_HEADER_ == "") 
                     {
                         if (Convert.ToInt32(in_str, 16) != 0)
@@ -240,13 +470,13 @@ namespace RedRatDatabaseViewer
             string value_str = "0";
 
             //Get_UART_Input = 1;
-            Wait_UART_ReadLine();
+            MyBlueRatSerial.Start_ReadLine();
             if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_SW_VER)).ToArray()))
             {
                 HomeMade_Delay(20);
-                if (UART_READ_MSG_QUEUE.Count > 0)
+                if (MyBlueRatSerial.ReadLine_Ready() == true)
                 {
-                    String in_str = UART_READ_MSG_QUEUE.Dequeue();
+                    String in_str = MyBlueRatSerial.ReadLine_Result();
                     if (_CMD_RETURN_SW_VER_RETURN_HEADER_ == "")
                     {
                         value_str = in_str;
@@ -269,13 +499,13 @@ namespace RedRatDatabaseViewer
             string value_str = "";
 
             //Get_UART_Input = 1;
-            Wait_UART_ReadLine();
+            MyBlueRatSerial.Start_ReadLine();
             if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_BUILD_TIME)).ToArray()))
             {
                 HomeMade_Delay(200);
-                if (UART_READ_MSG_QUEUE.Count > 0)
+                if (MyBlueRatSerial.ReadLine_Ready() == true)
                 {
-                    String in_str = UART_READ_MSG_QUEUE.Dequeue();
+                    String in_str = MyBlueRatSerial.ReadLine_Result();
                     if (_CMD_BUILD_TIME_RETURN_HEADER_ == "")
                     {
                         value_str = in_str;
@@ -298,13 +528,13 @@ namespace RedRatDatabaseViewer
             string value_str = "";
 
             //Get_UART_Input = 1;
-            Wait_UART_ReadLine();
+            MyBlueRatSerial.Start_ReadLine();
             if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_CMD_VERSION)).ToArray()))
             {
                 HomeMade_Delay(20);
-                if (UART_READ_MSG_QUEUE.Count > 0)
+                if (MyBlueRatSerial.ReadLine_Ready() == true)
                 {
-                    String in_str = UART_READ_MSG_QUEUE.Dequeue();
+                    String in_str = MyBlueRatSerial.ReadLine_Result();
                     if (_CMD_RETURN_CMD_VERSION_RETURN_HEADER_ == "")
                     {
                         value_str = in_str;
@@ -328,13 +558,13 @@ namespace RedRatDatabaseViewer
         {
             UInt32 GPIO_Read_Data = 0xffffffff;
             //Get_UART_Input = 1;
-            Wait_UART_ReadLine();
+            MyBlueRatSerial.Start_ReadLine();
             if (SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)).ToArray()))
             {
                 HomeMade_Delay(5);
-                if (UART_READ_MSG_QUEUE.Count > 0)
+                if (MyBlueRatSerial.ReadLine_Ready() == true)
                 {
-                    String in_str = UART_READ_MSG_QUEUE.Dequeue();
+                    String in_str = MyBlueRatSerial.ReadLine_Result();
                     if (_CMD_GPIO_INPUT_RETURN_HEADER_ == "")
                     {
                         GPIO_Read_Data = Convert.ToUInt32(in_str, 16);
@@ -391,7 +621,7 @@ namespace RedRatDatabaseViewer
             Contract.Requires(RedRatData.SelectedSignal != null);
             Contract.Requires(RedRatData.Signal_Type_Supported == true);
 
-            if ((RedRatData == null) || (Serial_PortConnection() == false))
+            if ((RedRatData == null) || (MyBlueRatSerial.Serial_PortConnection() == false))
             {
                 return 0;
             }
@@ -434,229 +664,17 @@ namespace RedRatDatabaseViewer
         // Function for external use -- END
         //
 
-        //
-        // Add UART Part
-        //
-        public const int Serial_BaudRate = 115200;
-        public const Parity Serial_Parity = Parity.None;
-        public const int Serial_DataBits = 8;
-        public const StopBits Serial_StopBits = StopBits.One;
-        SerialPort _serialPort = new SerialPort("COM1", Serial_BaudRate, Serial_Parity, Serial_DataBits, Serial_StopBits);
-
-        private Boolean Serial_OpenPort()
-        {
-            Boolean bRet = false;
-            _serialPort.Handshake = Handshake.None;
-            _serialPort.Encoding = Encoding.UTF8;
-            _serialPort.ReadTimeout = 500;
-            _serialPort.WriteTimeout = 500;
-
-            try
-            {
-                _serialPort.Open();
-                Start_SerialReadThread();
-                //_system_IO_exception = false;
-                bRet = true;
-            }
-            catch (Exception ex232)
-            {
-                Console.WriteLine("Serial_OpenPort Exception at PORT: " + _serialPort.PortName + " - " + ex232);
-                bRet = false;
-            }
-            return bRet;
-        }
-
-        private Boolean Serial_OpenPort(string PortName)
-        {
-            Boolean bRet = false;
-            _serialPort.PortName = PortName;
-            bRet = Serial_OpenPort();
-            return bRet;
-        }
-
-        private Boolean Serial_ClosePort()
-        {
-            Boolean bRet = false;
-            try
-            {
-                Stop_SerialReadThread();
-                _serialPort.Close();
-                bRet = true;
-            }
-            catch (Exception ex232)
-            {
-                Console.WriteLine("Serial_ClosePort Exception at PORT: " + _serialPort.PortName + " - " + ex232);
-                bRet = false;
-            }
-            return bRet;
-        }
-
-        private Boolean Serial_PortConnection()
-        {
-            Boolean bRet = false;
-            if((_serialPort.IsOpen==true)&&(readThread.IsAlive))
-            {
-                bRet = true;
-            }
-            return bRet;
-        }
-
-        //static bool _continue_serial_read_write = false;
-        //static uint Get_UART_Input = 0;
-        //static Thread readThread = null
-        Thread readThread = null;
-        private Queue<bool> Wait_UART_Input = new Queue<bool>();
-        private Queue<string> Temp_MSG_QUEUE = new Queue<string>();
-        private Queue<string> UART_READ_MSG_QUEUE = new Queue<string>();
-        public Queue<string> LOG_QUEUE = new Queue<string>();
-        //static bool _system_IO_exception = false;
-
-        private void Start_SerialReadThread()
-        {
-            //_continue_serial_read_write = true;
-            readThread = new Thread(ReadSerialPortThread);
-            readThread.Start();
-        }
-        private void Stop_SerialReadThread()
-        {
-            //_continue_serial_read_write = false;
-            if (readThread != null)
-            {
-                if (readThread.IsAlive)
-                {
-                    readThread.Abort();
-                    readThread.Join();
-                }
-            }
-        }
-
-        private void Wait_UART_ReadLine()
-        {
-            Wait_UART_Input.Enqueue(true);
-        }
-
-        /*
-        private static void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
-        {
-            SerialPort sp = (SerialPort)sender;
-            string indata = sp.ReadExisting();
-            Console.WriteLine("Data Received:");
-            Console.Write(indata);
-        }
-        */
-
-        private void ReadSerialPortThread()
-        {
-            bool _continue_serial_read_write = true;
-            while (_continue_serial_read_write)
-            {
-                try
-                {
-                    if (_serialPort.IsOpen == true)
-                    {
-                        if (_serialPort.BytesToRead > 0)
-                        {
-                            string message = _serialPort.ReadLine();
-                            LOG_QUEUE.Enqueue(message);
-                            {
-                                if (Wait_UART_Input.Count>0)// (Get_UART_Input > 0)
-                                {
-                                    //Get_UART_Input--;
-                                    Wait_UART_Input.Dequeue();
-                                    UART_READ_MSG_QUEUE.Enqueue(message);
-                                }
-                                //AppendSerialMessageLog(message);
-                            }
-                            _serialPort.ReadTimeout = 500;
-                        }
-                    }
-                    else
-                    {
-                        _continue_serial_read_write = false;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    if (ex.TargetSite.Name=="WinIOError")
-                    {
-                        //_system_IO_exception = true;
-                        //_continue_serial_read_write = false;
-                        _serialPort.Close();
-                        OnUARTException(EventArgs.Empty);
-                    }
-                    Console.WriteLine("ReadSerialPortThread - " + ex);
-                    //AppendSerialMessageLog(ex.ToString());
-                    //_continue_serial_read_write = false;
-                }
-            }
-        }
-
-        private static bool BlueRatSendToSerial(SerialPort _serialPort, byte[] byte_to_sent)
-        {
-            bool return_value = false;
-
-            if (_serialPort.IsOpen == true)
-            {
-                Application.DoEvents();
-                try
-                {
-                    int temp_index = 0;
-                    const int fixed_length = 16;
-
-                    while ((temp_index < byte_to_sent.Length)&& (_serialPort.IsOpen == true))
-                    {
-                        if ((temp_index + fixed_length) < byte_to_sent.Length)
-                        {
-                            _serialPort.Write(byte_to_sent, temp_index, fixed_length);
-                            temp_index += fixed_length;
-                        }
-                        else
-                        {
-                            _serialPort.Write(byte_to_sent, temp_index, (byte_to_sent.Length - temp_index));
-                            temp_index = byte_to_sent.Length;
-                        }
-                    }
-                    return_value = true;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("BlueRatSendToSerial - " + ex);
-                    return_value = false;
-                }
-            }
-            else
-            {
-                Console.WriteLine("COM is closed and cannot send byte data\n");
-                return_value = false;
-            }
-            return return_value;
-        }
-
+        // This function is intended to show Debug_String to console when each UART data is sent
         //private int Tx_CNT = 0;
         private bool SendToSerial_v2(byte[] byte_to_sent)
         {
             bool return_value = false;
 
-            return_value = BlueRatSendToSerial(_serialPort, byte_to_sent);
+            return_value = MyBlueRatSerial.BlueRatSendToSerial(byte_to_sent);
             // Console.WriteLine("\n===Tx:" + Tx_CNT.ToString() + " ");
             // Tx_CNT++;
             return return_value;
         }
-
-        //
-        // To process UART IO Exception
-        //
-        protected virtual void OnUARTException(EventArgs e)
-        {
-            EventHandler handler = UARTException;
-            if (handler != null)
-            {
-                handler(this, e);
-            }
-        }
-
-        public event EventHandler UARTException;
-
 
         //
         // 跟小藍鼠有關係的程式代碼與範例程式區 -- 開始
@@ -1238,7 +1256,7 @@ namespace RedRatDatabaseViewer
             TimeOutTimerList.Add(aTimer);
             MyOwnTimerList.Add(aTimer);
             aTimer.Enabled = true;
-            while ((Serial_PortConnection() == true) && (TimeOutTimerList.Contains(aTimer)==true)) { Application.DoEvents(); }
+            while ((MyBlueRatSerial.Serial_PortConnection() == true) && (TimeOutTimerList.Contains(aTimer)==true)) { Application.DoEvents(); }
             MyOwnTimerList.Remove(aTimer);
             aTimer.Stop();
             aTimer.Dispose();
@@ -1250,12 +1268,12 @@ namespace RedRatDatabaseViewer
         {
             Boolean bRet = false;
             //Get_UART_Input = 1;
-            Wait_UART_ReadLine();
+            MyBlueRatSerial.Start_ReadLine();
             SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SAY_HI)).ToArray());
             HomeMade_Delay(10);
-            if (UART_READ_MSG_QUEUE.Count > 0)
+            if (MyBlueRatSerial.ReadLine_Ready()==true)
             {
-                String in_str = UART_READ_MSG_QUEUE.Dequeue();
+                String in_str = MyBlueRatSerial.ReadLine_Result();
                 if (in_str.Contains(_CMD_SAY_HI_RETURN_HEADER_))
                 {
                     bRet = true;
