@@ -12,7 +12,7 @@ namespace RedRatDatabaseViewer
     {
         // static member/function to shared aross all BlueRatSerial
         static private Dictionary<string,Object> BlueRatSerialDictionary = new Dictionary<string, Object>();
-        static private void AddConnectionLUT(string com_port, object obj) { BlueRatSerialDictionary.Add(com_port, obj); }
+        //static private void AddConnectionLUT(string com_port, object obj) { BlueRatSerialDictionary.Add(com_port, obj); }
         //
         // public functions
         //
@@ -34,7 +34,7 @@ namespace RedRatDatabaseViewer
             _serialPort.Encoding = Encoding.UTF8;
             _serialPort.ReadTimeout = 500;
             _serialPort.WriteTimeout = 500;
-            //_serialPort.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
+            _serialPort.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
 
             try
             {
@@ -81,7 +81,8 @@ namespace RedRatDatabaseViewer
         public Boolean Serial_PortConnection()
         {
             Boolean bRet = false;
-            if ((_serialPort.IsOpen == true) && (readThread.IsAlive))
+            //if ((_serialPort.IsOpen == true) && (readThread.IsAlive))
+            if (_serialPort.IsOpen == true)
             {
                 bRet = true;
             }
@@ -98,7 +99,7 @@ namespace RedRatDatabaseViewer
         //static bool _continue_serial_read_write = false;
         //static uint Get_UART_Input = 0;
         //static Thread readThread = null
-        Thread readThread = null;
+        ////Thread readThread = null;
         private Queue<bool> Wait_UART_Input = new Queue<bool>();
         private Queue<string> Temp_MSG_QUEUE = new Queue<string>();
         private Queue<string> UART_READ_MSG_QUEUE = new Queue<string>();
@@ -107,21 +108,30 @@ namespace RedRatDatabaseViewer
 
         private void Start_SerialReadThread()
         {
-            //_continue_serial_read_write = true;
-            readThread = new Thread(ReadSerialPortThread);
-            readThread.Start();
+            ////_continue_serial_read_write = true;
+            //readThread = new Thread(ReadSerialPortThread);
+            //readThread.Start();
+            LOG_QUEUE.Clear();
+            UART_READ_MSG_QUEUE.Clear();
+            Temp_MSG_QUEUE.Clear();
+            Wait_UART_Input.Clear();
         }
+
         private void Stop_SerialReadThread()
         {
-            //_continue_serial_read_write = false;
-            if (readThread != null)
-            {
-                if (readThread.IsAlive)
-                {
-                    readThread.Abort();
-                    readThread.Join();
-                }
-            }
+            ////_continue_serial_read_write = false;
+            //if (readThread != null)
+            //{
+            //    if (readThread.IsAlive)
+            //    {
+            //        readThread.Abort();
+            //        readThread.Join();
+            //    }
+            //}
+            //Wait_UART_Input.Clear();
+            LOG_QUEUE.Clear();
+            UART_READ_MSG_QUEUE.Clear();
+            Temp_MSG_QUEUE.Clear();
             Wait_UART_Input.Clear();
         }
 
@@ -130,6 +140,7 @@ namespace RedRatDatabaseViewer
             Wait_UART_Input.Enqueue(true);
         }
 
+        /*
         private void ReadSerialPortThread()
         {
             bool _continue_serial_read_write = true;
@@ -175,13 +186,75 @@ namespace RedRatDatabaseViewer
                 }
             }
         }
-
+        */
 
         private static void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
         {
+            // Find out which serial port --> which bluerat
             SerialPort sp = (SerialPort)sender;
+            Object bluerat_obj;
+            BlueRatSerialDictionary.TryGetValue(sp.PortName, out bluerat_obj);
+            BlueRatSerial bluerat = (BlueRatSerial)bluerat_obj;
+
+            // Read in available char data and concatenate with previous remaining string;
+            string proc_str="", In_Str ="";
+            Console.Write(In_Str);
+            while (bluerat.Temp_MSG_QUEUE.Count>0)
+            {
+                proc_str += bluerat.Temp_MSG_QUEUE.Dequeue();
+            }
+             /*
+            while (sp.BytesToRead>0)
+            {
+                In_Str += Convert.ToChar(sp.ReadChar());
+            }
+            */
+            if (sp.BytesToRead > 0)
+            {
+                int len = sp.BytesToRead;
+                byte [] input_byte = new byte[len];
+                sp.Read(input_byte, 0, len);
+                foreach (var in_byte in input_byte)
+                {
+                    In_Str += Convert.ToChar(in_byte);
+                }
+            }
+            proc_str += In_Str;
+
+            // Decompose each line message and store to message queue
+            while (proc_str.Contains(sp.NewLine))
+            {
+                // Discard new line
+                int NewLinePos = proc_str.IndexOf(sp.NewLine);
+                string new_line_str = "";
+                if (NewLinePos>0)
+                {
+                    new_line_str = proc_str.Substring(0, NewLinePos);
+                }
+                // and then store string before newline
+                bluerat.LOG_QUEUE.Enqueue(new_line_str);
+                if(bluerat.Wait_UART_Input.Count>0)
+                {
+                    bluerat.Wait_UART_Input.Dequeue();
+                    bluerat.UART_READ_MSG_QUEUE.Enqueue(new_line_str);
+                }
+                // get the remaing string for next processing
+                if (proc_str.Length > (NewLinePos+1))
+                {
+                    proc_str = proc_str.Substring(NewLinePos + 1);
+                }
+                else
+                {
+                    proc_str = "";
+                }
+            }
+            // Store remaining string without a NewLine back to queue
+            if (proc_str.Length>0)
+            {
+                bluerat.Temp_MSG_QUEUE.Enqueue(proc_str);
+            }
             //string indata = sp.ReadExisting();
-            Console.WriteLine("Data Received:");
+            //Console.WriteLine("Data Received:");
             //Console.Write(indata);
         }
         //
