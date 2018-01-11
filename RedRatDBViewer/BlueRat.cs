@@ -503,6 +503,25 @@ namespace RedRatDatabaseViewer
             return total_us; // return total_rc_time_duration
         }
 
+        static public List<string> FindAllBlueRat()
+        {
+            List<string> AllBlueRat = new List<string>();
+
+            foreach (string comport_s in SerialPort.GetPortNames())
+            {
+                BlueRatSerial Checking_Serial = new BlueRatSerial(comport_s);
+                if (Checking_Serial.Serial_PortConnection() == true)
+                {
+                    if (STATIC_Test_If_System_Can_Say_HI(Checking_Serial) == true)
+                    {
+                        AllBlueRat.Add(comport_s);
+                    }
+                }
+            }
+
+            return AllBlueRat;
+        }
+
         // This one is private
         private bool Connect_BlueRat_Protocol()
         {
@@ -710,6 +729,7 @@ namespace RedRatDatabaseViewer
         const uint ISP_PASSWORD = (0x46574154);
         const uint RESTART_PASSWORD = (0x46535050);
 
+        static string _CMD_SAY_HI_RETURN_HEADER_UNIVERSIAL = "HI";
         string _CMD_SAY_HI_RETURN_HEADER_= "HI";
         string _CMD_RETURN_SW_VER_RETURN_HEADER_ ="";
         string _CMD_BUILD_TIME_RETURN_HEADER_ = "";
@@ -1164,6 +1184,34 @@ namespace RedRatDatabaseViewer
         // END - 小藍鼠專用的delay的內部資料與function
 
         // 單純回應"HI"的指令,可用來試試看系統是否還有在接受指令 -- 目前不對外開放
+        static private Boolean STATIC_Test_If_System_Can_Say_HI(BlueRatSerial bluerat_serial)
+        {
+            Boolean bRet = false;
+            //Get_UART_Input = 1;
+            bluerat_serial.Start_ReadLine();
+            bluerat_serial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SAY_HI)).ToArray());
+            Application.DoEvents(); Thread.Sleep(30); Application.DoEvents();
+            if (bluerat_serial.ReadLine_Ready() == true)
+            {
+                String in_str = bluerat_serial.ReadLine_Result();
+                if (in_str.Contains(_CMD_SAY_HI_RETURN_HEADER_UNIVERSIAL))
+                {
+                    bRet = true;
+                }
+                else
+                {
+                    Console.WriteLine("BlueRat no resonse to HI Command");
+                }
+            }
+            return bRet;
+        }
+
+        private Boolean Test_If_System_Can_Say_HI()
+        {
+            return STATIC_Test_If_System_Can_Say_HI(MyBlueRatSerial);
+        }
+
+        /*
         private Boolean Test_If_System_Can_Say_HI()
         {
             Boolean bRet = false;
@@ -1185,6 +1233,7 @@ namespace RedRatDatabaseViewer
             }
             return bRet;
         }
+        */
 
         // For self testing purpose
         public void TEST_WalkThroughAllCMDwithData()
