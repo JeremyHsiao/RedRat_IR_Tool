@@ -1207,9 +1207,9 @@ namespace RedRatDatabaseViewer
         {
             const int delay_time = 100;
             // Testing: send GPIO output with byte parameter -- Set output port value at once
-            for (byte output_value = 0; output_value <= 0xff; output_value++)
+            for (uint output_value = 0; output_value <= 0xff; output_value++)
             {
-                Set_GPIO_Output(output_value);
+                Set_GPIO_Output(Convert.ToByte(output_value&0xff));
                 HomeMade_Delay(delay_time / 2);
                 if (!MyBlueRatSerial.Serial_PortConnection())
                 {
