@@ -11,7 +11,7 @@ namespace RedRatDatabaseViewer
     class BlueRatSerial
     {
         // static member/function to shared aross all BlueRatSerial
-        static private Dictionary<string,Object> BlueRatSerialDictionary = new Dictionary<string, Object>();
+        static private Dictionary<string, Object> BlueRatSerialDictionary = new Dictionary<string, Object>();
         //static private void AddConnectionLUT(string com_port, object obj) { BlueRatSerialDictionary.Add(com_port, obj); }
         //
         // public functions
@@ -20,12 +20,16 @@ namespace RedRatDatabaseViewer
         public const Parity Serial_Parity = Parity.None;
         public const int Serial_DataBits = 8;
         public const StopBits Serial_StopBits = StopBits.One;
-        private SerialPort _serialPort;
 
         public BlueRatSerial() { _serialPort = new SerialPort(); _serialPort.BaudRate = Serial_BaudRate; _serialPort.Parity = Serial_Parity; _serialPort.DataBits = Serial_DataBits; _serialPort.StopBits = Serial_StopBits; }
         public BlueRatSerial(string com_port) { _serialPort = new SerialPort(com_port, Serial_BaudRate, Serial_Parity, Serial_DataBits, Serial_StopBits); }
         public string GetPortName() { return _serialPort.PortName; }
+        public void SetBlueRatVersion(UInt32 fw_ver, UInt32 cmd_ver) { BlueRatFWVersion = fw_ver; BlueRatCMDVersion = cmd_ver; }
 
+        private SerialPort _serialPort;
+        private UInt32 BlueRatCMDVersion = 0;
+        private UInt32 BlueRatFWVersion = 0;
+        //private uint TimeOutTimer;    
 
         public Boolean Serial_OpenPort()
         {
@@ -100,7 +104,8 @@ namespace RedRatDatabaseViewer
         //static uint Get_UART_Input = 0;
         //static Thread readThread = null
         ////Thread readThread = null;
-        private Queue<bool> Wait_UART_Input = new Queue<bool>();
+        //private Queue<bool> Wait_UART_Input = new Queue<bool>();
+        private bool Wait_Serial_Input = false;
         private Queue<string> Temp_MSG_QUEUE = new Queue<string>();
         private Queue<string> UART_READ_MSG_QUEUE = new Queue<string>();
         public Queue<string> LOG_QUEUE = new Queue<string>();
@@ -114,7 +119,8 @@ namespace RedRatDatabaseViewer
             LOG_QUEUE.Clear();
             UART_READ_MSG_QUEUE.Clear();
             Temp_MSG_QUEUE.Clear();
-            Wait_UART_Input.Clear();
+            Wait_Serial_Input = false;
+            //Wait_UART_Input.Clear();
         }
 
         private void Stop_SerialReadThread()
@@ -132,14 +138,21 @@ namespace RedRatDatabaseViewer
             LOG_QUEUE.Clear();
             UART_READ_MSG_QUEUE.Clear();
             Temp_MSG_QUEUE.Clear();
-            Wait_UART_Input.Clear();
+            Wait_Serial_Input = false;
+            //Wait_UART_Input.Clear();
         }
 
         public void Start_ReadLine()
         {
-            Wait_UART_Input.Enqueue(true);
+            //Wait_UART_Input.Enqueue(true);
+            Wait_Serial_Input = true;
         }
 
+        public void Abort_ReadLine()
+        {
+            //Wait_UART_Input.Clear();
+            Wait_Serial_Input = false;
+        }
         /*
         private void ReadSerialPortThread()
         {
@@ -198,48 +211,75 @@ namespace RedRatDatabaseViewer
 
             // Read in available char data and concatenate with previous remaining string;
             string proc_str="", In_Str ="";
-            Console.Write(In_Str);
+            //Console.Write(In_Str);
             while (bluerat.Temp_MSG_QUEUE.Count>0)
             {
                 proc_str += bluerat.Temp_MSG_QUEUE.Dequeue();
             }
-             /*
-            while (sp.BytesToRead>0)
+            /*
+           while (sp.BytesToRead>0)
+           {
+               In_Str += Convert.ToChar(sp.ReadChar());
+           }
+           */
+            int len = sp.BytesToRead;
+            if (len > 0)
             {
-                In_Str += Convert.ToChar(sp.ReadChar());
-            }
-            */
-            if (sp.BytesToRead > 0)
-            {
-                int len = sp.BytesToRead;
                 byte [] input_byte = new byte[len];
                 sp.Read(input_byte, 0, len);
                 foreach (var in_byte in input_byte)
                 {
                     In_Str += Convert.ToChar(in_byte);
                 }
+                proc_str += In_Str;
             }
-            proc_str += In_Str;
 
             // Decompose each line message and store to message queue
-            while (proc_str.Contains(sp.NewLine))
+            int NewLinePos = proc_str.IndexOf(sp.NewLine);
+            while (NewLinePos>=0)
             {
-                // Discard new line
-                int NewLinePos = proc_str.IndexOf(sp.NewLine);
-                string new_line_str = "";
-                if (NewLinePos>0)
+                // Capture the string before NewLine char
+                string new_line_str;
+                if (NewLinePos > 0)
                 {
                     new_line_str = proc_str.Substring(0, NewLinePos);
                 }
-                // and then store string before newline
-                bluerat.LOG_QUEUE.Enqueue(new_line_str);
-                if(bluerat.Wait_UART_Input.Count>0)
+                else
                 {
-                    bluerat.Wait_UART_Input.Dequeue();
-                    bluerat.UART_READ_MSG_QUEUE.Enqueue(new_line_str);
+                    new_line_str = "";
+                }
+
+                // Debug Log
+                //bluerat.LOG_QUEUE.Enqueue(new_line_str);
+                //Console.WriteLine(new_line_str); // Debug Purpose
+                                                 // End of Debug Log
+
+                // Store thte string without the new line
+                if (bluerat.BlueRatFWVersion < 102)
+                {
+                    if ((string.Compare(new_line_str,"+")!=0) && (string.Compare(new_line_str, "S") != 0)) // This check is for BlueRat v1.00 and before -- skip debug return character.
+                    {
+                        //if (bluerat.Wait_UART_Input.Count > 0)
+                        if (bluerat.Wait_Serial_Input)
+                        {
+                            //bluerat.Wait_UART_Input.Dequeue();
+                            bluerat.Wait_Serial_Input = false;
+                            bluerat.UART_READ_MSG_QUEUE.Enqueue(new_line_str);
+                        }
+                    }
+                }
+                else
+                {
+                    //if (bluerat.Wait_UART_Input.Count > 0)
+                    if (bluerat.Wait_Serial_Input)
+                    {
+                        //bluerat.Wait_UART_Input.Dequeue();
+                        bluerat.Wait_Serial_Input = false;
+                        bluerat.UART_READ_MSG_QUEUE.Enqueue(new_line_str);
+                    }
                 }
                 // get the remaing string for next processing
-                if (proc_str.Length > (NewLinePos+1))
+                if (proc_str.Length > (NewLinePos + 1))
                 {
                     proc_str = proc_str.Substring(NewLinePos + 1);
                 }
@@ -247,6 +287,7 @@ namespace RedRatDatabaseViewer
                 {
                     proc_str = "";
                 }
+                NewLinePos = proc_str.IndexOf(sp.NewLine);
             }
             // Store remaining string without a NewLine back to queue
             if (proc_str.Length>0)

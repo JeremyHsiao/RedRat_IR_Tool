@@ -99,6 +99,7 @@ namespace RedRatDatabaseViewer
             Stop_MyOwn_HomeMade_Delay();
             if (MyBlueRatSerial.Serial_PortConnection() == true)
             {
+                MyBlueRatSerial.Abort_ReadLine();
                 Stop_Current_Tx();
                 HomeMade_Delay(300);
                 Force_Init_BlueRat();
@@ -176,10 +177,29 @@ namespace RedRatDatabaseViewer
             MyBlueRatSerial.Start_ReadLine();
             if (SendToSerial_v2(Prepare_Get_RC_Repeat_Count().ToArray()))
             {
-                HomeMade_Delay(5);
+                if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
+                {
+                    HomeMade_Delay(500);
+                }
+                else
+                {
+                    HomeMade_Delay(40);
+                }
                 if (MyBlueRatSerial.ReadLine_Ready()==true)
                 {
                     String in_str = MyBlueRatSerial.ReadLine_Result();
+                    if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
+                    {
+                        string temp_str = "";
+                        foreach (char ch in in_str)
+                        {
+                            if ((ch != '+') && (ch != 'S'))
+                            {
+                                temp_str += ch;
+                            }
+                        }
+                        in_str = temp_str;
+                    }
                     if (_CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ == "")
                     {
                         repeat_cnt = Convert.ToInt32(in_str, 16);
@@ -206,10 +226,29 @@ namespace RedRatDatabaseViewer
             MyBlueRatSerial.Start_ReadLine();
             if (SendToSerial_v2(Prepare_Get_RC_Current_Running_Status().ToArray()))
             {
-                HomeMade_Delay(10);
+                if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
+                {
+                    HomeMade_Delay(500);
+                }
+                else
+                {
+                    HomeMade_Delay(10);
+                }
                 if (MyBlueRatSerial.ReadLine_Ready() == true)
                 {
                     String in_str = MyBlueRatSerial.ReadLine_Result();
+                    if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
+                    {
+                        string temp_str = "";
+                        foreach (char ch in in_str)
+                        {
+                            if((ch!='+')&& (ch != 'S'))
+                            {
+                                temp_str += ch;
+                            }
+                        }
+                        in_str = temp_str;
+                    }
                     if (_CMD_GET_TX_RUNNING_STATUS_HEADER_ == "") 
                     {
                         if (Convert.ToInt32(in_str, 16) != 0)
@@ -279,8 +318,6 @@ namespace RedRatDatabaseViewer
             // Workaround before v1.02
             if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
             {
-                Test_If_System_Can_Say_HI(); // this is workaround to force a '\n' before command version 201
-
                 if (BlueRatFWVersion == 100)
                 {
                     value_str = "Dec 21 2017" + " " + "13:44:08";
@@ -495,6 +532,7 @@ namespace RedRatDatabaseViewer
                     BlueRatCMDVersion = Convert.ToUInt32(Get_Command_Version()); 
                 }
                 Update_Header_by_SW_CMD_Version();
+                MyBlueRatSerial.SetBlueRatVersion(BlueRatFWVersion, BlueRatCMDVersion);     // Tell BlueRatSerial about version info for workaround at serial read function.
             }
             return bRet;
         }
@@ -1118,7 +1156,7 @@ namespace RedRatDatabaseViewer
             TimeOutTimerList.Add(aTimer);
             MyOwnTimerList.Add(aTimer);
             aTimer.Enabled = true;
-            while ((MyBlueRatSerial.Serial_PortConnection() == true) && (TimeOutTimerList.Contains(aTimer)==true)) { Application.DoEvents(); Thread.Sleep(0); }
+            while ((MyBlueRatSerial.Serial_PortConnection() == true) && (TimeOutTimerList.Contains(aTimer)==true)) { Application.DoEvents(); Thread.Sleep(1); }
             MyOwnTimerList.Remove(aTimer);
             aTimer.Stop();
             aTimer.Dispose();
