@@ -58,6 +58,8 @@
             this.btnConnectionControl = new System.Windows.Forms.Button();
             this.btnCheckHeartBeat = new System.Windows.Forms.Button();
             this.btnRepeatRC = new System.Windows.Forms.Button();
+            this.btnGetFirmwareBinary = new System.Windows.Forms.Button();
+            this.btnFWUpgrade = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvPulseData)).BeginInit();
             this.gbRC_File_Data.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvToggleBits)).BeginInit();
@@ -342,6 +344,7 @@
             this.listBox1.Name = "listBox1";
             this.listBox1.Size = new System.Drawing.Size(58, 46);
             this.listBox1.TabIndex = 17;
+            this.listBox1.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
             // 
             // btnConnectionControl
             // 
@@ -375,11 +378,33 @@
             this.btnRepeatRC.UseVisualStyleBackColor = true;
             this.btnRepeatRC.Click += new System.EventHandler(this.btnRepeatRC_Click);
             // 
+            // btnGetFirmwareBinary
+            // 
+            this.btnGetFirmwareBinary.Location = new System.Drawing.Point(6, 678);
+            this.btnGetFirmwareBinary.Name = "btnGetFirmwareBinary";
+            this.btnGetFirmwareBinary.Size = new System.Drawing.Size(84, 46);
+            this.btnGetFirmwareBinary.TabIndex = 20;
+            this.btnGetFirmwareBinary.Text = "Load New FW";
+            this.btnGetFirmwareBinary.UseVisualStyleBackColor = true;
+            this.btnGetFirmwareBinary.Click += new System.EventHandler(this.btnLoadNewFirmware_Click);
+            // 
+            // btnFWUpgrade
+            // 
+            this.btnFWUpgrade.Location = new System.Drawing.Point(532, 678);
+            this.btnFWUpgrade.Name = "btnFWUpgrade";
+            this.btnFWUpgrade.Size = new System.Drawing.Size(84, 46);
+            this.btnFWUpgrade.TabIndex = 21;
+            this.btnFWUpgrade.Text = "Upgrade FW";
+            this.btnFWUpgrade.UseVisualStyleBackColor = true;
+            this.btnFWUpgrade.Click += new System.EventHandler(this.btnFWUpgrade_Click);
+            // 
             // RedRatDBViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(620, 678);
+            this.ClientSize = new System.Drawing.Size(620, 728);
+            this.Controls.Add(this.btnFWUpgrade);
+            this.Controls.Add(this.btnGetFirmwareBinary);
             this.Controls.Add(this.btnRepeatRC);
             this.Controls.Add(this.btnCheckHeartBeat);
             this.Controls.Add(this.btnConnectionControl);
@@ -434,6 +459,8 @@
         private System.Windows.Forms.Button btnConnectionControl;
         private System.Windows.Forms.Button btnCheckHeartBeat;
         private System.Windows.Forms.Button btnRepeatRC;
+        private System.Windows.Forms.Button btnGetFirmwareBinary;
+        private System.Windows.Forms.Button btnFWUpgrade;
     }
 }
 
