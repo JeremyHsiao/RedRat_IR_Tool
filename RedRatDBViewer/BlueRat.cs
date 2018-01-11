@@ -276,6 +276,7 @@ namespace RedRatDatabaseViewer
         {
             string value_str = "0";
 
+            // Workaround before v1.02
             if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
             {
                 Test_If_System_Can_Say_HI(); // this is workaround to force a '\n' before command version 201
@@ -286,7 +287,7 @@ namespace RedRatDatabaseViewer
                 }
                 else
                 {
-                    value_str = "Unknown";
+                    value_str = "2017";
                 }
             }
             else
@@ -1117,7 +1118,7 @@ namespace RedRatDatabaseViewer
             TimeOutTimerList.Add(aTimer);
             MyOwnTimerList.Add(aTimer);
             aTimer.Enabled = true;
-            while ((MyBlueRatSerial.Serial_PortConnection() == true) && (TimeOutTimerList.Contains(aTimer)==true)) { Application.DoEvents(); }
+            while ((MyBlueRatSerial.Serial_PortConnection() == true) && (TimeOutTimerList.Contains(aTimer)==true)) { Application.DoEvents(); Thread.Sleep(0); }
             MyOwnTimerList.Remove(aTimer);
             aTimer.Stop();
             aTimer.Dispose();
@@ -1156,6 +1157,10 @@ namespace RedRatDatabaseViewer
             {
                 SendToSerial_v2(Prepare_Send_Input_CMD(cmd, 0x1010101U * cmd).ToArray());
                 HomeMade_Delay(32);
+                if(!MyBlueRatSerial.Serial_PortConnection())
+                {
+                    return;
+                }
             }
         }
 
@@ -1168,6 +1173,10 @@ namespace RedRatDatabaseViewer
             {
                 Set_GPIO_Output(output_value);
                 HomeMade_Delay(delay_time / 2);
+                if (!MyBlueRatSerial.Serial_PortConnection())
+                {
+                    return;
+                }
             }
 
             int run_time = 10;
@@ -1175,6 +1184,10 @@ namespace RedRatDatabaseViewer
 
             Set_GPIO_Output(Convert.ToByte((~reverse_IO_value_mask) & 0xff));
             HomeMade_Delay(delay_time);
+            if (!MyBlueRatSerial.Serial_PortConnection())
+            {
+                return;
+            }
 
             while (run_time-- > 0)
             {
@@ -1189,6 +1202,10 @@ namespace RedRatDatabaseViewer
                     //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
                     Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(IO_value_mask));
                     HomeMade_Delay(delay_time);
+                    if (!MyBlueRatSerial.Serial_PortConnection())
+                    {
+                        return;
+                    }
                 }
                 for (Byte output_bit = 7; output_bit > 0;)
                 {
@@ -1201,6 +1218,10 @@ namespace RedRatDatabaseViewer
                     //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
                     Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(IO_value_mask));
                     HomeMade_Delay(delay_time);
+                    if (!MyBlueRatSerial.Serial_PortConnection())
+                    {
+                        return;
+                    }
                 }
             }
         }
@@ -1216,6 +1237,11 @@ namespace RedRatDatabaseViewer
             int run_time = 20;
             while (run_time-- > 0)
             {
+                if (!MyBlueRatSerial.Serial_PortConnection())
+                {
+                    return;
+                }
+
                 byte GPIO_Read_Data = Convert.ToByte(Get_GPIO_Input() & 0xff);
                 GPIO_Read_Data ^= 0xff;
                 //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), ~GPIO_Read_Data).ToArray());
