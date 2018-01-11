@@ -249,12 +249,19 @@ namespace RedRatDatabaseViewer
                     if (_CMD_RETURN_SW_VER_RETURN_HEADER_ == "")
                     {
                         value_str = in_str;
-                        BlueRatFWVersion = Convert.ToUInt32(Convert.ToDouble(value_str) * 100);
                     }
                     else if (in_str.Contains(_CMD_RETURN_SW_VER_RETURN_HEADER_))
                     {
                         value_str = in_str.Substring(in_str.IndexOf(":") + 1);
-                        BlueRatFWVersion = Convert.ToUInt32(Convert.ToDouble(value_str) * 100);
+                    }
+                    try
+                    {
+                        UInt32 temp = Convert.ToUInt32(Convert.ToDouble(value_str) * 100);
+                    }
+                    catch (Exception)
+                    {
+
+                        value_str="0";
                     }
                 }
                 else
@@ -267,32 +274,44 @@ namespace RedRatDatabaseViewer
 
         public string Get_BUILD_TIME()
         {
-            string value_str = "";
+            string value_str = "0";
 
-            //Get_UART_Input = 1;
-            MyBlueRatSerial.Start_ReadLine();
-            if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_BUILD_TIME)).ToArray()))
+            if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
             {
-                HomeMade_Delay(100);
-                if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
+                Test_If_System_Can_Say_HI(); // this is workaround to force a '\n' before command version 201
+
+                if (BlueRatFWVersion == 100)
                 {
-                    Test_If_System_Can_Say_HI(); // this is workaround to force a '\n' before command version 201
-                }
-               if (MyBlueRatSerial.ReadLine_Ready() == true)
-                {
-                    String in_str = MyBlueRatSerial.ReadLine_Result();
-                    if (_CMD_BUILD_TIME_RETURN_HEADER_ == "")
-                    {
-                        value_str = in_str;
-                    }
-                    else if (in_str.Contains(_CMD_BUILD_TIME_RETURN_HEADER_))
-                    {
-                        value_str = in_str.Substring(in_str.IndexOf(":") + 1);
-                    }
+                    value_str = "Dec 21 2017" + " " + "13:44:08";
                 }
                 else
                 {
-                    Console.WriteLine("Check Get_BUILD_TIME()");
+                    value_str = "Unknown";
+                }
+            }
+            else
+            {
+                //Get_UART_Input = 1;
+                MyBlueRatSerial.Start_ReadLine();
+                if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_BUILD_TIME)).ToArray()))
+                {
+                    HomeMade_Delay(100);
+                    if (MyBlueRatSerial.ReadLine_Ready() == true)
+                    {
+                        String in_str = MyBlueRatSerial.ReadLine_Result();
+                        if (_CMD_BUILD_TIME_RETURN_HEADER_ == "")
+                        {
+                            value_str = in_str;
+                        }
+                        else if (in_str.Contains(_CMD_BUILD_TIME_RETURN_HEADER_))
+                        {
+                            value_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Check Get_BUILD_TIME()");
+                    }
                 }
             }
             return value_str;
@@ -300,7 +319,7 @@ namespace RedRatDatabaseViewer
 
         public string Get_Command_Version()
         {
-            string value_str = "";
+            string value_str = "0";
 
             //Get_UART_Input = 1;
             MyBlueRatSerial.Start_ReadLine();
@@ -313,12 +332,19 @@ namespace RedRatDatabaseViewer
                     if (_CMD_RETURN_CMD_VERSION_RETURN_HEADER_ == "")
                     {
                         value_str = in_str;
-                        BlueRatCMDVersion = Convert.ToUInt32(value_str);
                     }
                     else if (in_str.Contains(_CMD_RETURN_CMD_VERSION_RETURN_HEADER_))
                     {
                         value_str = in_str.Substring(in_str.IndexOf(":") + 1);
-                        BlueRatCMDVersion = Convert.ToUInt32(value_str);
+                    }
+                    try
+                    {
+                        UInt32 temp = Convert.ToUInt32(value_str);
+                    }
+                    catch (Exception)
+                    {
+
+                        value_str = "0";
                     }
                 }
                 else
@@ -357,6 +383,36 @@ namespace RedRatDatabaseViewer
                 }
             }
             return GPIO_Read_Data;
+        }
+
+        public byte Get_Sensor_Input()
+        {
+            UInt32 Sensor_Read_Data = 0xffffffff;
+            //Get_UART_Input = 1;
+            MyBlueRatSerial.Start_ReadLine();
+            if (SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_SENSOR_VALUE)).ToArray()))
+            {
+                HomeMade_Delay(5);
+                if (MyBlueRatSerial.ReadLine_Ready() == true)
+                {
+                    String in_str = MyBlueRatSerial.ReadLine_Result();
+                    if (_CMD_GPIO_INPUT_RETURN_HEADER_ == "")
+                    {
+                        Sensor_Read_Data = Convert.ToUInt32(in_str, 16);
+                    }
+                    else if (in_str.Contains(_CMD_GPIO_INPUT_RETURN_HEADER_))
+                    {
+                        string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                        Sensor_Read_Data = Convert.ToUInt32(value_str, 16);
+                        Console.WriteLine(Sensor_Read_Data.ToString());           // output to console
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Check Get_Sensor_Input()");
+                }
+            }
+            return Convert.ToByte(Sensor_Read_Data&0xff);
         }
 
         public bool Set_GPIO_Output(byte output_value)
@@ -429,14 +485,15 @@ namespace RedRatDatabaseViewer
             }
             if (bRet == true)
             {
-                if (FW_VER == 0)
+                if (BlueRatFWVersion == 0)
                 {
-                    Get_SW_Version();
+                    BlueRatFWVersion = Convert.ToUInt32(Convert.ToDouble(Get_SW_Version()) * 100);
                 }
-                if (CMD_VER == 0)
+                if (BlueRatCMDVersion == 0)
                 {
-                    Get_Command_Version();
+                    BlueRatCMDVersion = Convert.ToUInt32(Get_Command_Version()); 
                 }
+                Update_Header_by_SW_CMD_Version();
             }
             return bRet;
         }
@@ -614,21 +671,40 @@ namespace RedRatDatabaseViewer
         const uint ISP_PASSWORD = (0x46574154);
         const uint RESTART_PASSWORD = (0x46535050);
 
-        const string _CMD_SAY_HI_RETURN_HEADER_ = "HI";
-        //const string _CMD_RETURN_SW_VER_RETURN_HEADER_ = "SW:"; 
-        const string _CMD_RETURN_SW_VER_RETURN_HEADER_ = ""; // for compatibility of firmware: BlueRat - 20171221_001.bin -- please update it whenever we have chance to upgrade firmware.
-        //const string _CMD_BUILD_TIME_RETURN_HEADER_ = "AT";      
-        const string _CMD_BUILD_TIME_RETURN_HEADER_ = "";       //  please update it whenever we have chance to upgrade firmware.
-        //const string _CMD_RETURN_CMD_VERSION_RETURN_HEADER_ = "CMD_VER:"; 
-        const string _CMD_RETURN_CMD_VERSION_RETURN_HEADER_ = ""; // for compatibility of firmware: BlueRat - 20171221_001.bin -- please update it whenever we have chance to upgrade firmware.
-        //        const string _CMD_GET_TX_RUNNING_STATUS_HEADER_ = "TX:";
-        const string _CMD_GET_TX_RUNNING_STATUS_HEADER_ = ""; // for compatibility of firmware: BlueRat - 20171221_001.bin -- please update it whenever we have chance to upgrade firmware.
-        //const string _CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ = "CNT:";
-        const string _CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ = ""; // for compatibility of firmware: BlueRat - 20171221_001.bin -- please update it whenever we have chance to upgrade firmware.
-        //const string _CMD_GPIO_INPUT_RETURN_HEADER_ = "IN:"; 
-        const string _CMD_GPIO_INPUT_RETURN_HEADER_ = "";       //  please update it whenever we have chance to upgrade firmware.
-        //const string _CMD_SENSOR_INPUT_RETURN_HEADER_ = "SS:";
-        const string _CMD_SENSOR_INPUT_RETURN_HEADER_ = "";  //  please update it whenever we have chance to upgrade firmware.
+        string _CMD_SAY_HI_RETURN_HEADER_= "HI";
+        string _CMD_RETURN_SW_VER_RETURN_HEADER_ ="";
+        string _CMD_BUILD_TIME_RETURN_HEADER_ = "";
+        string _CMD_RETURN_CMD_VERSION_RETURN_HEADER_ = "";
+        string _CMD_GET_TX_RUNNING_STATUS_HEADER_ = "";
+        string _CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ = "";
+        string _CMD_GPIO_INPUT_RETURN_HEADER_ = "";
+        string _CMD_SENSOR_INPUT_RETURN_HEADER_ = "";
+
+        private void Update_Header_by_SW_CMD_Version()
+        {
+            if((BlueRatFWVersion>=102)&&(BlueRatCMDVersion>=203))
+            {
+                _CMD_SAY_HI_RETURN_HEADER_ = "HI";
+                _CMD_RETURN_SW_VER_RETURN_HEADER_ = "SW:"; 
+                _CMD_BUILD_TIME_RETURN_HEADER_ = "AT:";   
+                _CMD_RETURN_CMD_VERSION_RETURN_HEADER_ = "CMD_VER:"; 
+                _CMD_GET_TX_RUNNING_STATUS_HEADER_ = "TX:"; 
+                _CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ = "CNT:"; 
+                _CMD_GPIO_INPUT_RETURN_HEADER_ = "IN:";       
+                _CMD_SENSOR_INPUT_RETURN_HEADER_ = "SS:"; 
+            }
+            else
+            {
+                _CMD_SAY_HI_RETURN_HEADER_ = "HI";
+                _CMD_RETURN_SW_VER_RETURN_HEADER_ = "";
+                _CMD_BUILD_TIME_RETURN_HEADER_ = "";
+                _CMD_RETURN_CMD_VERSION_RETURN_HEADER_ = "";
+                _CMD_GET_TX_RUNNING_STATUS_HEADER_ = "";
+                _CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ = "";
+                _CMD_GPIO_INPUT_RETURN_HEADER_ = "";
+                _CMD_SENSOR_INPUT_RETURN_HEADER_ = "";
+            }
+        }
 
         //
         // Input parameter is 32-bit unsigned data
