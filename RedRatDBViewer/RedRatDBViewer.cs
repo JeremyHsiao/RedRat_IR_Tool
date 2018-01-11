@@ -53,10 +53,18 @@ namespace RedRatDatabaseViewer
         private void Serial_UpdatePortName()
         {
             listBox1.Items.Clear();
+            /*
             foreach (string comport_s in SerialPort.GetPortNames())
             {
                 listBox1.Items.Add(comport_s);
             }
+            */
+            List<string> bluerat_com = BlueRat.FindAllBlueRat();
+            foreach(string com_port in bluerat_com)
+            {
+                listBox1.Items.Add(com_port);
+            }
+
             if (listBox1.Items.Count > 0)
             {
                 listBox1.SelectedIndex = 0;     // this can be modified to preferred default
