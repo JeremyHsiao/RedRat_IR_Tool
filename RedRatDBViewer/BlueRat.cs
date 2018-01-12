@@ -81,8 +81,13 @@ namespace RedRatDatabaseViewer
             }
             if(bRet==true)
             {
-                //BlueRatCOMPortString.Add(com_name);
-                //BlueRatCOMPortName = com_name;
+                if (BlueRatFWVersion == 0)
+                {
+                    BlueRatFWVersion = Convert.ToUInt32(Convert.ToDouble(Get_SW_Version()) * 100);
+                    Update_Header_String_by_SW_Version(this,BlueRatFWVersion);
+                    BlueRatCMDVersion = Convert.ToUInt32(Get_Command_Version());
+                }
+                MyBlueRatSerial.SetBlueRatVersion(BlueRatFWVersion, BlueRatCMDVersion);     // Tell BlueRatSerial about version info for workaround at serial read function.
             }
             else
             {
@@ -124,7 +129,7 @@ namespace RedRatDatabaseViewer
             bool bRet = false;
             if (MyBlueRatSerial.Serial_PortConnection() == true)
             {
-                if (this.Test_If_System_Can_Say_HI() == true)
+                if (Test_If_System_Can_Say_HI() == true)
                 {
                     bRet = true;
                 }
@@ -273,107 +278,172 @@ namespace RedRatDatabaseViewer
             return bRet;
         }
 
-        static private string STATIC_Get_SW_Version(BlueRatSerial bluerat_serial, string sw_ver_str)
+        /*
+
+ static private string STATIC_Get_SW_Version(BlueRatSerial bluerat_serial, string sw_ver_str)
+ {
+     string value_str = "0";
+
+     //Get_UART_Input = 1;
+     bluerat_serial.Start_ReadLine();
+     if (bluerat_serial.BlueRatSendToSerial(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_SW_VER)).ToArray()))
+     {
+         Application.DoEvents(); Thread.Sleep(64); Application.DoEvents();
+         if (bluerat_serial.ReadLine_Ready() == true)
+         {
+             String in_str = bluerat_serial.ReadLine_Result();
+
+             if (sw_ver_str == "")
+             {
+                 value_str = in_str;
+             }
+             else if (in_str.Contains(sw_ver_str))
+             {
+                 value_str = in_str.Substring(in_str.IndexOf(":") + 1);
+             }
+             try
+             {
+                 UInt32 temp = Convert.ToUInt32(Convert.ToDouble(value_str) * 100);
+             }
+             catch (Exception)
+             {
+                 value_str = "0";
+             }
+         }
+         else
+         {
+             Console.WriteLine("Check STATIC_Get_SW_Version()");
+         }
+     }
+     return value_str;
+ }
+
+
+  public string Get_SW_Version()
+ {
+     uint previous_version = BlueRatFWVersion, temp_version;
+     string temp_string="", return_string="";
+
+     Update_Header_by_SW_CMD_Version();
+     temp_string = STATIC_Get_SW_Version(MyBlueRatSerial, _CMD_RETURN_SW_VER_RETURN_HEADER_);
+     temp_version = Convert.ToUInt32(Convert.ToDouble(temp_string) * 100);
+     if (temp_version == 0)
+     {
+         BlueRatFWVersion = 102;
+         Update_Header_by_SW_CMD_Version();
+         temp_string = STATIC_Get_SW_Version(MyBlueRatSerial, _CMD_RETURN_SW_VER_RETURN_HEADER_);
+         temp_version = Convert.ToUInt32(Convert.ToDouble(temp_string)*100);
+         if (temp_version != 0)
+         {
+             return_string = temp_string;
+         }
+     }
+     else
+     {
+         return_string = temp_string;
+     }
+     return return_string;
+ }
+ */
+        /*
+                public string Get_SW_Version()
+                {
+                    string value_str = "0";
+
+                    //Get_UART_Input = 1;
+                    MyBlueRatSerial.Start_ReadLine();
+                    if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_SW_VER)).ToArray()))
+                    {
+                        HomeMade_Delay(30);
+                        if (MyBlueRatSerial.ReadLine_Ready() == true)
+                        {
+                            String in_str = MyBlueRatSerial.ReadLine_Result();
+                            if (_CMD_RETURN_SW_VER_RETURN_HEADER_ == "")
+                            {
+                                value_str = in_str;
+                            }
+                            else if (in_str.Contains(_CMD_RETURN_SW_VER_RETURN_HEADER_))
+                            {
+                                value_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                            }
+                            try
+                            {
+                                UInt32 temp = Convert.ToUInt32(Convert.ToDouble(value_str) * 100);
+                            }
+                            catch (Exception)
+                            {
+
+                                value_str="0";
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Check Get_SW_Version()");
+                        }
+                    }
+                    return value_str;
+                }
+        */
+
+        private string Get_SW_Version()
         {
-            string value_str = "0";
+            bool bRet = false;
+            string value_str = "0.01";
+            ENUM_RETRY_RESULT result_status;   
 
-            //Get_UART_Input = 1;
-            bluerat_serial.Start_ReadLine();
-            if (bluerat_serial.BlueRatSendToSerial(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_SW_VER)).ToArray()))
+            MyBlueRatSerial.Start_ReadLine();
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_SW_VER)).ToArray()) == false)
             {
-                Application.DoEvents(); Thread.Sleep(30); Application.DoEvents();
-                if (bluerat_serial.ReadLine_Ready() == true)
-                {
-                    String in_str = bluerat_serial.ReadLine_Result();
-                    if (sw_ver_str == "")
-                    {
-                        value_str = in_str;
-                    }
-                    else if (in_str.Contains(sw_ver_str))
-                    {
-                        value_str = in_str.Substring(in_str.IndexOf(":") + 1);
-                    }
-                    try
-                    {
-                        UInt32 temp = Convert.ToUInt32(Convert.ToDouble(value_str) * 100);
-                    }
-                    catch (Exception)
-                    {
-                        value_str = "0";
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Check STATIC_Get_SW_Version()");
-                }
-            }
-            return value_str;
-        }
-
-        public string Get_SW_Version()
-        {
-            uint previous_version = BlueRatFWVersion, temp_version;
-            string temp_string="", return_string="";
-
-            Update_Header_by_SW_CMD_Version();
-            temp_string = STATIC_Get_SW_Version(MyBlueRatSerial, _CMD_RETURN_SW_VER_RETURN_HEADER_);
-            temp_version = Convert.ToUInt32(Convert.ToDouble(temp_string) * 100);
-            if (temp_version == 0)
-            {
-                BlueRatFWVersion = 102;
-                Update_Header_by_SW_CMD_Version();
-                temp_string = STATIC_Get_SW_Version(MyBlueRatSerial, _CMD_RETURN_SW_VER_RETURN_HEADER_);
-                temp_version = Convert.ToUInt32(Convert.ToDouble(temp_string)*100);
-                if (temp_version != 0)
-                {
-                    return_string = temp_string;
-                }
+                result_status = ENUM_RETRY_RESULT.ENUM_ERROR_AT_SEND_COMMAND;
             }
             else
             {
-                return_string = temp_string;
+                result_status = ENUM_RETRY_RESULT.ENUM_ERROR_AT_READLINE;       // readline error will be cleared after line is read.
+                uint MyRetryTimes = Convert.ToUInt32(ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1) - 1;
+                do
+                {
+                    Application.DoEvents(); Thread.Sleep(16); Application.DoEvents();
+                    if (MyBlueRatSerial.ReadLine_Ready() == true)
+                    {
+                        String in_str = MyBlueRatSerial.ReadLine_Result();
+                        if (in_str.Contains(_SW_VER_STRING_VER_01))         // Check latest version first -- currently 2 version
+                        {
+                            value_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                        }
+                        else //if ((in_str.IndexOf('1')==0)&& (in_str.IndexOf('.') == 1)
+                        {
+                            value_str = in_str;
+                        }
+                        // check if this is a number-sring
+                        try
+                        {
+                            UInt32 temp = Convert.ToUInt32(Convert.ToDouble(value_str) * 100);      // only for testing conversion.
+                            bRet = true;
+                            result_status = (ENUM_RETRY_RESULT)MyRetryTimes;
+                        }
+                        catch (System.FormatException)
+                        {
+                            result_status = ENUM_RETRY_RESULT.ENUM_ERROR_AT_COMPARE;
+                        }
+                        break;
+                    }
+                    else
+                    {
+                        // Console.WriteLine("No version string");
+                    }
+                }
+                while ((bRet == false) && (MyRetryTimes-- > 0));
             }
-            return return_string;
-        }
-/*
-        public string Get_SW_Version()
-        {
-            string value_str = "0";
 
-            //Get_UART_Input = 1;
-            MyBlueRatSerial.Start_ReadLine();
-            if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_SW_VER)).ToArray()))
+            // Debug purpose
+            if (bRet == false)
             {
-                HomeMade_Delay(30);
-                if (MyBlueRatSerial.ReadLine_Ready() == true)
-                {
-                    String in_str = MyBlueRatSerial.ReadLine_Result();
-                    if (_CMD_RETURN_SW_VER_RETURN_HEADER_ == "")
-                    {
-                        value_str = in_str;
-                    }
-                    else if (in_str.Contains(_CMD_RETURN_SW_VER_RETURN_HEADER_))
-                    {
-                        value_str = in_str.Substring(in_str.IndexOf(":") + 1);
-                    }
-                    try
-                    {
-                        UInt32 temp = Convert.ToUInt32(Convert.ToDouble(value_str) * 100);
-                    }
-                    catch (Exception)
-                    {
-
-                        value_str="0";
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Check Get_SW_Version()");
-                }
+                Console.WriteLine(result_status.ToString());
             }
+
             return value_str;
         }
-*/
+
         public string Get_BUILD_TIME()
         {
             string value_str = "0";
@@ -418,7 +488,7 @@ namespace RedRatDatabaseViewer
             return value_str;
         }
 
-        public string Get_Command_Version()
+        private string Get_Command_Version()
         {
             string value_str = "0";
 
@@ -575,17 +645,18 @@ namespace RedRatDatabaseViewer
                 BlueRatSerial Checking_Serial = new BlueRatSerial(comport_s);
                 if (Checking_Serial.Serial_PortConnection() == true)
                 {
-                    if (STATIC_Test_If_System_Can_Say_HI(Checking_Serial,"HI") == true)
+                    if (STATIC_Test_If_System_Can_Say_HI(Checking_Serial) == true)
                     {
                         AllBlueRat.Add(comport_s);
                     }
                 }
                 else
                 {
+                    // open it only when it is not currently open -- so need to close it after checking
                     Checking_Serial.Serial_OpenPort();
                     if (Checking_Serial.Serial_PortConnection() == true)
                     {
-                        if (STATIC_Test_If_System_Can_Say_HI(Checking_Serial, "HI") == true)
+                        if (STATIC_Test_If_System_Can_Say_HI(Checking_Serial) == true)
                         {
                             AllBlueRat.Add(comport_s);
                         }
@@ -608,25 +679,12 @@ namespace RedRatDatabaseViewer
             else
             {
                 HomeMade_Delay(10);
-                this.Force_Init_BlueRat();
+                Force_Init_BlueRat();
                 HomeMade_Delay(10);
-                if (this.CheckConnection() == true)
+                if (CheckConnection() == true)
                 {
                    bRet = true;
                 }
-            }
-            if (bRet == true)
-            {
-                if (BlueRatFWVersion == 0)
-                {
-                    BlueRatFWVersion = Convert.ToUInt32(Convert.ToDouble(Get_SW_Version()) * 100);
-                }
-                if (BlueRatCMDVersion == 0)
-                {
-                    BlueRatCMDVersion = Convert.ToUInt32(Get_Command_Version()); 
-                }
-                //Update_Header_by_SW_CMD_Version();
-                MyBlueRatSerial.SetBlueRatVersion(BlueRatFWVersion, BlueRatCMDVersion);     // Tell BlueRatSerial about version info for workaround at serial read function.
             }
             return bRet;
         }
@@ -804,13 +862,16 @@ namespace RedRatDatabaseViewer
         const uint ISP_PASSWORD = (0x46574154);
         const uint RESTART_PASSWORD = (0x46535050);
 
-        // History of all SW Version String
-        const string _FINDING_SW_VER_00 = "";
-        const string _FINDING_SW_VER_01 = "SW:";
+        // History of all HI String
+        const string _HI_STRING_VER_00 = "HI";
+        //const string _HI_STRING_VER_01 = "HI!BlueRat!"; // reserved for future extension
 
+        // History of all SW_VER header
+        const string _SW_VER_STRING_VER_00 = "";
+        const string _SW_VER_STRING_VER_01 = "SW:";
 
-        string _CMD_SAY_HI_RETURN_HEADER_ = "HI";
-        string _CMD_RETURN_SW_VER_RETURN_HEADER_ ="";
+        //string _CMD_SAY_HI_RETURN_HEADER_ = _HI_STRING_VER_00;
+        //string _CMD_RETURN_SW_VER_RETURN_HEADER_ ="";
         string _CMD_BUILD_TIME_RETURN_HEADER_ = "";
         string _CMD_RETURN_CMD_VERSION_RETURN_HEADER_ = "";
         string _CMD_GET_TX_RUNNING_STATUS_HEADER_ = "";
@@ -818,29 +879,29 @@ namespace RedRatDatabaseViewer
         string _CMD_GPIO_INPUT_RETURN_HEADER_ = "";
         string _CMD_SENSOR_INPUT_RETURN_HEADER_ = "";
 
-        private void Update_Header_by_SW_CMD_Version()
+        static private void Update_Header_String_by_SW_Version(BlueRat blue_rat, uint fw_ver)
         {
-            if(BlueRatFWVersion>=102)
+            if(fw_ver >= 102)
             {
-                _CMD_SAY_HI_RETURN_HEADER_ = "HI";
-                _CMD_RETURN_SW_VER_RETURN_HEADER_ = "SW:"; 
-                _CMD_BUILD_TIME_RETURN_HEADER_ = "AT:";   
-                _CMD_RETURN_CMD_VERSION_RETURN_HEADER_ = "CMD_VER:"; 
-                _CMD_GET_TX_RUNNING_STATUS_HEADER_ = "TX:"; 
-                _CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ = "CNT:"; 
-                _CMD_GPIO_INPUT_RETURN_HEADER_ = "IN:";       
-                _CMD_SENSOR_INPUT_RETURN_HEADER_ = "SS:"; 
+                //_CMD_SAY_HI_RETURN_HEADER_ = _HI_STRING_VER_00;
+                //_CMD_RETURN_SW_VER_RETURN_HEADER_ = "SW:"; 
+                blue_rat._CMD_BUILD_TIME_RETURN_HEADER_ = "AT:";
+                blue_rat._CMD_RETURN_CMD_VERSION_RETURN_HEADER_ = "CMD_VER:";
+                blue_rat._CMD_GET_TX_RUNNING_STATUS_HEADER_ = "TX:";
+                blue_rat._CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ = "CNT:";
+                blue_rat._CMD_GPIO_INPUT_RETURN_HEADER_ = "IN:";
+                blue_rat._CMD_SENSOR_INPUT_RETURN_HEADER_ = "SS:"; 
             }
             else
             {
-                _CMD_SAY_HI_RETURN_HEADER_ = "HI";
-                _CMD_RETURN_SW_VER_RETURN_HEADER_ = "";
-                _CMD_BUILD_TIME_RETURN_HEADER_ = "";
-                _CMD_RETURN_CMD_VERSION_RETURN_HEADER_ = "";
-                _CMD_GET_TX_RUNNING_STATUS_HEADER_ = "";
-                _CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ = "";
-                _CMD_GPIO_INPUT_RETURN_HEADER_ = "";
-                _CMD_SENSOR_INPUT_RETURN_HEADER_ = "";
+                //_CMD_SAY_HI_RETURN_HEADER_ = _HI_STRING_VER_00;
+                //_CMD_RETURN_SW_VER_RETURN_HEADER_ = "";
+                blue_rat._CMD_BUILD_TIME_RETURN_HEADER_ = "";
+                blue_rat._CMD_RETURN_CMD_VERSION_RETURN_HEADER_ = "";
+                blue_rat._CMD_GET_TX_RUNNING_STATUS_HEADER_ = "";
+                blue_rat._CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ = "";
+                blue_rat._CMD_GPIO_INPUT_RETURN_HEADER_ = "";
+                blue_rat._CMD_SENSOR_INPUT_RETURN_HEADER_ = "";
             }
         }
 
@@ -1262,32 +1323,72 @@ namespace RedRatDatabaseViewer
         }
         // END - 小藍鼠專用的delay的內部資料與function
 
-        // 單純回應"HI"的指令,可用來試試看系統是否還有在接受指令 -- 目前不對外開放
-        static private Boolean STATIC_Test_If_System_Can_Say_HI(BlueRatSerial bluerat_serial, string hi_string)
+        enum ENUM_RETRY_RESULT
         {
-            Boolean bRet = false;
-            //Get_UART_Input = 1;
+            ENUM_OK_RETRY_03 = 0,
+            ENUM_OK_RETRY_02,
+            ENUM_OK_RETRY_01,
+            ENUM_OK_RETRY_00,
+            ENUM_MAX_RETRY_PLUS_1,
+            ENUM_ERROR_AT_READLINE = 0x100,
+            ENUM_ERROR_AT_COMPARE,
+            ENUM_ERROR_AT_SEND_COMMAND,
+        } ;
+
+        // 單純回應"HI"的指令,可用來試試看系統是否還有在接受指令 -- 目前不對外開放
+        static private Boolean STATIC_Test_If_System_Can_Say_HI(BlueRatSerial bluerat_serial)
+        {
+            bool bRet = false;
+            ENUM_RETRY_RESULT result_status;
             bluerat_serial.Start_ReadLine();
-            bluerat_serial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SAY_HI)).ToArray());
-            Application.DoEvents(); Thread.Sleep(30); Application.DoEvents();
-            if (bluerat_serial.ReadLine_Ready() == true)
+            if (bluerat_serial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SAY_HI)).ToArray()) == false)
             {
-                String in_str = bluerat_serial.ReadLine_Result();
-                if (in_str.Contains(hi_string))
-                {
-                    bRet = true;
-                }
-                else
-                {
-                    Console.WriteLine("BlueRat no resonse to HI Command");
-                }
+                result_status = ENUM_RETRY_RESULT.ENUM_ERROR_AT_SEND_COMMAND;
             }
+            else
+            {
+                result_status = ENUM_RETRY_RESULT.ENUM_ERROR_AT_READLINE;       // readline error will be cleared after line is read.
+                uint MyRetryTimes = Convert.ToUInt32(ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1) - 1;
+                do
+                {
+                    Application.DoEvents(); Thread.Sleep(16); Application.DoEvents();
+                    if (bluerat_serial.ReadLine_Ready() == true)
+                    {
+                        String in_str = bluerat_serial.ReadLine_Result();
+                        result_status = (ENUM_RETRY_RESULT)MyRetryTimes;                // Store retry_ok_times as result
+
+                        if (String.Compare(in_str, _HI_STRING_VER_00) == 0)             // Currently only one version of HI string
+                        {
+                            bRet = true;
+                        }
+                        else
+                        {
+                            result_status = ENUM_RETRY_RESULT.ENUM_ERROR_AT_COMPARE;    // Store error_status result
+                                                                                        //MyRetryTimes = 0;
+                            break;
+                            //Console.WriteLine("Not a HI");
+                        }
+                    }
+                    else
+                    {
+                        // Console.WriteLine("No string at greeting");
+                    }
+                }
+                while ((bRet == false) && (MyRetryTimes-- > 0));
+            }
+
+            // Debug purpose
+            if(bRet == false)
+            {
+                Console.WriteLine(result_status.ToString());
+            }
+
             return bRet;
         }
 
         private Boolean Test_If_System_Can_Say_HI()
         {
-            return STATIC_Test_If_System_Can_Say_HI(MyBlueRatSerial, _CMD_SAY_HI_RETURN_HEADER_);
+            return STATIC_Test_If_System_Can_Say_HI(MyBlueRatSerial);
         }
 
         /*

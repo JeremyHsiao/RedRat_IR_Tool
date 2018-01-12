@@ -352,7 +352,17 @@ namespace RedRatDatabaseViewer
             TemoparilyDisbleAllRCFunctionButtons();
             if (MyBlueRat.Stop_Current_Tx() == true)
             {
-                AppendSerialMessageLog("Stop Command Sent\n");
+                this.rtbSignalData.AppendText("Stop Command Sent\n");
+
+                string temp_string;
+                temp_string = MyBlueRat.FW_VER.ToString();
+                this.rtbSignalData.AppendText("Get SW ver: " + temp_string + "\n");
+                //temp_string2 = MyBlueRat.Get_Command_Version();
+                temp_string = MyBlueRat.CMD_VER.ToString();
+                this.rtbSignalData.AppendText("Get CMD ver: " + temp_string + "\n");
+                temp_string = MyBlueRat.Get_BUILD_TIME();
+                this.rtbSignalData.AppendText("Get Build time: " + temp_string + "\n");
+                this.rtbSignalData.ScrollToCaret();
             }
             else
             {
@@ -944,31 +954,31 @@ namespace RedRatDatabaseViewer
             }
         }
 
-        private void Example_Auto_Serach_and_Connect_BlueRat()
-        {
-            foreach (string comport_s in SerialPort.GetPortNames())
-            {
-                if (MyBlueRat.Connect(comport_s))
-                {
-                    listBox1.SelectedItem = comport_s;      // This is the COM_PORT connecting to BlueRat
-                    MyBlueRat.Disconnect(); // 這裏關掉連線,單純是是為了執行後面的Connect;正式code可以連線完成就直接開始使用
-                    break;
-                }
-            }
-        }
-
         private void btnRepeatRC_Click(object sender, EventArgs e)
         {
             TemoparilyDisbleAllRCFunctionButtons();
 
             //
-            // Example
+            // 
             //
-            Example_Auto_Serach_and_Connect_BlueRat();
-            //示範現在如何聯接UART -- 需傳入COM PORT名稱
+            if (listBox1.Items.Count == 0)
+            {
+                // Example -- 示範現在如何找出所有的小藍鼠
+                List<string> bluerat_com = BlueRat.FindAllBlueRat();
+                foreach (string com_port in bluerat_com)
+                {
+                    listBox1.Items.Add(com_port);
+                }
+            }
+            if ((listBox1.SelectedItem == null)&&(listBox1.Items.Count > 0))    // Use first one if none-selected
+            {
+                listBox1.SelectedIndex = 0;
+            }
+
             if (listBox1.SelectedItem != null)
             {
                 string com_port_name = listBox1.SelectedItem.ToString();
+                //示範現在如何聯接小藍鼠 -- 需傳入COM PORT名稱
                 if (MyBlueRat.Connect(com_port_name))
                 {
                     // 在第一次/或長時間未使用之後,要開始使用BlueRat跑Schedule之前,建議執行這一行,確保BlueRat的起始狀態一致 -- 正常情況下不執行並不影響BlueRat運行,但為了找問題方便,還是請務必執行
@@ -1062,6 +1072,11 @@ namespace RedRatDatabaseViewer
                     //示範現在如何結束聯接UART並釋放 
                     MyBlueRat.Disconnect();
                 }
+
+                // UI update after disconnecting BlueRat
+                UpdateToConnectButton();
+                EnableRefreshCOMButton();
+                UpdateRCFunctionButtonAfterDisconnection();
             }
             UndoTemoparilyDisbleAllRCFunctionButtons();
         }
