@@ -789,23 +789,27 @@ namespace RedRatDatabaseViewer
                 // 這裏至少要放Applicaiton.DoEvents()讓其它event有機會完成
                 while (GetTimeOutIndicator() == false)
                 {
-                    int temp_repeat_cnt;
-                    RedRatDBViewer_Delay(480);
-                    temp_repeat_cnt = MyBlueRat.Get_Remaining_Repeat_Count();
+                    int temp_repeat_cnt = MyBlueRat.Get_Remaining_Repeat_Count();
                     Console.WriteLine(temp_repeat_cnt.ToString());
-                    RedRatDBViewer_Delay(480);
+                    if (temp_repeat_cnt == 0) break;
+                    RedRatDBViewer_Delay(240);
+
                     bool temp_tx_status = MyBlueRat.Get_Current_Tx_Status();
                     Console.WriteLine(temp_tx_status.ToString());
-                    if((temp_repeat_cnt==0)||(temp_tx_status==false))
-                    {
-                        break;
-                    }
+                    if (temp_tx_status == false) break;
+                    RedRatDBViewer_Delay(240);
+
                 }
                 aTimer.Stop();
                 aTimer.Dispose();
 
-                MyBlueRat.Get_Remaining_Repeat_Count();
-                MyBlueRat.Get_Current_Tx_Status();
+                // May cause error before v102
+                if (MyBlueRat.FW_VER >= 102)
+                {
+                    // These 2 functions have defect when BlueRat Tx isn't running -- ok when is running 
+                    MyBlueRat.Get_Remaining_Repeat_Count();
+                    MyBlueRat.Get_Current_Tx_Status();
+                }
             }
         }
 
@@ -993,7 +997,7 @@ namespace RedRatDatabaseViewer
                         temp_string3 = MyBlueRat.BUILD_TIME;
                         Console.WriteLine("BlueRat at " + com_port_name + ":\n"+ "SW: " + temp_string1 + "\n" + "CMD_API: " + temp_string2 + "\n" + "Build time: " + temp_string3 + "\n");
 
-                        //TEST_Return_Repeat_Count_and_Tx_Status();
+                        TEST_Return_Repeat_Count_and_Tx_Status();
 
                         MyBlueRat.Stop_Current_Tx();
                         MyBlueRat.CheckConnection();

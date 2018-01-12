@@ -192,7 +192,7 @@ namespace RedRatDatabaseViewer
                 }
                 else
                 {
-                    HomeMade_Delay(40);
+                    HomeMade_Delay(60);
                 }
                 if (MyBlueRatSerial.ReadLine_Ready()==true)
                 {
@@ -241,7 +241,7 @@ namespace RedRatDatabaseViewer
                 }
                 else
                 {
-                    HomeMade_Delay(10);
+                    HomeMade_Delay(20);
                 }
                 if (MyBlueRatSerial.ReadLine_Ready() == true)
                 {
@@ -1384,7 +1384,7 @@ namespace RedRatDatabaseViewer
             // Debug purpose
             if(bRet == false)
             {
-                Console.WriteLine(result_status.ToString());
+                Console.WriteLine("Check STATIC_Test_If_System_Can_Say_HI - " + result_status.ToString());
             }
 
             return bRet;
