@@ -457,11 +457,11 @@ namespace RedRatDatabaseViewer
             {
                 if (BlueRatFWVersion == 100)
                 {
-                    value_str = "Dec 21 2017" + " " + "13:44:08";
+                    value_str = "Dec 21 2017" + " " + "13:44:28";
                 }
                 else
                 {
-                    value_str = "2017";
+                    value_str = "Dec 2017";
                 }
             }
             else
