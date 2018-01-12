@@ -54,7 +54,7 @@
             this.label3 = new System.Windows.Forms.Label();
             this.lbModulationType = new System.Windows.Forms.Label();
             this.btnFreshCOMNo = new System.Windows.Forms.Button();
-            this.listBox1 = new System.Windows.Forms.ListBox();
+            this.lstBlueRatComPort = new System.Windows.Forms.ListBox();
             this.btnConnectionControl = new System.Windows.Forms.Button();
             this.btnCheckHeartBeat = new System.Windows.Forms.Button();
             this.btnRepeatRC = new System.Windows.Forms.Button();
@@ -335,16 +335,16 @@
             this.btnFreshCOMNo.UseVisualStyleBackColor = true;
             this.btnFreshCOMNo.Click += new System.EventHandler(this.btnFreshCOMNo_Click);
             // 
-            // listBox1
+            // lstBlueRatComPort
             // 
-            this.listBox1.Font = new System.Drawing.Font("Calibri", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.listBox1.FormattingEnabled = true;
-            this.listBox1.ItemHeight = 14;
-            this.listBox1.Location = new System.Drawing.Point(305, 12);
-            this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(58, 46);
-            this.listBox1.TabIndex = 17;
-            this.listBox1.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
+            this.lstBlueRatComPort.Font = new System.Drawing.Font("Calibri", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lstBlueRatComPort.FormattingEnabled = true;
+            this.lstBlueRatComPort.ItemHeight = 14;
+            this.lstBlueRatComPort.Location = new System.Drawing.Point(305, 12);
+            this.lstBlueRatComPort.Name = "lstBlueRatComPort";
+            this.lstBlueRatComPort.Size = new System.Drawing.Size(58, 46);
+            this.lstBlueRatComPort.TabIndex = 17;
+            this.lstBlueRatComPort.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
             // 
             // btnConnectionControl
             // 
@@ -408,7 +408,7 @@
             this.Controls.Add(this.btnRepeatRC);
             this.Controls.Add(this.btnCheckHeartBeat);
             this.Controls.Add(this.btnConnectionControl);
-            this.Controls.Add(this.listBox1);
+            this.Controls.Add(this.lstBlueRatComPort);
             this.Controls.Add(this.btnFreshCOMNo);
             this.Controls.Add(this.gbRC_File_Data);
             this.Controls.Add(this.btnStopRCButton);
@@ -455,7 +455,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column2;
         private System.Windows.Forms.Button btnFreshCOMNo;
-        private System.Windows.Forms.ListBox listBox1;
+        private System.Windows.Forms.ListBox lstBlueRatComPort;
         private System.Windows.Forms.Button btnConnectionControl;
         private System.Windows.Forms.Button btnCheckHeartBeat;
         private System.Windows.Forms.Button btnRepeatRC;

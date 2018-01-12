@@ -174,7 +174,6 @@ namespace RedRatDatabaseViewer
                                     Wait_UART_Input.Dequeue();
                                     UART_READ_MSG_QUEUE.Enqueue(message);
                                 }
-                                //AppendSerialMessageLog(message);
                             }
                             _serialPort.ReadTimeout = 500;
                         }
@@ -194,7 +193,6 @@ namespace RedRatDatabaseViewer
                         OnUARTException(EventArgs.Empty);
                     }
                     Console.WriteLine("ReadSerialPortThread - " + ex);
-                    //AppendSerialMessageLog(ex.ToString());
                     //_continue_serial_read_write = false;
                 }
             }

@@ -52,7 +52,7 @@ namespace RedRatDatabaseViewer
 
         private void Serial_UpdatePortName()
         {
-            listBox1.Items.Clear();
+            lstBlueRatComPort.Items.Clear();
             /*
             foreach (string comport_s in SerialPort.GetPortNames())
             {
@@ -62,12 +62,12 @@ namespace RedRatDatabaseViewer
             List<string> bluerat_com = BlueRat.FindAllBlueRat();
             foreach(string com_port in bluerat_com)
             {
-                listBox1.Items.Add(com_port);
+                lstBlueRatComPort.Items.Add(com_port);
             }
 
-            if (listBox1.Items.Count > 0)
+            if (lstBlueRatComPort.Items.Count > 0)
             {
-                listBox1.SelectedIndex = 0;     // this can be modified to preferred default
+                lstBlueRatComPort.SelectedIndex = 0;     // this can be modified to preferred default
                 EnableConnectButton();
                 UpdateToConnectButton();
             }
@@ -170,11 +170,11 @@ namespace RedRatDatabaseViewer
         // Print Serial Port Message on RichTextBox
         //
         delegate void AppendSerialMessageCallback(string text);
-        public void AppendSerialMessageLog(string my_str)
+        public void AppendDBViewerMessageLog(string my_str)
         {
             if (this.rtbSignalData.InvokeRequired)
             {
-                AppendSerialMessageCallback d = new AppendSerialMessageCallback(AppendSerialMessageLog);
+                AppendSerialMessageCallback d = new AppendSerialMessageCallback(AppendDBViewerMessageLog);
                 this.Invoke(d, new object[] { my_str });
             }
             else
@@ -207,7 +207,7 @@ namespace RedRatDatabaseViewer
         {
             if (btnConnectionControl.Text.Equals(CONNECT_UART_STRING_ON_BUTTON, StringComparison.Ordinal)) // Check if button is showing "Connect" at this moment.
             {   // User to connect
-                string curItem = listBox1.SelectedItem.ToString();
+                string curItem = lstBlueRatComPort.SelectedItem.ToString();
                 if (MyBlueRat.Connect(curItem) == true)
                 {
                     BlueRat_UART_Exception_status = false;
@@ -331,11 +331,11 @@ namespace RedRatDatabaseViewer
             TemoparilyDisbleAllRCFunctionButtons();
             if (MyBlueRat.CheckConnection() == true)
             {
-                AppendSerialMessageLog("BlueRat available\n");
+                AppendDBViewerMessageLog("BlueRat available\n");
             }
             else
             {
-                AppendSerialMessageLog("BlueRat not found\n");
+                AppendDBViewerMessageLog("BlueRat not found\n");
             }
             //SendToSerial_v2(Prepare_Say_HI_CMD().ToArray());
             UndoTemoparilyDisbleAllRCFunctionButtons();
@@ -353,21 +353,22 @@ namespace RedRatDatabaseViewer
             if (MyBlueRat.Stop_Current_Tx() == true)
             {
                 this.rtbSignalData.AppendText("Stop Command Sent\n");
-
-                string temp_string;
-                temp_string = MyBlueRat.FW_VER.ToString();
-                this.rtbSignalData.AppendText("Get SW ver: " + temp_string + "\n");
-                //temp_string2 = MyBlueRat.Get_Command_Version();
-                temp_string = MyBlueRat.CMD_VER.ToString();
-                this.rtbSignalData.AppendText("Get CMD ver: " + temp_string + "\n");
-                temp_string = MyBlueRat.Get_BUILD_TIME();
-                this.rtbSignalData.AppendText("Get Build time: " + temp_string + "\n");
-                this.rtbSignalData.ScrollToCaret();
             }
             else
             {
-                AppendSerialMessageLog("Command not sent\n");
+                AppendDBViewerMessageLog("Command not sent\n");
             }
+
+            string temp_string;
+            temp_string = MyBlueRat.FW_VER.ToString();
+            this.rtbSignalData.AppendText("Get SW ver: " + temp_string + "\n");
+            //temp_string2 = MyBlueRat.Get_Command_Version();
+            temp_string = MyBlueRat.CMD_VER.ToString();
+            this.rtbSignalData.AppendText("Get CMD ver: " + temp_string + "\n");
+            temp_string = MyBlueRat.BUILD_TIME.ToString();
+            this.rtbSignalData.AppendText("Get Build time: " + temp_string + "\n");
+            this.rtbSignalData.ScrollToCaret();
+
             //SendToSerial_v2(Prepare_STOP_CMD().ToArray());
             UndoTemoparilyDisbleAllRCFunctionButtons();
             //btnCheckHeartBeat.Enabled = true;
@@ -958,120 +959,128 @@ namespace RedRatDatabaseViewer
         {
             TemoparilyDisbleAllRCFunctionButtons();
 
-            //
-            // 
-            //
-            if (listBox1.Items.Count == 0)
+            if (lstBlueRatComPort.Items.Count == 0)
             {
                 // Example -- 示範現在如何找出所有的小藍鼠
                 List<string> bluerat_com = BlueRat.FindAllBlueRat();
                 foreach (string com_port in bluerat_com)
                 {
-                    listBox1.Items.Add(com_port);
+                    lstBlueRatComPort.Items.Add(com_port);
                 }
             }
-            if ((listBox1.SelectedItem == null)&&(listBox1.Items.Count > 0))    // Use first one if none-selected
+            if ((lstBlueRatComPort.SelectedItem == null)&&(lstBlueRatComPort.Items.Count > 0))    // Use first one if none-selected
             {
-                listBox1.SelectedIndex = 0;
+                lstBlueRatComPort.SelectedIndex = 0;
             }
 
-            if (listBox1.SelectedItem != null)
+            if (lstBlueRatComPort.SelectedItem != null)
             {
-                string com_port_name = listBox1.SelectedItem.ToString();
-                //示範現在如何聯接小藍鼠 -- 需傳入COM PORT名稱
-                if (MyBlueRat.Connect(com_port_name))
+                // Go through all BlueRat
+                int ScanBlueRat_Count = 0;
+                do
                 {
-                    // 在第一次/或長時間未使用之後,要開始使用BlueRat跑Schedule之前,建議執行這一行,確保BlueRat的起始狀態一致 -- 正常情況下不執行並不影響BlueRat運行,但為了找問題方便,還是請務必執行
-                    MyBlueRat.Force_Init_BlueRat();
-                    string temp_string1, temp_string2, temp_string3;
-                    //temp_string1 = MyBlueRat.Get_SW_Version();
-                    temp_string1 = MyBlueRat.FW_VER.ToString();
-                    this.rtbSignalData.AppendText("Get SW ver: " + temp_string1 + "\n");
-                    //temp_string2 = MyBlueRat.Get_Command_Version();
-                    temp_string2 = MyBlueRat.CMD_VER.ToString();
-                    this.rtbSignalData.AppendText("Get CMD ver: " + temp_string2 + "\n");
-                    temp_string3 = MyBlueRat.Get_BUILD_TIME();
-                    this.rtbSignalData.AppendText("Get Build time: " + temp_string3 + "\n");
-                    this.rtbSignalData.ScrollToCaret();
+                    string com_port_name = lstBlueRatComPort.SelectedItem.ToString();
+                    //示範現在如何聯接小藍鼠 -- 需傳入COM PORT名稱
+                    if (MyBlueRat.Connect(com_port_name))
+                    {
+                        // 在第一次/或長時間未使用之後,要開始使用BlueRat跑Schedule之前,建議執行這一行,確保BlueRat的起始狀態一致 -- 正常情況下不執行並不影響BlueRat運行,但為了找問題方便,還是請務必執行
+                        MyBlueRat.Force_Init_BlueRat();
+                        string temp_string1, temp_string2, temp_string3;
+                        //temp_string1 = MyBlueRat.Get_SW_Version();
+                        temp_string1 = MyBlueRat.FW_VER.ToString();
+                        //temp_string2 = MyBlueRat.Get_Command_Version();
+                        temp_string2 = MyBlueRat.CMD_VER.ToString();
+                        temp_string3 = MyBlueRat.BUILD_TIME;
+                        Console.WriteLine("BlueRat at " + com_port_name + ":\n"+ "SW: " + temp_string1 + "\n" + "CMD_API: " + temp_string2 + "\n" + "Build time: " + temp_string3 + "\n");
 
-                    //TEST_Return_Repeat_Count_and_Tx_Status();
-
-                    MyBlueRat.Stop_Current_Tx();
-                    MyBlueRat.CheckConnection();
-                    MyBlueRat.Get_GPIO_Input();
-                    MyBlueRat.CheckConnection();
-                    if (FormIsClosing == false)
-                    {
-                        Example_to_Send_RC_without_Repeat_Count();
-                        MyBlueRat.CheckConnection();
-                        Console.WriteLine("DONE - Example_to_Send_RC_without_Repeat_Count");
-                    }
-                    if (FormIsClosing == false)
-                    {
-                        Example_to_Send_RC_with_Repeat_Count();
-                        MyBlueRat.CheckConnection();
-                        Console.WriteLine("DONE - Example_to_Send_RC_with_Repeat_Count");
-                    }
-                    if (FormIsClosing == false)
-                    {
-                        Example_to_Send_RC_with_Large_Repeat_Count();
-                        MyBlueRat.CheckConnection();
-                        Console.WriteLine("DONE - Example_to_Send_RC_with_Large_Repeat_Count");
-                    }
-
-                    if ((RedRatData != null) && (RedRatData.SignalDB != null))
-                    {
-                        if (FormIsClosing == false)
-                        {
-                            TEST_WalkThroughAllRCKeys();
-                            MyBlueRat.CheckConnection();
-                            Console.WriteLine("DONE - TEST_WalkThroughAllRCKeys");
-                        }
-                        if (FormIsClosing == false)
-                        {
-                            TEST_StressSendingRepeatCount();
-                            MyBlueRat.CheckConnection();
-                            Console.WriteLine("DONE - TEST_WalkThroughAllRCKeys");
-                        }
-                    }
-
-                    ////
-                    // Self-testing code
-                    //
-                    if (FormIsClosing == false)
-                    {
                         //TEST_Return_Repeat_Count_and_Tx_Status();
-                        MyBlueRat.CheckConnection();
-                        //Console.WriteLine("DONE - TEST_Return_Repeat_Count_and_Tx_Status");
-                    }
-                    if (FormIsClosing == false)
-                    {
-                        MyBlueRat.TEST_WalkThroughAllCMDwithData();
-                        MyBlueRat.CheckConnection();
-                        Console.WriteLine("DONE - TEST_WalkThroughAllCMDwithData");
-                    }
-                    if (FormIsClosing == false)
-                    {
-                        MyBlueRat.TEST_GPIO_Output();
-                        MyBlueRat.CheckConnection();
-                        Console.WriteLine("DONE - TEST_GPIO_Output");
-                    }
-                    if (FormIsClosing == false)
-                    {
-                        MyBlueRat.TEST_GPIO_Input();
-                        MyBlueRat.CheckConnection();
-                        Console.WriteLine("DONE - TEST_GPIO_Input");
-                    }
 
-                    if (FormIsClosing == false)
-                    {
-                        //MyBlueRat.Enter_ISP_Mode();
-                        //Console.WriteLine("DONE - Enter_ISP_Mode");
-                    }
+                        MyBlueRat.Stop_Current_Tx();
+                        MyBlueRat.CheckConnection();
+                        MyBlueRat.Get_GPIO_Input();
+                        MyBlueRat.CheckConnection();
+                        if (FormIsClosing == false)
+                        {
+                            Example_to_Send_RC_without_Repeat_Count();
+                            MyBlueRat.CheckConnection();
+                            Console.WriteLine("DONE - Example_to_Send_RC_without_Repeat_Count");
+                        }
+                        if (FormIsClosing == false)
+                        {
+                            Example_to_Send_RC_with_Repeat_Count();
+                            MyBlueRat.CheckConnection();
+                            Console.WriteLine("DONE - Example_to_Send_RC_with_Repeat_Count");
+                        }
+                        if (FormIsClosing == false)
+                        {
+                            Example_to_Send_RC_with_Large_Repeat_Count();
+                            MyBlueRat.CheckConnection();
+                            Console.WriteLine("DONE - Example_to_Send_RC_with_Large_Repeat_Count");
+                        }
 
-                    //示範現在如何結束聯接UART並釋放 
-                    MyBlueRat.Disconnect();
+                        if ((RedRatData != null) && (RedRatData.SignalDB != null))
+                        {
+                            if (FormIsClosing == false)
+                            {
+                                TEST_WalkThroughAllRCKeys();
+                                MyBlueRat.CheckConnection();
+                                Console.WriteLine("DONE - TEST_WalkThroughAllRCKeys");
+                            }
+                            if (FormIsClosing == false)
+                            {
+                                TEST_StressSendingRepeatCount();
+                                MyBlueRat.CheckConnection();
+                                Console.WriteLine("DONE - TEST_WalkThroughAllRCKeys");
+                            }
+                        }
+
+                        ////
+                        // Self-testing code
+                        //
+                        if (FormIsClosing == false)
+                        {
+                            //TEST_Return_Repeat_Count_and_Tx_Status();
+                            MyBlueRat.CheckConnection();
+                            //Console.WriteLine("DONE - TEST_Return_Repeat_Count_and_Tx_Status");
+                        }
+                        if (FormIsClosing == false)
+                        {
+                            MyBlueRat.TEST_WalkThroughAllCMDwithData();
+                            MyBlueRat.CheckConnection();
+                            Console.WriteLine("DONE - TEST_WalkThroughAllCMDwithData");
+                        }
+                        if (FormIsClosing == false)
+                        {
+                            MyBlueRat.TEST_GPIO_Output();
+                            MyBlueRat.CheckConnection();
+                            Console.WriteLine("DONE - TEST_GPIO_Output");
+                        }
+                        if (FormIsClosing == false)
+                        {
+                            MyBlueRat.TEST_GPIO_Input();
+                            MyBlueRat.CheckConnection();
+                            Console.WriteLine("DONE - TEST_GPIO_Input");
+                        }
+
+                        if (FormIsClosing == false)
+                        {
+                            //MyBlueRat.Enter_ISP_Mode();
+                            //Console.WriteLine("DONE - Enter_ISP_Mode");
+                        }
+
+                        //示範現在如何結束聯接UART並釋放 
+                        MyBlueRat.Disconnect();
+                    }
+                    if(lstBlueRatComPort.SelectedIndex==(lstBlueRatComPort.Items.Count-1))
+                    {
+                        lstBlueRatComPort.SelectedIndex = 0;
+                    }
+                    else
+                    {
+                        lstBlueRatComPort.SelectedIndex++;
+                    }
                 }
+                while ((FormIsClosing==false) &&(++ScanBlueRat_Count < lstBlueRatComPort.Items.Count));
 
                 // UI update after disconnecting BlueRat
                 UpdateToConnectButton();
