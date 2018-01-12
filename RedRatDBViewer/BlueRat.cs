@@ -47,12 +47,14 @@ namespace RedRatDatabaseViewer
         // Private member variable
         private UInt32 BlueRatCMDVersion = 0;
         private UInt32 BlueRatFWVersion = 0;
+        private string BlueRatBuildTime = "Unknown";
         //private string BlueRatCOMPortName;
         private BlueRatSerial MyBlueRatSerial;
 
         // Public member variables
         public UInt32 FW_VER { get { return BlueRatFWVersion; } }
         public UInt32 CMD_VER { get { return BlueRatCMDVersion; } }
+        public string BUILD_TIME { get { return BlueRatBuildTime; } }
 
         //
         // Function for external use
@@ -86,6 +88,7 @@ namespace RedRatDatabaseViewer
                     BlueRatFWVersion = Convert.ToUInt32(Convert.ToDouble(Get_SW_Version()) * 100);
                     Update_Header_String_by_SW_Version(this,BlueRatFWVersion);
                     BlueRatCMDVersion = Convert.ToUInt32(Get_Command_Version());
+                    BlueRatBuildTime = Get_SW_Build_Time();
                 }
                 MyBlueRatSerial.SetBlueRatVersion(BlueRatFWVersion, BlueRatCMDVersion);     // Tell BlueRatSerial about version info for workaround at serial read function.
             }
@@ -121,6 +124,7 @@ namespace RedRatDatabaseViewer
             // BlueRatCOMPortName = "";
             BlueRatFWVersion = 0;
             BlueRatCMDVersion = 0;
+            BlueRatBuildTime = "";
             return bRet;
         }
 
@@ -444,7 +448,7 @@ namespace RedRatDatabaseViewer
             return value_str;
         }
 
-        public string Get_BUILD_TIME()
+        private string Get_SW_Build_Time()
         {
             string value_str = "0";
 
