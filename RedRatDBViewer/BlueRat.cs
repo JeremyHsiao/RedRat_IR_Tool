@@ -145,7 +145,7 @@ namespace RedRatDatabaseViewer
         public bool Force_Init_BlueRat()
         {
             bool bRet = false;
-            bRet = SendToSerial_v2(Prepare_FORCE_RESTART_CMD().ToArray());
+            bRet = MyBlueRatSerial.BlueRatSendToSerial(Prepare_FORCE_RESTART_CMD().ToArray());
             HomeMade_Delay(20);
             //HomeMade_TimeOutIndicator = true;
             return bRet;
@@ -155,7 +155,7 @@ namespace RedRatDatabaseViewer
         public bool Stop_Current_Tx()
         {
             bool bRet = false;
-            bRet = SendToSerial_v2(Prepare_STOP_CMD().ToArray());
+            bRet = MyBlueRatSerial.BlueRatSendToSerial(Prepare_STOP_CMD().ToArray());
             //HomeMade_TimeOutIndicator = true;
             return bRet;
         }
@@ -163,7 +163,7 @@ namespace RedRatDatabaseViewer
         public bool Add_Repeat_Count(UInt32 add_count)
         {
             bool bRet = false;
-            bRet = SendToSerial_v2(Prepare_Send_Repeat_Cnt_Add_CMD(add_count).ToArray());
+            bRet = MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Repeat_Cnt_Add_CMD(add_count).ToArray());
             return bRet;
         }
 
@@ -171,7 +171,7 @@ namespace RedRatDatabaseViewer
         public bool Enter_ISP_Mode()
         {
             bool bRet = false;
-            bRet = SendToSerial_v2(Prepare_Enter_ISP_CMD().ToArray());
+            bRet = MyBlueRatSerial.BlueRatSendToSerial(Prepare_Enter_ISP_CMD().ToArray());
             return bRet;
         }
 
@@ -180,7 +180,7 @@ namespace RedRatDatabaseViewer
             int repeat_cnt = 0;
             //Get_UART_Input = 1;
             MyBlueRatSerial.Start_ReadLine();
-            if (SendToSerial_v2(Prepare_Get_RC_Repeat_Count().ToArray()))
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Get_RC_Repeat_Count().ToArray()))
             {
                 if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
                 {
@@ -229,7 +229,7 @@ namespace RedRatDatabaseViewer
 
             //Get_UART_Input = 1;
             MyBlueRatSerial.Start_ReadLine();
-            if (SendToSerial_v2(Prepare_Get_RC_Current_Running_Status().ToArray()))
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Get_RC_Current_Running_Status().ToArray()))
             {
                 if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
                 {
@@ -352,7 +352,7 @@ namespace RedRatDatabaseViewer
 
                     //Get_UART_Input = 1;
                     MyBlueRatSerial.Start_ReadLine();
-                    if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_SW_VER)).ToArray()))
+                    if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_SW_VER)).ToArray()))
                     {
                         HomeMade_Delay(30);
                         if (MyBlueRatSerial.ReadLine_Ready() == true)
@@ -464,7 +464,7 @@ namespace RedRatDatabaseViewer
             {
                 //Get_UART_Input = 1;
                 MyBlueRatSerial.Start_ReadLine();
-                if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_BUILD_TIME)).ToArray()))
+                if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_BUILD_TIME)).ToArray()))
                 {
                     HomeMade_Delay(100);
                     if (MyBlueRatSerial.ReadLine_Ready() == true)
@@ -494,7 +494,7 @@ namespace RedRatDatabaseViewer
 
             //Get_UART_Input = 1;
             MyBlueRatSerial.Start_ReadLine();
-            if (SendToSerial_v2(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_CMD_VERSION)).ToArray()))
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_CMD_VERSION)).ToArray()))
             {
                 HomeMade_Delay(30);
                 if (MyBlueRatSerial.ReadLine_Ready() == true)
@@ -531,7 +531,7 @@ namespace RedRatDatabaseViewer
             UInt32 GPIO_Read_Data = 0xffffffff;
             //Get_UART_Input = 1;
             MyBlueRatSerial.Start_ReadLine();
-            if (SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)).ToArray()))
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)).ToArray()))
             {
                 HomeMade_Delay(5);
                 if (MyBlueRatSerial.ReadLine_Ready() == true)
@@ -561,7 +561,7 @@ namespace RedRatDatabaseViewer
             UInt32 Sensor_Read_Data = 0xffffffff;
             //Get_UART_Input = 1;
             MyBlueRatSerial.Start_ReadLine();
-            if (SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_SENSOR_VALUE)).ToArray()))
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_SENSOR_VALUE)).ToArray()))
             {
                 HomeMade_Delay(5);
                 if (MyBlueRatSerial.ReadLine_Ready() == true)
@@ -590,7 +590,7 @@ namespace RedRatDatabaseViewer
         {
             bool bRet = false;
 
-            if(SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), output_value).ToArray()))
+            if(MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), output_value).ToArray()))
             {
                 bRet = true;
             }
@@ -604,7 +604,7 @@ namespace RedRatDatabaseViewer
             UInt32 temp_parameter;
             if (output_value != 0) { temp_parameter = 1; } else { temp_parameter = 0; }
             temp_parameter |= Convert.ToUInt32(port_no) << 8;
-            if (SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), temp_parameter).ToArray()))
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), temp_parameter).ToArray()))
             {
                 bRet = true;
             }
@@ -631,7 +631,7 @@ namespace RedRatDatabaseViewer
             List<byte> data_to_sent = new List<byte>();
             int total_us;
             data_to_sent = Prepare_RC_Data_CMD(RedRatData, default_repeat_cnt, out total_us);  // prepare RC-data packet for BlueRat
-            SendToSerial_v2(data_to_sent.ToArray());    // Send to BlueRat
+            MyBlueRatSerial.BlueRatSendToSerial(data_to_sent.ToArray());    // Send to BlueRat
 
             return total_us; // return total_rc_time_duration
         }
@@ -1397,7 +1397,7 @@ namespace RedRatDatabaseViewer
             Boolean bRet = false;
             //Get_UART_Input = 1;
             MyBlueRatSerial.Start_ReadLine();
-            SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SAY_HI)).ToArray());
+            MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SAY_HI)).ToArray());
             HomeMade_Delay(10);
             if (MyBlueRatSerial.ReadLine_Ready()==true)
             {
@@ -1422,7 +1422,7 @@ namespace RedRatDatabaseViewer
             for (byte cmd = Convert.ToByte(CMD_CODE_UPPER_LIMIT); cmd >= Convert.ToByte(CMD_CODE_LOWER_LIMIT); cmd--)
             //byte cmd = 0xdf;
             {
-                SendToSerial_v2(Prepare_Send_Input_CMD(cmd, 0x1010101U * cmd).ToArray());
+                MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(cmd, 0x1010101U * cmd).ToArray());
                 HomeMade_Delay(32);
                 if(!MyBlueRatSerial.Serial_PortConnection())
                 {
@@ -1461,12 +1461,12 @@ namespace RedRatDatabaseViewer
                 for (Byte output_bit = 0; output_bit < 7;)
                 {
                     //UInt32 temp_parameter = (output_bit << 8) | reverse_IO_value_mask;
-                    //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
+                    //MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
                     Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(reverse_IO_value_mask));
                     HomeMade_Delay(16);
                     output_bit++;
                     //temp_parameter = (((output_bit) << 8) | IO_value_mask);
-                    //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
+                    //MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
                     Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(IO_value_mask));
                     HomeMade_Delay(delay_time);
                     if (!MyBlueRatSerial.Serial_PortConnection())
@@ -1477,12 +1477,12 @@ namespace RedRatDatabaseViewer
                 for (Byte output_bit = 7; output_bit > 0;)
                 {
                     //UInt32 temp_parameter = (output_bit << 8) | reverse_IO_value_mask;
-                    //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
+                    //MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
                     Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(reverse_IO_value_mask));
                     HomeMade_Delay(16);
                     output_bit--;
                     //temp_parameter = (((output_bit) << 8) | IO_value_mask);
-                    //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
+                    //MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
                     Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(IO_value_mask));
                     HomeMade_Delay(delay_time);
                     if (!MyBlueRatSerial.Serial_PortConnection())
@@ -1511,10 +1511,10 @@ namespace RedRatDatabaseViewer
 
                 byte GPIO_Read_Data = Convert.ToByte(Get_GPIO_Input() & 0xff);
                 GPIO_Read_Data ^= 0xff;
-                //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), ~GPIO_Read_Data).ToArray());
+                //MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), ~GPIO_Read_Data).ToArray());
                 Set_GPIO_Output(GPIO_Read_Data);
                 HomeMade_Delay(delay_time);
-                //SendToSerial_v2(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), 0xff).ToArray());
+                //MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), 0xff).ToArray());
                 Set_GPIO_Output(0xff);
                 HomeMade_Delay(delay_time);
             }
