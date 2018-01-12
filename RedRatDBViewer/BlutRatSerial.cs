@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO.Ports;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Threading;
+using Microsoft.Win32.SafeHandles;
 
 namespace RedRatDatabaseViewer
 {
@@ -30,6 +30,15 @@ namespace RedRatDatabaseViewer
         private UInt32 BlueRatCMDVersion = 0;
         private UInt32 BlueRatFWVersion = 0;
         //private uint TimeOutTimer;    
+
+        //private object stream;
+
+        public SafeFileHandle ReturnSafeFileHandle()
+        {
+            object stream = typeof(SerialPort).GetField("internalSerialStream", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(_serialPort);
+            SafeFileHandle hCOM = (SafeFileHandle)stream.GetType().GetField("_handle", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(stream);
+            return hCOM;
+        }
 
         public Boolean Serial_OpenPort()
         {

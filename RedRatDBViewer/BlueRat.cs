@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO.Ports;
-using System.Text;
+using System.Reflection;
 using System.Threading;
 using System.Timers;
 using System.Windows.Forms;
+using Microsoft.Win32.SafeHandles;
 
 namespace RedRatDatabaseViewer
 {
@@ -55,6 +56,9 @@ namespace RedRatDatabaseViewer
         public UInt32 FW_VER { get { return BlueRatFWVersion; } }
         public UInt32 CMD_VER { get { return BlueRatCMDVersion; } }
         public string BUILD_TIME { get { return BlueRatBuildTime; } }
+
+        public SafeFileHandle ReturnSafeFileHandle() => MyBlueRatSerial.ReturnSafeFileHandle();
+
 
         //
         // Function for external use
