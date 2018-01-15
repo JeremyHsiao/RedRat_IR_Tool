@@ -656,9 +656,11 @@ namespace RedRatDatabaseViewer
             // 1. Open RC database file to load it in advance
             foreach (var temp_device in RedRatData.RedRatGetDBDeviceNameList())
             {
+                Console.WriteLine("RC--" + temp_device);
                 RedRatData.RedRatSelectDevice(temp_device);
                 foreach (var temp_rc in RedRatData.RedRatGetRCNameList())
                 {
+                    Console.WriteLine(temp_rc);
                     RedRatData.RedRatSelectRCSignal(temp_rc, true);
                     if (RedRatData.Signal_Type_Supported == true)
                     {
@@ -673,7 +675,7 @@ namespace RedRatDatabaseViewer
                             RedRatData.RedRatSelectRCSignal(temp_rc, false);
                             // Use UART to transmit RC signal
                             rc_duration = MyBlueRat.SendOneRC(RedRatData) / 1000 + 1;
-                            Console.WriteLine("Walk through: " + RedRatData.SelectedDevice.Name + " - " + RedRatData.SelectedSignal.Name);
+                            
                             RedRatDBViewer_Delay(rc_duration);
                         }
                     }
@@ -1010,6 +1012,7 @@ namespace RedRatDatabaseViewer
                             MyBlueRat.CheckConnection();
                             Console.WriteLine("DONE - Example_to_Send_RC_without_Repeat_Count");
                         }
+
                         if (FormIsClosing == false)
                         {
                             Example_to_Send_RC_with_Repeat_Count();
