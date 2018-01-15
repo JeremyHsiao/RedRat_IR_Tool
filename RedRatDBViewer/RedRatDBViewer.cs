@@ -792,12 +792,12 @@ namespace RedRatDatabaseViewer
                     int temp_repeat_cnt = MyBlueRat.Get_Remaining_Repeat_Count();
                     Console.WriteLine(temp_repeat_cnt.ToString());
                     if (temp_repeat_cnt == 0) break;
-                    RedRatDBViewer_Delay(240);
+                    RedRatDBViewer_Delay(360);      // better >=360
 
                     bool temp_tx_status = MyBlueRat.Get_Current_Tx_Status();
                     Console.WriteLine(temp_tx_status.ToString());
                     if (temp_tx_status == false) break;
-                    RedRatDBViewer_Delay(240);
+                    RedRatDBViewer_Delay(200);      // better >= 200
 
                 }
                 aTimer.Stop();

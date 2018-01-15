@@ -218,48 +218,67 @@ namespace RedRatDatabaseViewer
         public int Get_Remaining_Repeat_Count()
         {
             int repeat_cnt = 0;
-            //Get_UART_Input = 1;
-            MyBlueRatSerial.Start_ReadLine();
-            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Get_RC_Repeat_Count().ToArray()))
+            int default_timeout_time = 60;
+            string in_str;
+            ENUM_RETRY_RESULT result_status;
+
+            if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
+            {
+                default_timeout_time = 640;
+            }
+
+            result_status = SendCmd_WaitReadLine((Prepare_Get_RC_Repeat_Count()), out in_str, default_timeout_time);
+            if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
                 if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
                 {
-                    HomeMade_Delay(500);
-                }
-                else
-                {
-                    HomeMade_Delay(60);
-                }
-                if (MyBlueRatSerial.ReadLine_Ready() == true)
-                {
-                    String in_str = MyBlueRatSerial.ReadLine_Result();
-                    if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
+                    if (in_str.Contains("S"))
+                    {
+                        in_str = "0";
+                    }
+                    else
                     {
                         string temp_str = "";
                         foreach (char ch in in_str)
                         {
-                            if ((ch != '+') && (ch != 'S'))
+                            if (ch != '+')
                             {
                                 temp_str += ch;
                             }
                         }
                         in_str = temp_str;
                     }
-                    if (_CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ == "")
-                    {
-                        repeat_cnt = Convert.ToInt32(in_str, 16);
-                    }
-                    else if (in_str.Contains(_CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_))
-                    {
-                        string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
-                        repeat_cnt = Convert.ToInt32(value_str, 16);
-                    }
+                }
+                else if (in_str.Contains(_CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_))
+                {
+                    in_str = in_str.Substring(in_str.IndexOf(":") + 1);
                 }
                 else
                 {
-                    Console.WriteLine("Check Get_Remaining_Repeat_Count()");
+                    result_status = ENUM_RETRY_RESULT.ENUM_ERROR_AT_COMPARE;
                 }
             }
+
+            if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
+            {
+                try
+                {
+                    Int32 temp = Convert.ToInt32(in_str, 16);      // only for testing conversion.
+                    repeat_cnt = temp;
+
+                }
+                catch (System.FormatException)
+                {
+                    result_status = ENUM_RETRY_RESULT.ENUM_ERROR_AT_COMPARE;
+                }
+            }
+
+            // Debug purpose
+            if (result_status >= ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
+            {
+                Console.WriteLine("Get_Remaining_Repeat_Count Error: " + result_status.ToString());
+            }
+
             return repeat_cnt;
         }
 
@@ -272,7 +291,7 @@ namespace RedRatDatabaseViewer
 
             if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
             {
-                default_timeout_time = 500;
+                default_timeout_time = 450;
             }
 
             result_status = SendCmd_WaitReadLine((Prepare_Get_RC_Current_Running_Status()), out in_str, default_timeout_time);
