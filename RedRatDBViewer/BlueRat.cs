@@ -57,8 +57,9 @@ namespace RedRatDatabaseViewer
         public UInt32 CMD_VER { get { return BlueRatCMDVersion; } }
         public string BUILD_TIME { get { return BlueRatBuildTime; } }
 
-        public SafeFileHandle ReturnSafeFileHandle() => MyBlueRatSerial.ReturnSafeFileHandle();
-
+        // This function is currently only inteneded for PL2303 GPIO. Other Serial port shouldn't use it (or should have its own version)
+        public SafeFileHandle ReturnSafeFileHandle() => MyBlueRatSerial.GetMySafeFileHandle_PL2303();
+        public SafeFileHandle ReturnSafeFileHandle_PL2303() => MyBlueRatSerial.GetMySafeFileHandle_PL2303();  // For PL2303-GPIO
 
         //
         // Function for external use
@@ -182,6 +183,46 @@ namespace RedRatDatabaseViewer
             bRet = MyBlueRatSerial.BlueRatSendToSerial(Prepare_Enter_ISP_CMD().ToArray());
             return bRet;
         }
+
+        private ENUM_RETRY_RESULT SendCmd_WaitReadLine(List<byte> cmd_list, out string result_string, int timeout_time = 16)
+        {
+            result_string = "";
+            ENUM_RETRY_RESULT result_status;
+
+            MyBlueRatSerial.Start_ReadLine();
+            if (MyBlueRatSerial.BlueRatSendToSerial(cmd_list.ToArray()) == false)
+            {
+                result_status = ENUM_RETRY_RESULT.ENUM_ERROR_AT_SEND_COMMAND;
+            }
+            else
+            {
+                result_status = ENUM_RETRY_RESULT.ENUM_ERROR_AT_READLINE;       // readline error will be cleared after line is read.
+                uint MyRetryTimes = Convert.ToUInt32(ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1) - 1;
+                int each_delay_time = (timeout_time / Convert.ToInt32(ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1));
+                if (each_delay_time <= 0) each_delay_time = 0;
+                do
+                {
+                    HomeMade_Delay(each_delay_time);
+                    if (MyBlueRatSerial.ReadLine_Ready() == true)
+                    {
+                        String in_str = MyBlueRatSerial.ReadLine_Result();
+                        result_status = (ENUM_RETRY_RESULT)MyRetryTimes;
+                        break;
+                    }
+                }
+                while ((MyBlueRatSerial.ReadLine_Ready() == false) && (MyRetryTimes-- > 0));
+            }
+
+            return result_status;
+
+            //// Debug purpose
+            //if (result_status == ENUM_RETRY_RESULT.ENUM_ERROR_AT_READLINE)
+            //{
+            //    Console.WriteLine(result_status.ToString());
+            //}
+        }
+
+
 
         public int Get_Remaining_Repeat_Count()
         {
@@ -1293,20 +1334,23 @@ namespace RedRatDatabaseViewer
         }
 
         // 小藍鼠專用的delay的內部資料與function
+        // This list stores all running timers. If timer timeout, it is removed at event. When BlueRat stop connection, all timers under this bluerat are also removed.
         static private List<object> TimeOutTimerList = new List<object>();
+        // This list stores only running timers belonged to this bluerat object.
         private List <object> MyOwnTimerList = new List<object>();
 
         private void Stop_MyOwn_HomeMade_Delay()
         {
-            foreach(var timer in MyOwnTimerList)
+            // Stop all timer created from own BlueRat Object (in list MyOwnTimerList)
+            foreach (var timer in MyOwnTimerList)
             {
-                if(TimeOutTimerList.Contains(timer))
+                if(TimeOutTimerList.Contains(timer))        // still timer of this bluerat object is running?
                 {
-                    TimeOutTimerList.Remove(timer);
+                    TimeOutTimerList.Remove(timer);         // if yes, force it to expire
                     Application.DoEvents();
                 }
             }
-            MyOwnTimerList.Clear();
+            MyOwnTimerList.Clear();                         // all timer expired, no need to keep record
         }
 
         static private void HomeMade_Delay_OnTimedEvent(object source, ElapsedEventArgs e)
@@ -1321,11 +1365,11 @@ namespace RedRatDatabaseViewer
             System.Timers.Timer aTimer = new System.Timers.Timer(delay_ms);
             aTimer.Elapsed += new ElapsedEventHandler(HomeMade_Delay_OnTimedEvent);
             //HomeMade_TimeOutIndicator = false;
-            TimeOutTimerList.Add(aTimer);
-            MyOwnTimerList.Add(aTimer);
+            TimeOutTimerList.Add(aTimer);           // This list is to keep running timer until it reaches TimeOutEvent (as indicator of running timer)
+            MyOwnTimerList.Add(aTimer);             // This list record all timer created in this bluerat object -- to be removed after timer expired
             aTimer.Enabled = true;
             while ((MyBlueRatSerial.Serial_PortConnection() == true) && (TimeOutTimerList.Contains(aTimer)==true)) { Application.DoEvents(); Thread.Sleep(1); }
-            MyOwnTimerList.Remove(aTimer);
+            MyOwnTimerList.Remove(aTimer);          // timer expired, so remove it from the list recording timer created.
             aTimer.Stop();
             aTimer.Dispose();
         }

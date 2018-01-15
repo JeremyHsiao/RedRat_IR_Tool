@@ -29,16 +29,19 @@ namespace RedRatDatabaseViewer
         private SerialPort _serialPort;
         private UInt32 BlueRatCMDVersion = 0;
         private UInt32 BlueRatFWVersion = 0;
+        //private SafeFileHandle hCOM;
         //private uint TimeOutTimer;    
 
         //private object stream;
 
-        public SafeFileHandle ReturnSafeFileHandle()
+        // This function is only inteneded for PL2303 GPIO. Other Serial port hardware shouldn't use it (or should have its own version)
+        public SafeFileHandle GetMySafeFileHandle_PL2303()
         {
             object stream = typeof(SerialPort).GetField("internalSerialStream", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(_serialPort);
             SafeFileHandle hCOM = (SafeFileHandle)stream.GetType().GetField("_handle", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(stream);
             return hCOM;
         }
+        // End of special function (not Serial-function but need to use serial port information)
 
         public Boolean Serial_OpenPort()
         {
