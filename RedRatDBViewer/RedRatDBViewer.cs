@@ -673,6 +673,7 @@ namespace RedRatDatabaseViewer
                             RedRatData.RedRatSelectRCSignal(temp_rc, false);
                             // Use UART to transmit RC signal
                             rc_duration = MyBlueRat.SendOneRC(RedRatData) / 1000 + 1;
+                            Console.WriteLine("Walk through: " + RedRatData.SelectedDevice.Name + " - " + RedRatData.SelectedSignal.Name);
                             RedRatDBViewer_Delay(rc_duration);
                         }
                     }

@@ -7,6 +7,8 @@ using System.Threading;
 using System.Timers;
 using System.Windows.Forms;
 using Microsoft.Win32.SafeHandles;
+using System.Management;
+using System.Linq;
 
 namespace RedRatDatabaseViewer
 {
@@ -570,7 +572,8 @@ namespace RedRatDatabaseViewer
         {
             List<string> AllBlueRat = new List<string>();
 
-            foreach (string comport_s in SerialPort.GetPortNames())
+//            foreach (string comport_s in SerialPort.GetPortNames())
+            foreach (string comport_s in BlueRat.Find_BluRat_USBSerial_Port()) 
             {
                 BlueRatSerial Checking_Serial = new BlueRatSerial(comport_s);
                 if (Checking_Serial.Serial_PortConnection() == true)
@@ -1347,6 +1350,81 @@ namespace RedRatDatabaseViewer
             return bRet;
         }
         */
+
+        //
+        // Try to use VID/PID to locate possible BlueRat com-port
+        //
+        static private List<string> Find_BluRat_USBSerial_Port()
+        {
+            List<string> return_com_port = new List<string> ();
+            ManagementObjectSearcher search = new ManagementObjectSearcher("SELECT * FROM Win32_PnPEntity");
+            ManagementObjectCollection collection = search.Get();
+            var usbList = from u in collection.Cast<ManagementBaseObject>()
+                          select new
+                          {
+                              id = u.GetPropertyValue("DeviceID"),
+                              name = u.GetPropertyValue("Name"),
+                              description = u.GetPropertyValue("Description"),
+                              status = u.GetPropertyValue("Status"),
+                              system = u.GetPropertyValue("SystemName"),
+                              caption = u.GetPropertyValue("Caption"),
+                              pnp = u.GetPropertyValue("PNPDeviceID"),
+                          };
+
+            foreach (var usbDevice in usbList)
+            {
+                string deviceId = (string)usbDevice.id;
+                string deviceTp = (string)usbDevice.name;
+                string deviecDescription = (string)usbDevice.description;
+
+                string deviceStatus = (string)usbDevice.status;
+                string deviceSystem = (string)usbDevice.system;
+                string deviceCaption = (string)usbDevice.caption;
+                string devicePnp = (string)usbDevice.pnp;
+
+                if (deviecDescription != null)
+                {
+                    if (deviceId.IndexOf("&0&5", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                        deviceId.IndexOf("USB", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        int FirstIndex = deviceTp.IndexOf("(");
+                        string AutoBoxPortSubstring = deviceTp.Substring(FirstIndex + 1);
+                        string AutoBoxPort = AutoBoxPortSubstring.Substring(0);
+
+                        int AutoBoxPortLengh = AutoBoxPort.Length;
+                        string AutoBoxPortFinal = AutoBoxPort.Remove(AutoBoxPortLengh - 1);
+
+                        string BlueRatVid = "";
+                        if (deviceId.IndexOf("VID_", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            int vidIndex = deviceId.IndexOf("VID_");
+                            string startingAtVid = deviceId.Substring(vidIndex + 4); // + 4 to remove "VID_"                    
+                            BlueRatVid = startingAtVid.Substring(0, 4); // vid is four characters long
+                            //Console.WriteLine(BlueRatVid);
+                        }
+
+                        string BlueRatPid = "";
+                        if (deviceId.IndexOf("PID_", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            int pidIndex = deviceId.IndexOf("PID_");
+                            string startingAtPid = deviceId.Substring(pidIndex + 4); // + 4 to remove "PID_"                    
+                            BlueRatPid = startingAtPid.Substring(0, 4); // pid is four characters long
+                            //Console.WriteLine(BlueRatPid);
+                        }
+
+                        if (BlueRatVid == "067B" && BlueRatPid == "2303")
+                        {
+                            //AutoBox存在
+                            if (AutoBoxPortSubstring.Substring(0, 3) == "COM")
+                            {
+                                return_com_port.Add(AutoBoxPortFinal);
+                            }
+                        }
+                    }
+                }
+            }
+            return return_com_port;
+        }
 
         // For self testing purpose
         public void TEST_WalkThroughAllCMDwithData()
