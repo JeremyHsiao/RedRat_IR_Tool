@@ -605,7 +605,7 @@ namespace RedRatDatabaseViewer
                             {
                                 this.listboxAVDeviceList_SelectedIndexChanged(sender, e);
                                 Previous_Key = -1;
-                                listboxRCKey.Items.AddRange(RedRatData.RedRatGetRCNameList().ToArray());
+                                //listboxRCKey.Items.AddRange(RedRatData.RedRatGetRCNameList().ToArray());
                                 if (listboxRCKey.Items.Count > 0)
                                 {
                                     listboxRCKey.SelectedIndex = 0;
