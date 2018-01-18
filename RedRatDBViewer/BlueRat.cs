@@ -234,22 +234,7 @@ namespace RedRatDatabaseViewer
             {
                 if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
                 {
-                    if (in_str.Contains("S"))
-                    {
-                        in_str = "0";
-                    }
-                    else
-                    {
-                        string temp_str = "";
-                        foreach (char ch in in_str)
-                        {
-                            if (ch != '+')
-                            {
-                                temp_str += ch;
-                            }
-                        }
-                        in_str = temp_str;
-                    }
+
                 }
                 else if (in_str.Contains(_CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_))
                 {
@@ -293,7 +278,7 @@ namespace RedRatDatabaseViewer
 
             if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
             {
-                default_timeout_time = 450;
+                default_timeout_time = 280;
             }
 
             result_status = SendCmd_WaitReadLine((Prepare_Get_RC_Current_Running_Status()), out in_str, default_timeout_time);
@@ -302,10 +287,6 @@ namespace RedRatDatabaseViewer
                 if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
                 {
                     if(in_str.Contains("1"))
-                    {
-                        bRet = true;
-                    }
-                    else if (in_str.Contains("+"))
                     {
                         bRet = true;
                     }
@@ -1261,7 +1242,7 @@ namespace RedRatDatabaseViewer
 
         enum ENUM_RETRY_RESULT
         {
-            ENUM_OK_RETRY_03 = 0,
+            ENUM_OK_LAST_RETRY = 0,
             ENUM_OK_RETRY_02,
             ENUM_OK_RETRY_01,
             ENUM_OK_RETRY_00,
@@ -1287,7 +1268,7 @@ namespace RedRatDatabaseViewer
                 uint MyRetryTimes = Convert.ToUInt32(ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1) - 1;
                 do
                 {
-                    Application.DoEvents(); Thread.Sleep(16); Application.DoEvents();
+                    Application.DoEvents(); Thread.Sleep(4); Application.DoEvents();
                     if (bluerat_serial.ReadLine_Ready() == true)
                     {
                         String in_str = bluerat_serial.ReadLine_Result();
