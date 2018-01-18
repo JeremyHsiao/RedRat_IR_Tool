@@ -582,8 +582,7 @@ namespace RedRatDatabaseViewer
                         //Console.WriteLine("RedRat Found. Loading DB file...");
                         //RedRatData = new RedRatDBParser();
                         RedRatData.RedRatLoadSignalDB(openFileDialog1.FileName); // Device 0 Signal 0 will be selected after RC database loaded
-                        //RedRatDBViewer_Delay(16);
-                        Application.DoEvents();
+                        RedRatDBViewer_Delay(64);
                         //
                         // Update Form Display Data according to content of RedRatData.SelectedSignal
                         //
