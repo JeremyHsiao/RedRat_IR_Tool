@@ -794,7 +794,7 @@ namespace RedRatDatabaseViewer
                 {
                     int temp_repeat_cnt = MyBlueRat.Get_Remaining_Repeat_Count();
                     Console.WriteLine(temp_repeat_cnt.ToString());
-                    if (temp_repeat_cnt <= 3) break;
+                    if (temp_repeat_cnt <= 4) break;
                     RedRatDBViewer_Delay(360);      // better >=360
 
                     bool temp_tx_status = MyBlueRat.Get_Current_Tx_Status();
@@ -803,16 +803,19 @@ namespace RedRatDatabaseViewer
                     RedRatDBViewer_Delay(200);      // better >= 200
 
                 }
+                while (GetTimeOutIndicator() == false)  // keep looping until timeout
+                {
+                    if (MyBlueRat.FW_VER >= 102)
+                    {
+                        // May cause error before v102
+                        // These 2 functions have defect before v102 when BlueRat Tx isn't running -- ok when is running 
+                        MyBlueRat.Get_Remaining_Repeat_Count();
+                        MyBlueRat.Get_Current_Tx_Status();
+                    }
+                    RedRatDBViewer_Delay(32);
+                }
                 aTimer.Stop();
                 aTimer.Dispose();
-
-                // May cause error before v102
-                if (MyBlueRat.FW_VER >= 102)
-                {
-                    // These 2 functions have defect when BlueRat Tx isn't running -- ok when is running 
-                    MyBlueRat.Get_Remaining_Repeat_Count();
-                    MyBlueRat.Get_Current_Tx_Status();
-                }
             }
         }
 
