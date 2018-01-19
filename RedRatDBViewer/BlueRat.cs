@@ -231,7 +231,7 @@ namespace RedRatDatabaseViewer
         {
             bool bRet = false;
             
-            int default_timeout_time = 60;
+            int default_timeout_time = 30;
             string in_str;
             ENUM_RETRY_RESULT result_status;
 
@@ -443,6 +443,11 @@ namespace RedRatDatabaseViewer
                 {
                     in_str = in_str.Substring(in_str.IndexOf(":") + 1);
                 }
+                else
+                {
+                    in_str = "ERR:" + in_str;
+                    // not correct result - intentionally set in_str="ERR"
+                }
 
                 // check if this is a unsigned-number-sring
                 try
@@ -460,70 +465,102 @@ namespace RedRatDatabaseViewer
             // Debug purpose
             if (result_status >= ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
-                Console.WriteLine("Get_SW_Version Error: " + result_status.ToString());
+                Console.WriteLine("Get_SW_Version Error: " + result_status.ToString() + " -- " + in_str);
             }
 
             return bRet;
         }
 
-        public UInt32 Get_GPIO_Input()
+        public bool Get_GPIO_Input(out UInt32 GPIO_Read_Data)
         {
-            UInt32 GPIO_Read_Data = 0xffffffff;
-            //Get_UART_Input = 1;
-            MyBlueRatSerial.Start_ReadLine();
-            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)).ToArray()))
+            bool bRet = false;
+            const int default_timeout_time = 16;
+            string in_str;
+            ENUM_RETRY_RESULT result_status;
+
+            GPIO_Read_Data = 0xffffffff;
+            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)), out in_str, default_timeout_time);
+            if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
-                HomeMade_Delay(5);
-                if (MyBlueRatSerial.ReadLine_Ready() == true)
+                if (in_str.Contains(_CMD_GPIO_INPUT_RETURN_HEADER_))
                 {
-                    String in_str = MyBlueRatSerial.ReadLine_Result();
-                    if (_CMD_GPIO_INPUT_RETURN_HEADER_ == "")
-                    {
-                        GPIO_Read_Data = Convert.ToUInt32(in_str, 16);
-                    }
-                    else if (in_str.Contains(_CMD_GPIO_INPUT_RETURN_HEADER_))
-                    {
-                        string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
-                        GPIO_Read_Data = Convert.ToUInt32(value_str, 16);
-                        Console.WriteLine(GPIO_Read_Data.ToString());           // output to console
-                    }
+                   in_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                }
+                else if (_CMD_GPIO_INPUT_RETURN_HEADER_ == "")
+                {
+                    // do nothing here
                 }
                 else
                 {
-                    Console.WriteLine("Check Get_GPIO_Input()");
+                    in_str = "ERR:"+ in_str;
+                    // not correct result - intentionally set in_str="ERR"
+                }
+
+                try
+                {
+                    UInt32 temp = Convert.ToUInt32(in_str, 16);      // only for testing conversion.
+                    GPIO_Read_Data = temp;
+                    bRet = true;
+                }
+                catch (System.FormatException)
+                {
+                    result_status = ENUM_RETRY_RESULT.ENUM_ERROR_AT_COMPARE;
                 }
             }
-            return GPIO_Read_Data;
+
+            // Debug purpose
+            if (result_status >= ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
+            {
+                Console.WriteLine("Get_SW_Version Error: " + result_status.ToString() + " -- " + in_str);
+            }
+
+            return bRet;
         }
 
-        public byte Get_Sensor_Input()
+        public bool Get_Sensor_Input(out UInt32 Sensor_Read_Data)
         {
-            UInt32 Sensor_Read_Data = 0xffffffff;
-            //Get_UART_Input = 1;
-            MyBlueRatSerial.Start_ReadLine();
-            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_SENSOR_VALUE)).ToArray()))
+            bool bRet = false;
+            const int default_timeout_time = 16;
+            string in_str;
+            ENUM_RETRY_RESULT result_status;
+
+            Sensor_Read_Data = 0xffffffff;
+            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_SENSOR_VALUE)), out in_str, default_timeout_time);
+            if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
-                HomeMade_Delay(5);
-                if (MyBlueRatSerial.ReadLine_Ready() == true)
+                if (in_str.Contains(_CMD_SENSOR_INPUT_RETURN_HEADER_))
                 {
-                    String in_str = MyBlueRatSerial.ReadLine_Result();
-                    if (_CMD_GPIO_INPUT_RETURN_HEADER_ == "")
-                    {
-                        Sensor_Read_Data = Convert.ToUInt32(in_str, 16);
-                    }
-                    else if (in_str.Contains(_CMD_GPIO_INPUT_RETURN_HEADER_))
-                    {
-                        string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
-                        Sensor_Read_Data = Convert.ToUInt32(value_str, 16);
-                        Console.WriteLine(Sensor_Read_Data.ToString());           // output to console
-                    }
+                    in_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                }
+                else if (_CMD_SENSOR_INPUT_RETURN_HEADER_ == "")
+                {
+                    // do nothing here
                 }
                 else
                 {
-                    Console.WriteLine("Check Get_Sensor_Input()");
+                    in_str = "ERR:" + in_str;
+                    // not correct result - intentionally set in_str="ERR"
+                }
+
+                try
+                {
+                    UInt32 temp = Convert.ToUInt32(in_str, 16);      // only for testing conversion.
+                    Sensor_Read_Data = temp;
+                    bRet = true;
+                }
+                catch (System.FormatException)
+                {
+                    result_status = ENUM_RETRY_RESULT.ENUM_ERROR_AT_COMPARE;
                 }
             }
-            return Convert.ToByte(Sensor_Read_Data & 0xff);
+
+            // Debug purpose
+            if (result_status >= ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
+            {
+                Console.WriteLine("Get_Sensor_Input Error: " + result_status.ToString() + " -- " + in_str);
+            }
+
+            return bRet;
         }
 
         public bool Set_GPIO_Output(byte output_value)
@@ -1528,7 +1565,10 @@ namespace RedRatDatabaseViewer
                     return;
                 }
 
-                byte GPIO_Read_Data = Convert.ToByte(Get_GPIO_Input() & 0xff);
+                UInt32 gpio_input_value;
+                Get_GPIO_Input(out gpio_input_value);
+                byte GPIO_Read_Data = Convert.ToByte(gpio_input_value & 0xff);
+                Console.WriteLine("GPIO_IN:" + GPIO_Read_Data.ToString());
                 GPIO_Read_Data ^= 0xff;
                 //MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), ~GPIO_Read_Data).ToArray());
                 Set_GPIO_Output(GPIO_Read_Data);

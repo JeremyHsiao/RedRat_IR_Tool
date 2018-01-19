@@ -1016,7 +1016,8 @@ namespace RedRatDatabaseViewer
 
                         MyBlueRat.Stop_Current_Tx();
                         MyBlueRat.CheckConnection();
-                        MyBlueRat.Get_GPIO_Input();
+                        UInt32 GPIO_input_value;
+                        MyBlueRat.Get_GPIO_Input(out GPIO_input_value);
                         MyBlueRat.CheckConnection();
                         if (FormIsClosing == false)
                         {
@@ -1075,6 +1076,7 @@ namespace RedRatDatabaseViewer
                             MyBlueRat.CheckConnection();
                             Console.WriteLine("DONE - TEST_GPIO_Output");
                         }
+
                         if (FormIsClosing == false)
                         {
                             MyBlueRat.TEST_GPIO_Input();
