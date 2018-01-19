@@ -976,6 +976,27 @@ namespace RedRatDatabaseViewer
             }
         }
 
+        private void Test_GPIO_Input()
+        {
+            UInt32 GPIO_input_value, retry_cnt;
+            bool bRet = false;
+            retry_cnt = 3;
+            do
+            {
+                bRet = MyBlueRat.Get_GPIO_Input(out GPIO_input_value);
+            }
+            while ((bRet == false) && (--retry_cnt > 0) && (FormIsClosing == false));
+            if (bRet)
+            {
+                Console.WriteLine("GPIO_input: " + GPIO_input_value.ToString());
+            }
+            else
+            {
+                Console.WriteLine("GPIO_input fail after retry");
+            }
+
+        }
+
         private void btnRepeatRC_Click(object sender, EventArgs e)
         {
             TemoparilyDisbleAllRCFunctionButtons();
@@ -1015,6 +1036,9 @@ namespace RedRatDatabaseViewer
                         Console.WriteLine("BlueRat at " + com_port_name + ":\n" + "SW: " + temp_string1 + "\n" + "CMD_API: " + temp_string2 + "\n" + "Build time: " + temp_string3 + "\n");
 
                         if (FormIsClosing == true) break;
+                        Test_GPIO_Input();
+
+                        if (FormIsClosing == true) break;
                         TEST_Return_Repeat_Count_and_Tx_Status();
 
                         if (FormIsClosing == true) break;
@@ -1022,13 +1046,6 @@ namespace RedRatDatabaseViewer
 
                         if (FormIsClosing == true) break;
                         MyBlueRat.CheckConnection();
-
-                        if (FormIsClosing == true) break;
-                        UInt32 GPIO_input_value;
-                        if (MyBlueRat.Get_GPIO_Input(out GPIO_input_value))
-                        {
-                            Console.WriteLine("GPIO_input: "+ GPIO_input_value.ToString());
-                        }
 
                         if (FormIsClosing == true) break;
                         MyBlueRat.CheckConnection();
@@ -1089,13 +1106,6 @@ namespace RedRatDatabaseViewer
                             MyBlueRat.TEST_GPIO_Output();
                             MyBlueRat.CheckConnection();
                             Console.WriteLine("DONE - TEST_GPIO_Output");
-                        }
-
-                        if (FormIsClosing == false)
-                        {
-                            MyBlueRat.TEST_GPIO_Input();
-                            MyBlueRat.CheckConnection();
-                            Console.WriteLine("DONE - TEST_GPIO_Input");
                         }
 
                         if (FormIsClosing == false)
