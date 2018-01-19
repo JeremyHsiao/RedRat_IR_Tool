@@ -1012,7 +1012,7 @@ namespace RedRatDatabaseViewer
                         //temp_string2 = MyBlueRat.Get_Command_Version();
                         temp_string2 = MyBlueRat.CMD_VER.ToString();
                         temp_string3 = MyBlueRat.BUILD_TIME;
-                        Console.WriteLine("BlueRat at " + com_port_name + ":\n"+ "SW: " + temp_string1 + "\n" + "CMD_API: " + temp_string2 + "\n" + "Build time: " + temp_string3 + "\n");
+                        Console.WriteLine("BlueRat at " + com_port_name + ":\n" + "SW: " + temp_string1 + "\n" + "CMD_API: " + temp_string2 + "\n" + "Build time: " + temp_string3 + "\n");
 
                         if (FormIsClosing == true) break;
                         TEST_Return_Repeat_Count_and_Tx_Status();
@@ -1025,7 +1025,10 @@ namespace RedRatDatabaseViewer
 
                         if (FormIsClosing == true) break;
                         UInt32 GPIO_input_value;
-                        MyBlueRat.Get_GPIO_Input(out GPIO_input_value);
+                        if (MyBlueRat.Get_GPIO_Input(out GPIO_input_value))
+                        {
+                            Console.WriteLine("GPIO_input: "+ GPIO_input_value.ToString());
+                        }
 
                         if (FormIsClosing == true) break;
                         MyBlueRat.CheckConnection();
