@@ -791,26 +791,36 @@ namespace RedRatDatabaseViewer
                 // 這裏至少要放Applicaiton.DoEvents()讓其它event有機會完成
                 while (GetTimeOutIndicator() == false)
                 {
-                    int temp_repeat_cnt = MyBlueRat.Get_Remaining_Repeat_Count();
-                    Console.WriteLine(temp_repeat_cnt.ToString());
-                    if (temp_repeat_cnt <= 4) break;
+                    bool cmd_ok_status;
+                    int temp_repeat_cnt;
+                    cmd_ok_status = MyBlueRat.Get_Remaining_Repeat_Count(out temp_repeat_cnt);
+                    if (cmd_ok_status)
+                    {
+                        Console.WriteLine(temp_repeat_cnt.ToString());
+                    }
+                    else
+                    {
+                        Console.WriteLine("remaining_cnt_err");
+                    }
+                    if ((temp_repeat_cnt <= 4) || (cmd_ok_status == false)) break;
                     RedRatDBViewer_Delay(360);      // better >=360
 
-                    bool temp_tx_status = MyBlueRat.Get_Current_Tx_Status();
-                    Console.WriteLine(temp_tx_status.ToString());
-                    if (temp_tx_status == false) break;
+                    bool temp_tx_status;
+                    cmd_ok_status = MyBlueRat.Get_Current_Tx_Status(out temp_tx_status);
+                    if (cmd_ok_status)
+                    {
+                        Console.WriteLine(temp_tx_status.ToString());
+                    }
+                    else
+                    {
+                        Console.WriteLine("tx_status_err");
+                    }
+                    if ((temp_tx_status == false)||(cmd_ok_status==false)) break;
                     RedRatDBViewer_Delay(200);      // better >= 200
 
                 }
                 while (GetTimeOutIndicator() == false)  // keep looping until timeout
                 {
-                    if (MyBlueRat.FW_VER >= 102)
-                    {
-                        // May cause error before v102
-                        // These 2 functions have defect before v102 when BlueRat Tx isn't running -- ok when is running 
-                        MyBlueRat.Get_Remaining_Repeat_Count();
-                        MyBlueRat.Get_Current_Tx_Status();
-                    }
                     RedRatDBViewer_Delay(32);
                 }
                 aTimer.Stop();

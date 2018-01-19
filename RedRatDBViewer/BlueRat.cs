@@ -92,10 +92,20 @@ namespace RedRatDatabaseViewer
             {
                 if (BlueRatFWVersion == 0)
                 {
-                    BlueRatFWVersion = Convert.ToUInt32(Convert.ToDouble(Get_SW_Version()) * 100);
+                    int retry_cnt;
+                    string fw_ver_str;
+                    retry_cnt = 3;
+                    while ((Get_SW_Version(out fw_ver_str)==false) && (--retry_cnt > 0));
+                    BlueRatFWVersion = Convert.ToUInt32(Convert.ToDouble(fw_ver_str) * 100);
                     Update_Header_String_by_SW_Version(this, BlueRatFWVersion);
-                    BlueRatCMDVersion = Convert.ToUInt32(Get_Command_Version());
-                    BlueRatBuildTime = Get_SW_Build_Time();
+
+                    retry_cnt = 3;
+                    string cmd_ver_str;
+                    while ((Get_Command_Version(out cmd_ver_str) == false) && (--retry_cnt > 0)) ;
+                    BlueRatCMDVersion = Convert.ToUInt32(cmd_ver_str);
+
+                    retry_cnt = 3;
+                    while ((Get_SW_Build_Time(out BlueRatBuildTime) == false) && (--retry_cnt > 0)) ;
                 }
                 MyBlueRatSerial.SetBlueRatVersion(BlueRatFWVersion, BlueRatCMDVersion);     // Tell BlueRatSerial about version info for workaround at serial read function.
             }
@@ -217,9 +227,10 @@ namespace RedRatDatabaseViewer
             return result_status;
         }
 
-        public int Get_Remaining_Repeat_Count()
+        public bool Get_Remaining_Repeat_Count(out int repeat_cnt)
         {
-            int repeat_cnt = 0;
+            bool bRet = false;
+            
             int default_timeout_time = 60;
             string in_str;
             ENUM_RETRY_RESULT result_status;
@@ -229,6 +240,7 @@ namespace RedRatDatabaseViewer
                 default_timeout_time = 640;
             }
 
+            repeat_cnt = 0;
             result_status = SendCmd_WaitReadLine((Prepare_Get_RC_Repeat_Count()), out in_str, default_timeout_time);
             if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
@@ -252,7 +264,7 @@ namespace RedRatDatabaseViewer
                 {
                     Int32 temp = Convert.ToInt32(in_str, 16);      // only for testing conversion.
                     repeat_cnt = temp;
-
+                    bRet = true;
                 }
                 catch (System.FormatException)
                 {
@@ -266,10 +278,10 @@ namespace RedRatDatabaseViewer
                 Console.WriteLine("Get_Remaining_Repeat_Count Error: " + result_status.ToString());
             }
 
-            return repeat_cnt;
+            return bRet;
         }
 
-        public bool Get_Current_Tx_Status()
+        public bool Get_Current_Tx_Status(out bool return_tx_status)
         {
             bool bRet = false;
             int default_timeout_time = 16;
@@ -281,6 +293,7 @@ namespace RedRatDatabaseViewer
                 default_timeout_time = 280;
             }
 
+            return_tx_status = false;
             result_status = SendCmd_WaitReadLine((Prepare_Get_RC_Current_Running_Status()), out in_str, default_timeout_time);
             if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
@@ -288,23 +301,25 @@ namespace RedRatDatabaseViewer
                 {
                     if(in_str.Contains("1"))
                     {
+                        return_tx_status = true;
                         bRet = true;
                     }
                 }
                 else if (in_str.Contains(_CMD_GET_TX_RUNNING_STATUS_HEADER_))
                 {
                     string value_str = in_str.Substring(in_str.IndexOf(":") + 1);
-                    if (Convert.ToInt32(value_str, 16) != 0)
-                    {
-                        bRet = true;
-                    }
                     try
                     {
                         Int32 temp = Convert.ToInt32(value_str);      // only for testing conversion.
-                        if(temp!=0)
+                        if (temp != 0)
                         {
-                            bRet = true;
+                            return_tx_status = true;
                         }
+                        else
+                        {
+                            return_tx_status = false;
+                        }
+                        bRet = true;
                     }
                     catch (System.FormatException)
                     {
@@ -322,12 +337,14 @@ namespace RedRatDatabaseViewer
             return bRet;
         }
 
-        private string Get_SW_Version()
+        private bool Get_SW_Version(out string result_string)
         {
+            bool bRet = false;
             const int default_timeout_time = 16;
             string value_str = "0.01", in_str;
             ENUM_RETRY_RESULT result_status;
 
+            result_string = "0";
             result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_SW_VER)), out in_str, default_timeout_time);
             if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
@@ -343,6 +360,8 @@ namespace RedRatDatabaseViewer
                 try
                 {
                     UInt32 temp = Convert.ToUInt32(Convert.ToDouble(value_str) * 100);      // only for testing conversion.
+                    result_string = value_str;
+                    bRet = true;
                 }
                 catch (System.FormatException)
                 {
@@ -356,13 +375,14 @@ namespace RedRatDatabaseViewer
                 Console.WriteLine("Get_SW_Version Error: " + result_status.ToString());
             }
 
-            return value_str;
+            return bRet;
         }
 
-        private string Get_SW_Build_Time()
+        private bool Get_SW_Build_Time(out string result_string)
         {
-            const int default_timeout_time = 100;
-            string value_str = "0", in_str;
+            bool bRet = false;
+            const int default_timeout_time = 40;
+            string in_str;
             ENUM_RETRY_RESULT result_status;
 
             // Workaround before v1.02
@@ -370,22 +390,25 @@ namespace RedRatDatabaseViewer
             {
                 if (BlueRatFWVersion == 100)
                 {
-                    value_str = "Dec 21 2017" + " " + "13:44:28";
+                    result_string = "Dec 21 2017" + " " + "13:44:28";
                 }
                 else
                 {
-                    value_str = "Dec 2017";
+                    result_string = "Dec 2017";
                 }
                 result_status = ENUM_RETRY_RESULT.ENUM_OK_RETRY_00;
+                bRet = true;
             }
             else
             {
+                result_string = "0";
                 result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_BUILD_TIME)), out in_str, default_timeout_time);
                 if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
                 {
                     if (in_str.Contains(_CMD_BUILD_TIME_RETURN_HEADER_))
                     {
-                        value_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                        result_string = in_str.Substring(in_str.IndexOf(":") + 1);
+                        bRet = true;
                     }
                     else
                     {
@@ -398,15 +421,17 @@ namespace RedRatDatabaseViewer
                     Console.WriteLine("Get_SW_Build_Time Error: " + result_status.ToString());
                 }
             }
-            return value_str;
+            return bRet;
         }
 
-        private string Get_Command_Version()
+        private bool Get_Command_Version(out string result_string)
         {
+            bool bRet = false;
             const int default_timeout_time = 30;
-            string value_str = "0", in_str;
+            string in_str;
             ENUM_RETRY_RESULT result_status;
 
+            result_string = "0";
             result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_CMD_VERSION)), out in_str, default_timeout_time);
             if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
@@ -418,11 +443,13 @@ namespace RedRatDatabaseViewer
                 {
                     in_str = in_str.Substring(in_str.IndexOf(":") + 1);
                 }
-                // check if this is a number-sring
+
+                // check if this is a unsigned-number-sring
                 try
                 {
-                    UInt32 temp = Convert.ToUInt32(value_str);
-                    value_str = in_str;
+                    UInt32 temp = Convert.ToUInt32(in_str);
+                    result_string = in_str;
+                    bRet = true;
                 }
                 catch (System.FormatException)
                 {
@@ -436,7 +463,7 @@ namespace RedRatDatabaseViewer
                 Console.WriteLine("Get_SW_Version Error: " + result_status.ToString());
             }
 
-            return value_str;
+            return bRet;
         }
 
         public UInt32 Get_GPIO_Input()
