@@ -1548,7 +1548,7 @@ namespace RedRatDatabaseViewer
                 }
             }
         }
-
+        
         // For self testing purpose
         public void TEST_GPIO_Input()
         {
@@ -1578,6 +1578,31 @@ namespace RedRatDatabaseViewer
                 HomeMade_Delay(delay_time);
             }
         }
+
+        public void TEST_SENSOR_Input()
+        {
+            const int delay_time = 500;
+            //byte GPIO_Read_Data = 0;
+
+            // For reading an UART input, please make sure previous return data has been already received
+
+            int run_time = 20;
+            while (run_time-- > 0)
+            {
+                if (!MyBlueRatSerial.Serial_PortConnection())
+                {
+                    return;
+                }
+
+                UInt32 sensor_input_value;
+                Get_Sensor_Input(out sensor_input_value);
+                byte Sensor_Read_Data = Convert.ToByte(sensor_input_value & 0xff);
+                Console.WriteLine("Sendor_IN:" + Sensor_Read_Data.ToString());
+                HomeMade_Delay(delay_time);
+            }
+        }
+
+
         ///
         ///
     }

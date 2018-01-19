@@ -789,10 +789,11 @@ namespace RedRatDatabaseViewer
                 // 一直循環等到 GetTimeOutIndicator() == true為止
                 // 在這等待的同時,就可以安排其它要做的事情
                 // 這裏至少要放Applicaiton.DoEvents()讓其它event有機會完成
-                while (GetTimeOutIndicator() == false)
+                while ((GetTimeOutIndicator() == false) && (FormIsClosing == false))
                 {
                     bool cmd_ok_status;
                     int temp_repeat_cnt;
+
                     cmd_ok_status = MyBlueRat.Get_Remaining_Repeat_Count(out temp_repeat_cnt);
                     if (cmd_ok_status)
                     {
@@ -802,9 +803,10 @@ namespace RedRatDatabaseViewer
                     {
                         Console.WriteLine("remaining_cnt_err");
                     }
-                    if ((temp_repeat_cnt <= 4) || (cmd_ok_status == false)) break;
+                    if ((temp_repeat_cnt <= 4) || (cmd_ok_status == false) || (FormIsClosing == true)) break;
                     RedRatDBViewer_Delay(360);      // better >=360
 
+                    if (FormIsClosing == true) break;
                     bool temp_tx_status;
                     cmd_ok_status = MyBlueRat.Get_Current_Tx_Status(out temp_tx_status);
                     if (cmd_ok_status)
@@ -815,11 +817,11 @@ namespace RedRatDatabaseViewer
                     {
                         Console.WriteLine("tx_status_err");
                     }
-                    if ((temp_tx_status == false)||(cmd_ok_status==false)) break;
+                    if ((temp_tx_status == false)||(cmd_ok_status==false)|| (FormIsClosing == true)) break;
                     RedRatDBViewer_Delay(200);      // better >= 200
-
                 }
-                while (GetTimeOutIndicator() == false)  // keep looping until timeout
+
+                while ((GetTimeOutIndicator() == false) && (FormIsClosing == false))   // keep looping until timeout
                 {
                     RedRatDBViewer_Delay(32);
                 }
@@ -1012,13 +1014,22 @@ namespace RedRatDatabaseViewer
                         temp_string3 = MyBlueRat.BUILD_TIME;
                         Console.WriteLine("BlueRat at " + com_port_name + ":\n"+ "SW: " + temp_string1 + "\n" + "CMD_API: " + temp_string2 + "\n" + "Build time: " + temp_string3 + "\n");
 
+                        if (FormIsClosing == true) break;
                         TEST_Return_Repeat_Count_and_Tx_Status();
 
+                        if (FormIsClosing == true) break;
                         MyBlueRat.Stop_Current_Tx();
+
+                        if (FormIsClosing == true) break;
                         MyBlueRat.CheckConnection();
+
+                        if (FormIsClosing == true) break;
                         UInt32 GPIO_input_value;
                         MyBlueRat.Get_GPIO_Input(out GPIO_input_value);
+
+                        if (FormIsClosing == true) break;
                         MyBlueRat.CheckConnection();
+
                         if (FormIsClosing == false)
                         {
                             Example_to_Send_RC_without_Repeat_Count();
@@ -1084,6 +1095,13 @@ namespace RedRatDatabaseViewer
                             Console.WriteLine("DONE - TEST_GPIO_Input");
                         }
 
+                        if (FormIsClosing == false)
+                        {
+                            MyBlueRat.TEST_SENSOR_Input();
+                            MyBlueRat.CheckConnection();
+                            Console.WriteLine("DONE - Get_Sensor_Input");
+                        }
+                        
                         if (FormIsClosing == false)
                         {
                             //MyBlueRat.Enter_ISP_Mode();
