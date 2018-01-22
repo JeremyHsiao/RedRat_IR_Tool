@@ -148,8 +148,8 @@ namespace RedRatDatabaseViewer
             btnConnectionControl.Enabled = false;
         }
 
-        const string CONNECT_UART_STRING_ON_BUTTON = "Connect UART";
-        const string DISCONNECT_UART_STRING_ON_BUTTON = "Disconnect UART";
+        const string CONNECT_UART_STRING_ON_BUTTON = "Connect";
+        const string DISCONNECT_UART_STRING_ON_BUTTON = "Disconnect";
 
         private void UpdateToConnectButton()
         {
