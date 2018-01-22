@@ -834,7 +834,7 @@ namespace RedRatDatabaseViewer
         private void Example_to_Send_RC_without_Repeat_Count()
         {
             // Load RedRat database - 載入資料庫
-            RedRatData.RedRatLoadSignalDB("C:\\Users\\jeremy.hsiao\\Downloads\\SDK-V4-Samples\\Samples\\RC DB\\DeviceDB - 複製.xml");
+            RedRatData.RedRatLoadSignalDB("..\\..\\..\\..\\RC DB\\DeviceDB - 複製.xml");
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
             RedRatDBViewer_Delay(16);
             // Select Device  - 選擇RC Device
