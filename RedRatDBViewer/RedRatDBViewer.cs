@@ -31,7 +31,7 @@ namespace RedRatDatabaseViewer
         static void BlueRat_UARTException(Object sender, EventArgs e)
         {
             BlueRat_UART_Exception_status = true;
-         }
+        }
 
         static bool TimeOutIndicator = false;
 
@@ -60,7 +60,7 @@ namespace RedRatDatabaseViewer
             }
             */
             List<string> bluerat_com = BlueRat.FindAllBlueRat();
-            foreach(string com_port in bluerat_com)
+            foreach (string com_port in bluerat_com)
             {
                 lstBlueRatComPort.Items.Add(com_port);
             }
@@ -198,7 +198,7 @@ namespace RedRatDatabaseViewer
             aTimer.Elapsed += new ElapsedEventHandler(RedRatDBViewer_Delay_OnTimedEvent);
             RedRatDBViewer_Delay_TimeOutIndicator = false;
             aTimer.Enabled = true;
-            while ((FormIsClosing==false)&&(RedRatDBViewer_Delay_TimeOutIndicator == false)) { Application.DoEvents(); Thread.Sleep(1); }
+            while ((FormIsClosing == false) && (RedRatDBViewer_Delay_TimeOutIndicator == false)) { Application.DoEvents(); Thread.Sleep(1); }
             aTimer.Stop();
             aTimer.Dispose();
         }
@@ -562,6 +562,27 @@ namespace RedRatDatabaseViewer
             InitializeComponent();
         }
 
+        private void ClearDeviceWindow()
+        {
+            listboxAVDeviceList.Items.Clear();
+        }
+
+        private void UpdateDeviceWindowAfterLoadDB()
+        {
+            listboxAVDeviceList.Items.Clear();
+            listboxAVDeviceList.Items.AddRange(RedRatData.RedRatGetDBDeviceNameList().ToArray());
+        }
+
+        private void ClearRCWindow()
+        {
+            listboxRCKey.Items.Clear();
+        }
+
+        private void UpdateRCWindowAfterDeviceSelected()
+        {
+            listboxRCKey.Items.AddRange(RedRatData.RedRatGetRCNameList().ToArray());
+        }
+
         private void btnGetRCFile_Click(object sender, EventArgs e)
         {
             OpenFileDialog openFileDialog1 = new OpenFileDialog
@@ -583,81 +604,54 @@ namespace RedRatDatabaseViewer
                         //RedRatData = new RedRatDBParser();
                         if (RedRatData.RedRatLoadSignalDB(openFileDialog1.FileName)) // Device 0 Signal 0 will be selected after RC database loaded
                         {
+                            // Clear window after loading RC database
                             RedRatDBViewer_Delay(16);
+                            ClearDeviceWindow();
+                            ClearRCWindow();
+                            rtbSignalData.Text = "";
+
+                            // Update Device Window and set 0 as selected
+                            UpdateDeviceWindowAfterLoadDB();
+                            Previous_Device = -1;
+                            listboxAVDeviceList.SelectedIndex = 0;
+                            RedRatData.RedRatSelectDevice(0);
+
+                            // Update RC Window and set 0 as selected
+                            UpdateRCWindowAfterDeviceSelected();
+                            Previous_Key = -1;
+                            listboxRCKey.SelectedIndex = 0;
+                            RedRatData.RedRatSelectRCSignal(0);
+
                             //
                             // Update Form Display Data according to content of RedRatData.SelectedSignal
                             //
-                            rtbSignalData.Text = "";
-                            listboxAVDeviceList.Items.Clear();
-                            listboxRCKey.Items.Clear();
-                            if (RedRatData.SignalDB != null)
-                            {
-                                Previous_Device = -1;
-                                listboxAVDeviceList.Items.AddRange(RedRatData.RedRatGetDBDeviceNameList().ToArray());
-                                if (listboxAVDeviceList.Items.Count > 0)
-                                {
-                                    listboxAVDeviceList.SelectedIndex = 0;
-                                    //RedRatDBViewer_Delay(16);
-                                    Application.DoEvents();
-                                    RedRatData.RedRatSelectDevice(0);
-                                }
-                                if (RedRatData.SelectedDevice != null)
-                                {
-                                    this.listboxAVDeviceList_SelectedIndexChanged(sender, e);
-                                    Previous_Key = -1;
-                                    //listboxRCKey.Items.AddRange(RedRatData.RedRatGetRCNameList().ToArray());
-                                    if (listboxRCKey.Items.Count > 0)
-                                    {
-                                        listboxRCKey.SelectedIndex = 0;
-                                        //RedRatDBViewer_Delay(16);
-                                        Application.DoEvents();
-                                        RedRatData.RedRatSelectRCSignal(0);
-                                        if (RedRatData.SelectedSignal != null)
-                                        {
-                                            UpdateRCDataOnForm();
-                                            this.listboxRCKey_SelectedIndexChanged(sender, e); // Force to update Device list selection box (RC selection box will be forced to updated within listboxAVDeviceList_SelectedIndexChanged()
-                                            listboxAVDeviceList.Enabled = true;
-                                            listboxRCKey.Enabled = true;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    rtbDecodeRCSignal.Text = "RC data file data is corrupted!";
-                                    UpdateRCDataOnForm();
-                                    Previous_Device = -1;
-                                    Previous_Key = -1;
-                                    listboxAVDeviceList.Enabled = true;
-                                    listboxRCKey.Enabled = false;
-                                }
-                            }
-                            else
-                            {
-                                rtbDecodeRCSignal.Text = "RC data file data is corrupted!";
-                                UpdateRCDataOnForm();
-                                Previous_Device = -1;
-                                Previous_Key = -1;
-                                listboxAVDeviceList.Enabled = false;
-                                listboxRCKey.Enabled = false;
-                            }
+                            UpdateRCDataOnForm();
+                            listboxAVDeviceList.Enabled = true;
+                            listboxRCKey.Enabled = true;
+
+                            // Wait for data to refresh
+                            RedRatDBViewer_Delay(16);
                         }
                         else
                         {
-                            rtbDecodeRCSignal.Text = "Cannot load RC file!";
+                            rtbDecodeRCSignal.Text = "Cannot load RC file or RC data file is corrupted";
                             UpdateRCDataOnForm();
                             Previous_Device = -1;
                             Previous_Key = -1;
                             listboxAVDeviceList.Enabled = true;
                             listboxRCKey.Enabled = false;
                         }
-
-
                         UpdateRCFunctionButtonAfterConnection();
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Error: " + ex.Message);
+                    rtbDecodeRCSignal.Text = "RC data file data is corrupted!";
+                    UpdateRCDataOnForm();
+                    Previous_Device = -1;
+                    Previous_Key = -1;
+                    listboxAVDeviceList.Enabled = true;
+                    listboxRCKey.Enabled = false;
                 }
             }
         }
@@ -690,7 +684,7 @@ namespace RedRatDatabaseViewer
                             RedRatData.RedRatSelectRCSignal(temp_rc, false);
                             // Use UART to transmit RC signal
                             rc_duration = MyBlueRat.SendOneRC(RedRatData) / 1000 + 1;
-                            
+
                             RedRatDBViewer_Delay(rc_duration);
                         }
                     }
@@ -836,7 +830,7 @@ namespace RedRatDatabaseViewer
                     {
                         Console.WriteLine("tx_status_err");
                     }
-                    if ((temp_tx_status == false)||(cmd_ok_status==false)|| (FormIsClosing == true)) break;
+                    if ((temp_tx_status == false) || (cmd_ok_status == false) || (FormIsClosing == true)) break;
                     RedRatDBViewer_Delay(200);      // better >= 200
                 }
 
@@ -853,7 +847,7 @@ namespace RedRatDatabaseViewer
         private void Example_to_Send_RC_without_Repeat_Count()
         {
             // Load RedRat database - 載入資料庫
-            if(!(RedRatData.RedRatLoadSignalDB(@"..\..\..\..\RC DB\DeviceDB - 複製.xml")))
+            if (!(RedRatData.RedRatLoadSignalDB(@"..\..\..\..\RC DB\DeviceDB - 複製.xml")))
             {
                 return;     // return if loading RC fails
             }
@@ -933,7 +927,7 @@ namespace RedRatDatabaseViewer
         // 如果一個RC要repeat很多次(過255次),無法像前面使用一個byte來傳入repeat次數,
         // 就要在後面使用另一個指令,來追加要repeat的次數,
         // 該指令的傳入參數為4-byte (0~4,294,967,295 (0xffffffff))
-        bool MyApplicationNeedToStopNow = false;        
+        bool MyApplicationNeedToStopNow = false;
         private void Example_to_Send_RC_with_Large_Repeat_Count()
         {
             int repeat = 300; // max value is 4,294,967,295 (0xffffffff)
@@ -978,9 +972,9 @@ namespace RedRatDatabaseViewer
                 {
                     // 這裏至少要放Applicaiton.DoEvents()讓其它event有機會完成
                     Application.DoEvents();
-                    Thread.Sleep(rc_duration/100);
+                    Thread.Sleep(rc_duration / 100);
                     // 如果應用程式需要立刻停止(例如form-closing,或使用者中斷Scheduler的執行),則可以使用break跳出此while-loop
-                    if (MyApplicationNeedToStopNow==true)
+                    if (MyApplicationNeedToStopNow == true)
                     {
                         break;
                     }
@@ -1039,7 +1033,7 @@ namespace RedRatDatabaseViewer
                     lstBlueRatComPort.Items.Add(com_port);
                 }
             }
-            if ((lstBlueRatComPort.SelectedItem == null)&&(lstBlueRatComPort.Items.Count > 0))    // Use first one if none-selected
+            if ((lstBlueRatComPort.SelectedItem == null) && (lstBlueRatComPort.Items.Count > 0))    // Use first one if none-selected
             {
                 lstBlueRatComPort.SelectedIndex = 0;
             }
@@ -1143,7 +1137,7 @@ namespace RedRatDatabaseViewer
                             MyBlueRat.CheckConnection();
                             Console.WriteLine("DONE - Get_Sensor_Input");
                         }
-                        
+
                         if (FormIsClosing == false)
                         {
                             //MyBlueRat.Enter_ISP_Mode();
@@ -1153,7 +1147,7 @@ namespace RedRatDatabaseViewer
                         //示範現在如何結束聯接UART並釋放 
                         MyBlueRat.Disconnect();
                     }
-                    if(lstBlueRatComPort.SelectedIndex==(lstBlueRatComPort.Items.Count-1))
+                    if (lstBlueRatComPort.SelectedIndex == (lstBlueRatComPort.Items.Count - 1))
                     {
                         lstBlueRatComPort.SelectedIndex = 0;
                     }
@@ -1162,7 +1156,7 @@ namespace RedRatDatabaseViewer
                         lstBlueRatComPort.SelectedIndex++;
                     }
                 }
-                while ((FormIsClosing==false) &&(++ScanBlueRat_Count < lstBlueRatComPort.Items.Count));
+                while ((FormIsClosing == false) && (++ScanBlueRat_Count < lstBlueRatComPort.Items.Count));
 
                 // UI update after disconnecting BlueRat
                 UpdateToConnectButton();
