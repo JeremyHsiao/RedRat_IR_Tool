@@ -1186,5 +1186,46 @@ namespace RedRatDatabaseViewer
         {
 
         }
+
+        private void AutoRunAllRC_Click(object sender, EventArgs e)
+        {
+            TemoparilyDisbleAllRCFunctionButtons();
+
+            string com_port_name = lstBlueRatComPort.SelectedItem.ToString();
+            //示範現在如何聯接小藍鼠 -- 需傳入COM PORT名稱
+            if (MyBlueRat.Connect(com_port_name))
+            {
+                // 在第一次/或長時間未使用之後,要開始使用BlueRat跑Schedule之前,建議執行這一行,確保BlueRat的起始狀態一致 -- 正常情況下不執行並不影響BlueRat運行,但為了找問題方便,還是請務必執行
+                MyBlueRat.Force_Init_BlueRat();
+                string temp_string1, temp_string2, temp_string3;
+                //temp_string1 = MyBlueRat.Get_SW_Version();
+                temp_string1 = MyBlueRat.FW_VER.ToString();
+                //temp_string2 = MyBlueRat.Get_Command_Version();
+                temp_string2 = MyBlueRat.CMD_VER.ToString();
+                temp_string3 = MyBlueRat.BUILD_TIME;
+                Console.WriteLine("BlueRat at " + com_port_name + ":\n" + "SW: " + temp_string1 + "\n" + "CMD_API: " + temp_string2 + "\n" + "Build time: " + temp_string3 + "\n");
+
+                if ((RedRatData == null)||(RedRatData.SignalDB == null))
+                {
+                    // Load RedRat database - 載入資料庫
+                    if (!(RedRatData.RedRatLoadSignalDB(@"..\..\..\..\RC DB\DeviceDB - 複製.xml")))
+                    {
+                        return;     // return if loading RC fails
+                    }
+                    // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+                    RedRatDBViewer_Delay(16);
+                }
+
+                if ((RedRatData != null) && (RedRatData.SignalDB != null))
+                {
+                   TEST_WalkThroughAllRCKeys();
+                 }
+
+                //示範現在如何結束聯接UART並釋放 
+                MyBlueRat.Disconnect();
+            }
+            UndoTemoparilyDisbleAllRCFunctionButtons();
+
+        }
     }
 }
