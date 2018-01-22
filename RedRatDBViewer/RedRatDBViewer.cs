@@ -675,6 +675,10 @@ namespace RedRatDatabaseViewer
                     RedRatData.RedRatSelectRCSignal(temp_rc, true);
                     if (RedRatData.Signal_Type_Supported == true)
                     {
+                        if (FormIsClosing == true)
+                        {
+                            return;
+                        }
 
                         // Use UART to transmit RC signal
                         int rc_duration = MyBlueRat.SendOneRC(RedRatData) / 1000 + 1;
