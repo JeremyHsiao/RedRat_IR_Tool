@@ -581,43 +581,54 @@ namespace RedRatDatabaseViewer
                     {
                         //Console.WriteLine("RedRat Found. Loading DB file...");
                         //RedRatData = new RedRatDBParser();
-                        RedRatData.RedRatLoadSignalDB(openFileDialog1.FileName); // Device 0 Signal 0 will be selected after RC database loaded
-                        RedRatDBViewer_Delay(64);
-                        //
-                        // Update Form Display Data according to content of RedRatData.SelectedSignal
-                        //
-                        rtbSignalData.Text = "";
-                        listboxAVDeviceList.Items.Clear();
-                        listboxRCKey.Items.Clear();
-                        if (RedRatData.SignalDB != null)
+                        if (RedRatData.RedRatLoadSignalDB(openFileDialog1.FileName)) // Device 0 Signal 0 will be selected after RC database loaded
                         {
-                            Previous_Device = -1;
-                            listboxAVDeviceList.Items.AddRange(RedRatData.RedRatGetDBDeviceNameList().ToArray());
-                            if (listboxAVDeviceList.Items.Count > 0)
+                            RedRatDBViewer_Delay(16);
+                            //
+                            // Update Form Display Data according to content of RedRatData.SelectedSignal
+                            //
+                            rtbSignalData.Text = "";
+                            listboxAVDeviceList.Items.Clear();
+                            listboxRCKey.Items.Clear();
+                            if (RedRatData.SignalDB != null)
                             {
-                                listboxAVDeviceList.SelectedIndex = 0;
-                                //RedRatDBViewer_Delay(16);
-                                Application.DoEvents();
-                                RedRatData.RedRatSelectDevice(0);
-                            }
-                            if (RedRatData.SelectedDevice != null)
-                            {
-                                this.listboxAVDeviceList_SelectedIndexChanged(sender, e);
-                                Previous_Key = -1;
-                                //listboxRCKey.Items.AddRange(RedRatData.RedRatGetRCNameList().ToArray());
-                                if (listboxRCKey.Items.Count > 0)
+                                Previous_Device = -1;
+                                listboxAVDeviceList.Items.AddRange(RedRatData.RedRatGetDBDeviceNameList().ToArray());
+                                if (listboxAVDeviceList.Items.Count > 0)
                                 {
-                                    listboxRCKey.SelectedIndex = 0;
+                                    listboxAVDeviceList.SelectedIndex = 0;
                                     //RedRatDBViewer_Delay(16);
                                     Application.DoEvents();
-                                    RedRatData.RedRatSelectRCSignal(0);
-                                    if (RedRatData.SelectedSignal != null)
+                                    RedRatData.RedRatSelectDevice(0);
+                                }
+                                if (RedRatData.SelectedDevice != null)
+                                {
+                                    this.listboxAVDeviceList_SelectedIndexChanged(sender, e);
+                                    Previous_Key = -1;
+                                    //listboxRCKey.Items.AddRange(RedRatData.RedRatGetRCNameList().ToArray());
+                                    if (listboxRCKey.Items.Count > 0)
                                     {
-                                        UpdateRCDataOnForm();
-                                        this.listboxRCKey_SelectedIndexChanged(sender, e); // Force to update Device list selection box (RC selection box will be forced to updated within listboxAVDeviceList_SelectedIndexChanged()
-                                        listboxAVDeviceList.Enabled = true;
-                                        listboxRCKey.Enabled = true;
+                                        listboxRCKey.SelectedIndex = 0;
+                                        //RedRatDBViewer_Delay(16);
+                                        Application.DoEvents();
+                                        RedRatData.RedRatSelectRCSignal(0);
+                                        if (RedRatData.SelectedSignal != null)
+                                        {
+                                            UpdateRCDataOnForm();
+                                            this.listboxRCKey_SelectedIndexChanged(sender, e); // Force to update Device list selection box (RC selection box will be forced to updated within listboxAVDeviceList_SelectedIndexChanged()
+                                            listboxAVDeviceList.Enabled = true;
+                                            listboxRCKey.Enabled = true;
+                                        }
                                     }
+                                }
+                                else
+                                {
+                                    rtbDecodeRCSignal.Text = "RC data file data is corrupted!";
+                                    UpdateRCDataOnForm();
+                                    Previous_Device = -1;
+                                    Previous_Key = -1;
+                                    listboxAVDeviceList.Enabled = true;
+                                    listboxRCKey.Enabled = false;
                                 }
                             }
                             else
@@ -626,19 +637,20 @@ namespace RedRatDatabaseViewer
                                 UpdateRCDataOnForm();
                                 Previous_Device = -1;
                                 Previous_Key = -1;
-                                listboxAVDeviceList.Enabled = true;
+                                listboxAVDeviceList.Enabled = false;
                                 listboxRCKey.Enabled = false;
                             }
                         }
                         else
                         {
-                            rtbDecodeRCSignal.Text = "RC data file data is corrupted!";
+                            rtbDecodeRCSignal.Text = "Cannot load RC file!";
                             UpdateRCDataOnForm();
                             Previous_Device = -1;
                             Previous_Key = -1;
-                            listboxAVDeviceList.Enabled = false;
+                            listboxAVDeviceList.Enabled = true;
                             listboxRCKey.Enabled = false;
                         }
+
 
                         UpdateRCFunctionButtonAfterConnection();
                     }
@@ -758,7 +770,10 @@ namespace RedRatDatabaseViewer
             int repeat = 300; // max value is 4,294,967,295 (0xffffffff)
             const byte recommended_first_repeat_cnt_value = 100;    // must be <= 0xff
             // Load RedRat database - 載入資料庫
-            RedRatData.RedRatLoadSignalDB("C:\\Users\\jeremy.hsiao\\Downloads\\SDK-V4-Samples\\Samples\\RC DB\\DeviceDB - 複製.xml");
+            if (!(RedRatData.RedRatLoadSignalDB(@"..\..\..\..\RC DB\DeviceDB - 複製.xml")))
+            {
+                return;     // return if loading RC fails
+            }
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
             RedRatDBViewer_Delay(16);
             // Select Device  - 選擇RC Device
@@ -834,9 +849,13 @@ namespace RedRatDatabaseViewer
         private void Example_to_Send_RC_without_Repeat_Count()
         {
             // Load RedRat database - 載入資料庫
-            RedRatData.RedRatLoadSignalDB("..\\..\\..\\..\\RC DB\\DeviceDB - 複製.xml");
+            if(!(RedRatData.RedRatLoadSignalDB(@"..\..\..\..\RC DB\DeviceDB - 複製.xml")))
+            {
+                return;     // return if loading RC fails
+            }
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
             RedRatDBViewer_Delay(16);
+            //Application.DoEvents();
             // Select Device  - 選擇RC Device
             RedRatData.RedRatSelectDevice("HP-MCE");
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
@@ -870,10 +889,13 @@ namespace RedRatDatabaseViewer
         {
             const byte SendOneRC_default_cnt = 2;
             // Load RedRat database - 載入資料庫
-            RedRatData.RedRatLoadSignalDB("C:\\Users\\jeremy.hsiao\\Downloads\\SDK-V4-Samples\\Samples\\RC DB\\DeviceDB - 複製.xml");
+            if (!(RedRatData.RedRatLoadSignalDB(@"..\..\..\..\RC DB\DeviceDB - 複製.xml")))
+            {
+                return;     // return if loading RC fails
+            }
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
-            //RedRatDBViewer_Delay(16);
-            Application.DoEvents();
+            RedRatDBViewer_Delay(16);
+            //Application.DoEvents();
             // Select Device  - 選擇RC Device
             RedRatData.RedRatSelectDevice("HP-MCE");
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
@@ -913,10 +935,13 @@ namespace RedRatDatabaseViewer
             int repeat = 300; // max value is 4,294,967,295 (0xffffffff)
             const byte recommended_first_repeat_cnt_value = 100;    // must be <= 0xff
             // Load RedRat database - 載入資料庫
-            RedRatData.RedRatLoadSignalDB("C:\\Users\\jeremy.hsiao\\Downloads\\SDK-V4-Samples\\Samples\\RC DB\\DeviceDB - 複製.xml");
+            if (!(RedRatData.RedRatLoadSignalDB(@"..\..\..\..\RC DB\DeviceDB - 複製.xml")))
+            {
+                return;     // return if loading RC fails
+            }
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
-            //RedRatDBViewer_Delay(16);
-            Application.DoEvents();
+            RedRatDBViewer_Delay(16);
+            //Application.DoEvents();
             // Select Device  - 選擇RC Device
             RedRatData.RedRatSelectDevice("HP-MCE");
             // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
