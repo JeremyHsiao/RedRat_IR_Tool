@@ -163,6 +163,9 @@ namespace RedRatDatabaseViewer
 
         private void btnFreshCOMNo_Click(object sender, System.EventArgs e)
         {
+            AutoDetectAndRun();
+            return; 
+
             TemoparilyDisbleAllRCFunctionButtons();
             btnFreshCOMNo.Enabled = false;
 
@@ -828,6 +831,46 @@ namespace RedRatDatabaseViewer
             }
         }
 
+        private void TEST_WalkThroughAllRCKeys(BlueRat TestBlueRat, RedRatDBParser TestRedRatData)
+        {
+            // 1. Open RC database file to load it in advance
+            foreach (var temp_device in TestRedRatData.RedRatGetDBDeviceNameList())
+            {
+                TestRedRatData.RedRatSelectDevice(temp_device);
+                RedRatDBViewer_Delay(20);
+                foreach (var temp_rc in TestRedRatData.RedRatGetRCNameList())
+                {
+                    TestRedRatData.RedRatSelectRCSignal(temp_rc, true);
+                    RedRatDBViewer_Delay(20);
+                    if (TestRedRatData.Signal_Type_Supported == true)
+                    {
+                        Console.WriteLine(temp_device + " - " + temp_rc);
+
+                        if (FormIsClosing == true)
+                        {
+                            return;
+                        }
+
+                        // Use UART to transmit RC signal
+                        int rc_duration = MyBlueRat.SendOneRC(TestRedRatData, 1) / 1000 + 1;
+                        RedRatDBViewer_Delay(rc_duration+50);
+
+                        // Update 2nd Signal checkbox
+                        if ((TestRedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (TestRedRatData.RC_ToggleData_Length_Value() > 0))
+                        {
+                            TestRedRatData.RedRatSelectRCSignal(temp_rc, false);
+                            // Use UART to transmit RC signal
+                            rc_duration = TestBlueRat.SendOneRC(TestRedRatData, 1) / 1000 + 1;
+
+                            RedRatDBViewer_Delay(rc_duration+50);
+                        }
+                        //RedRatDBViewer_Delay(100);
+                        break;
+                    }
+                }
+            }
+        }
+
         private void TEST_StressSendingAlreadySelectedRC()
         {
             // Testing: send "stress_cnt" times Single RC
@@ -1301,6 +1344,125 @@ namespace RedRatDatabaseViewer
             }
             UndoTemoparilyDisbleAllRCFunctionButtons();
         }
+
+
+        private void AutoDetectAndRun()
+        {
+            BlueRat TestBlueRat = new BlueRat();
+            RedRatDBParser MyRedRatData = new RedRatDBParser();
+
+            btnFreshCOMNo.Enabled = false;
+            bool bBlueRatUnplugged = false;
+
+            while (FormIsClosing==false)
+            {
+                //if (lstBlueRatComPort.Items.Count == 0)
+                lstBlueRatComPort.Items.Clear();
+                {
+                    // Example -- 示範現在如何找出所有的小藍鼠
+                    btnFreshCOMNo.Text = @"偵測設備";
+                    List<string> bluerat_com = BlueRat.FindAllBlueRat();
+                    foreach (string com_port in bluerat_com)
+                    {
+                        lstBlueRatComPort.Items.Add(com_port);
+                        btnFreshCOMNo.Text = @"找到設備";
+                        break;
+                    }
+                }
+                if ((lstBlueRatComPort.SelectedItem == null) && (lstBlueRatComPort.Items.Count > 0))    // Use first one if none-selected
+                {
+                    lstBlueRatComPort.SelectedIndex = 0;
+                }
+
+                if (lstBlueRatComPort.SelectedItem != null)
+                {
+                    // Go through all BlueRat
+                    int ScanBlueRat_Count = 0;
+                    rtbSignalData.Clear();
+//                    do
+//                    {
+                        string com_port_name = lstBlueRatComPort.SelectedItem.ToString();
+                        //示範現在如何聯接小藍鼠 -- 需傳入COM PORT名稱
+                        if (TestBlueRat.Connect(com_port_name))
+                        {
+                            btnFreshCOMNo.Text = @"發射信號";
+                            bBlueRatUnplugged = false;
+                            // 在第一次/或長時間未使用之後,要開始使用BlueRat跑Schedule之前,建議執行這一行,確保BlueRat的起始狀態一致 -- 正常情況下不執行並不影響BlueRat運行,但為了找問題方便,還是請務必執行
+                            TestBlueRat.Force_Init_BlueRat();
+
+                            string temp_string1, temp_string2, temp_string3;
+                            //temp_string1 = TestBlueRat.Get_SW_Version();
+                            temp_string1 = TestBlueRat.FW_VER.ToString();
+                            temp_string1 = Convert.ToString(Convert.ToDouble(temp_string1) / 100.0);
+                            //temp_string2 = TestBlueRat.Get_Command_Version();
+                            //temp_string2 = TestBlueRat.CMD_VER.ToString();
+                            temp_string2 = "";
+                            temp_string3 = TestBlueRat.BUILD_TIME;
+                            rtbSignalData.AppendText(com_port_name + " -- \nVer: " + temp_string1 + "\nBuild at: " + temp_string3 + "\n");
+                            rtbSignalData.ScrollToCaret();
+
+                            if ((MyRedRatData == null) || (MyRedRatData.SignalDB == null))
+                            {
+                                // Load RedRat database - 載入資料庫
+                                if (!(MyRedRatData.RedRatLoadSignalDB(@"DeviceDB - 複製.xml")))
+                                {
+                                    return;     // return if loading RC fails
+                                }
+                                // Let main program has time to refresh MyRedRatData data content -- can be skiped if this code is not running in UI event call-back function
+                                RedRatDBViewer_Delay(16);
+                            }
+
+                            if ((MyRedRatData != null) && (MyRedRatData.SignalDB != null))
+                            {
+                                TEST_WalkThroughAllRCKeys(TestBlueRat,MyRedRatData);
+                            }
+
+                            TestBlueRat.Force_Init_BlueRat();
+
+                            //示範現在如何結束聯接UART並釋放 
+                            TestBlueRat.Disconnect();
+                            btnFreshCOMNo.Text = @"測試結束移除設備";
+                        }
+                        else
+                        {
+                            btnFreshCOMNo.Text = @"執行失敗請留意!";
+                            RedRatDBViewer_Delay(5000);
+                        }
+                        //if (lstBlueRatComPort.SelectedIndex == (lstBlueRatComPort.Items.Count - 1))
+                        //{
+                        //    lstBlueRatComPort.SelectedIndex = 0;
+                        //}
+                        //else
+                        //{
+                        //    lstBlueRatComPort.SelectedIndex++;
+                        //}
+//                    }
+//                    while ((FormIsClosing == false) && (++ScanBlueRat_Count < lstBlueRatComPort.Items.Count));
+
+                    do
+                    {
+                        List<string> bluerat_com = BlueRat.FindAllBlueRat();
+                        if (bluerat_com.IndexOf(com_port_name) < 0)
+                        {
+                            bBlueRatUnplugged = true;
+                            lstBlueRatComPort.Items.Clear();
+                            btnFreshCOMNo.Text = @"等候設備";
+                        }
+                        else
+                        {
+                            RedRatDBViewer_Delay(100);
+                        }
+                    }
+                    while ((bBlueRatUnplugged == false)&&(FormIsClosing == false));
+                }
+                else
+                {
+                    RedRatDBViewer_Delay(100);
+                }
+            }
+            btnFreshCOMNo.Enabled = true;
+        }
+
 
 
     }
