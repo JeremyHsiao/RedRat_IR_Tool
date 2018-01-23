@@ -665,19 +665,23 @@ namespace RedRatDatabaseViewer
                 TestDBData.RedRatSelectDevice(temp_device);
                 foreach (var temp_rc in TestDBData.RedRatGetRCNameList())
                 {
-                    Console.WriteLine(temp_rc);
+                    if (FormIsClosing == true)
+                    {
+                        return;
+                    }
                     TestDBData.RedRatSelectRCSignal(temp_rc, true);
                     if (TestDBData.Signal_Type_Supported == true)
                     {
-                        if (FormIsClosing == true)
-                        {
-                            return;
-                        }
+                        Console.WriteLine(temp_rc);
 
                         // Use UART to transmit RC signal
                         int rc_duration = TestBlueRat.SendOneRC(TestDBData) / 1000 + 1;
                         RedRatDBViewer_Delay(rc_duration);
 
+                        if (FormIsClosing == true)
+                        {
+                            return;
+                        }
                         // Update 2nd Signal checkbox
                         if ((TestDBData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (TestDBData.RC_ToggleData_Length_Value() > 0))
                         {
