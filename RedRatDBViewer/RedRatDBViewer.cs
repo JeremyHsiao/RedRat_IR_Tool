@@ -662,18 +662,18 @@ namespace RedRatDatabaseViewer
             }
         }
 
-        private void TEST_WalkThroughAllRCKeys()
+        private void TEST_WalkThroughAllRCKeys(BlueRat TestBlueRat, RedRatDBParser TestDBData)
         {
             // 1. Open RC database file to load it in advance
-            foreach (var temp_device in RedRatData.RedRatGetDBDeviceNameList())
+            foreach (var temp_device in TestDBData.RedRatGetDBDeviceNameList())
             {
                 Console.WriteLine("RC--" + temp_device);
-                RedRatData.RedRatSelectDevice(temp_device);
-                foreach (var temp_rc in RedRatData.RedRatGetRCNameList())
+                TestDBData.RedRatSelectDevice(temp_device);
+                foreach (var temp_rc in TestDBData.RedRatGetRCNameList())
                 {
                     Console.WriteLine(temp_rc);
-                    RedRatData.RedRatSelectRCSignal(temp_rc, true);
-                    if (RedRatData.Signal_Type_Supported == true)
+                    TestDBData.RedRatSelectRCSignal(temp_rc, true);
+                    if (TestDBData.Signal_Type_Supported == true)
                     {
                         if (FormIsClosing == true)
                         {
@@ -681,16 +681,15 @@ namespace RedRatDatabaseViewer
                         }
 
                         // Use UART to transmit RC signal
-                        int rc_duration = MyBlueRat.SendOneRC(RedRatData) / 1000 + 1;
+                        int rc_duration = TestBlueRat.SendOneRC(TestDBData) / 1000 + 1;
                         RedRatDBViewer_Delay(rc_duration);
 
                         // Update 2nd Signal checkbox
-                        if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
+                        if ((TestDBData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (TestDBData.RC_ToggleData_Length_Value() > 0))
                         {
-                            RedRatData.RedRatSelectRCSignal(temp_rc, false);
+                            TestDBData.RedRatSelectRCSignal(temp_rc, false);
                             // Use UART to transmit RC signal
-                            rc_duration = MyBlueRat.SendOneRC(RedRatData) / 1000 + 1;
-                            
+                            rc_duration = TestBlueRat.SendOneRC(RedRatData) / 1000 + 1;
                             RedRatDBViewer_Delay(rc_duration);
                         }
                     }
@@ -1103,7 +1102,7 @@ namespace RedRatDatabaseViewer
                         {
                             if (FormIsClosing == false)
                             {
-                                TEST_WalkThroughAllRCKeys();
+                                TEST_WalkThroughAllRCKeys(MyBlueRat,RedRatData);
                                 MyBlueRat.CheckConnection();
                                 Console.WriteLine("DONE - TEST_WalkThroughAllRCKeys");
                             }
@@ -1218,7 +1217,7 @@ namespace RedRatDatabaseViewer
 
                 if ((RedRatData != null) && (RedRatData.SignalDB != null))
                 {
-                   TEST_WalkThroughAllRCKeys();
+                    TEST_WalkThroughAllRCKeys(MyBlueRat, RedRatData);
                  }
 
                 //示範現在如何結束聯接UART並釋放 
