@@ -198,6 +198,7 @@ namespace RedRatDatabaseViewer
                         string temp_string1, temp_string2, temp_string3;
                         //temp_string1 = MyBlueRat.Get_SW_Version();
                         temp_string1 = MyBlueRat.FW_VER.ToString();
+                        temp_string1 = Convert.ToString(Convert.ToDouble(temp_string1) / 100.0);
                         //temp_string2 = MyBlueRat.Get_Command_Version();
                         //temp_string2 = MyBlueRat.CMD_VER.ToString();
                         temp_string2 = "";
