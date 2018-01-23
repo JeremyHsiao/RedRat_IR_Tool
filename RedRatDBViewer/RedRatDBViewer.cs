@@ -837,11 +837,11 @@ namespace RedRatDatabaseViewer
             foreach (var temp_device in TestRedRatData.RedRatGetDBDeviceNameList())
             {
                 TestRedRatData.RedRatSelectDevice(temp_device);
-                RedRatDBViewer_Delay(20);
+                //RedRatDBViewer_Delay(20);
                 foreach (var temp_rc in TestRedRatData.RedRatGetRCNameList())
                 {
                     TestRedRatData.RedRatSelectRCSignal(temp_rc, true);
-                    RedRatDBViewer_Delay(20);
+                    //RedRatDBViewer_Delay(20);
                     if (TestRedRatData.Signal_Type_Supported == true)
                     {
                         Console.WriteLine(temp_device + " - " + temp_rc);
@@ -852,17 +852,17 @@ namespace RedRatDatabaseViewer
                         }
 
                         // Use UART to transmit RC signal
-                        int rc_duration = MyBlueRat.SendOneRC(TestRedRatData, 1) / 1000 + 1;
-                        RedRatDBViewer_Delay(rc_duration+50);
+                        int rc_duration = TestBlueRat.SendOneRC(TestRedRatData) / 1000 + 1;
+                        RedRatDBViewer_Delay(rc_duration+20);
 
                         // Update 2nd Signal checkbox
                         if ((TestRedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (TestRedRatData.RC_ToggleData_Length_Value() > 0))
                         {
                             TestRedRatData.RedRatSelectRCSignal(temp_rc, false);
                             // Use UART to transmit RC signal
-                            rc_duration = TestBlueRat.SendOneRC(TestRedRatData, 1) / 1000 + 1;
+                            rc_duration = TestBlueRat.SendOneRC(TestRedRatData) / 1000 + 1;
 
-                            RedRatDBViewer_Delay(rc_duration+50);
+                            RedRatDBViewer_Delay(rc_duration+20);
                         }
                         //RedRatDBViewer_Delay(100);
                         break;
