@@ -15,7 +15,7 @@ using System.Timers;
 
 namespace RedRatDatabaseViewer
 {
-    public partial class RedRatDBViewer : Form
+    public partial class BlueRatSimepleTest : Form
     {
 
         private int Previous_Device = -1;
@@ -163,7 +163,135 @@ namespace RedRatDatabaseViewer
 
         private void btnFreshCOMNo_Click(object sender, System.EventArgs e)
         {
-            Serial_UpdatePortName();
+            TemoparilyDisbleAllRCFunctionButtons();
+            btnFreshCOMNo.Enabled = false;
+
+            //if (lstBlueRatComPort.Items.Count == 0)
+            lstBlueRatComPort.Items.Clear();
+            {
+                // Example -- 示範現在如何找出所有的小藍鼠
+                List<string> bluerat_com = BlueRat.FindAllBlueRat();
+                foreach (string com_port in bluerat_com)
+                {
+                    lstBlueRatComPort.Items.Add(com_port);
+                }
+            }
+            if ((lstBlueRatComPort.SelectedItem == null) && (lstBlueRatComPort.Items.Count > 0))    // Use first one if none-selected
+            {
+                lstBlueRatComPort.SelectedIndex = 0;
+            }
+
+            if (lstBlueRatComPort.SelectedItem != null)
+            {
+                // Go through all BlueRat
+                int ScanBlueRat_Count = 0;
+                rtbSignalData.Clear();
+                do
+                {
+                    string com_port_name = lstBlueRatComPort.SelectedItem.ToString();
+                    //示範現在如何聯接小藍鼠 -- 需傳入COM PORT名稱
+                    if (MyBlueRat.Connect(com_port_name))
+                    {
+                        // 在第一次/或長時間未使用之後,要開始使用BlueRat跑Schedule之前,建議執行這一行,確保BlueRat的起始狀態一致 -- 正常情況下不執行並不影響BlueRat運行,但為了找問題方便,還是請務必執行
+                        MyBlueRat.Force_Init_BlueRat();
+
+                        string temp_string1, temp_string2, temp_string3;
+                        //temp_string1 = MyBlueRat.Get_SW_Version();
+                        temp_string1 = MyBlueRat.FW_VER.ToString();
+                        //temp_string2 = MyBlueRat.Get_Command_Version();
+                        //temp_string2 = MyBlueRat.CMD_VER.ToString();
+                        temp_string2 = "";
+                        temp_string3 = MyBlueRat.BUILD_TIME;
+                        rtbSignalData.AppendText(com_port_name + " -- \nVer: " + temp_string1 + "\nBuild at: " + temp_string3 + "\n");
+                        rtbSignalData.ScrollToCaret();
+
+                        if ((RedRatData == null) || (RedRatData.SignalDB == null))
+                        {
+                            // Load RedRat database - 載入資料庫
+                            if (!(RedRatData.RedRatLoadSignalDB(@"..\..\..\..\RC DB\DeviceDB - 複製.xml")))
+                            {
+                                return;     // return if loading RC fails
+                            }
+                            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+                            RedRatDBViewer_Delay(16);
+                        }
+
+                        if ((RedRatData != null) && (RedRatData.SignalDB != null))
+                        {
+                            TEST_WalkThroughAllRCKeys();
+                        }
+
+                        MyBlueRat.Force_Init_BlueRat();
+
+                        //示範現在如何結束聯接UART並釋放 
+                        MyBlueRat.Disconnect();
+                    }
+                    if (lstBlueRatComPort.SelectedIndex == (lstBlueRatComPort.Items.Count - 1))
+                    {
+                        lstBlueRatComPort.SelectedIndex = 0;
+                    }
+                    else
+                    {
+                        lstBlueRatComPort.SelectedIndex++;
+                    }
+                }
+                while ((FormIsClosing == false) && (++ScanBlueRat_Count < lstBlueRatComPort.Items.Count));
+
+                // UI update after disconnecting BlueRat
+                UpdateToConnectButton();
+                EnableRefreshCOMButton();
+                UpdateRCFunctionButtonAfterDisconnection();
+            }
+            btnFreshCOMNo.Enabled = true;
+            UndoTemoparilyDisbleAllRCFunctionButtons();
+        }
+
+        private void btnLoadNewFirmware_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnFWUpgrade_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void AutoRunAllRC_Click(object sender, EventArgs e)
+        {
+            TemoparilyDisbleAllRCFunctionButtons();
+
+            string com_port_name = lstBlueRatComPort.SelectedItem.ToString();
+            //示範現在如何聯接小藍鼠 -- 需傳入COM PORT名稱
+            if (MyBlueRat.Connect(com_port_name))
+            {
+                // 在第一次/或長時間未使用之後,要開始使用BlueRat跑Schedule之前,建議執行這一行,確保BlueRat的起始狀態一致 -- 正常情況下不執行並不影響BlueRat運行,但為了找問題方便,還是請務必執行
+                MyBlueRat.Force_Init_BlueRat();
+
+                if ((RedRatData == null) || (RedRatData.SignalDB == null))
+                {
+                    // Load RedRat database - 載入資料庫
+                    if (!(RedRatData.RedRatLoadSignalDB(@"..\..\..\..\RC DB\DeviceDB - 複製.xml")))
+                    {
+                        return;     // return if loading RC fails
+                    }
+                    // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+                    RedRatDBViewer_Delay(16);
+                }
+
+                if ((RedRatData != null) && (RedRatData.SignalDB != null))
+                {
+                    TEST_WalkThroughAllRCKeys();
+                }
+
+                //示範現在如何結束聯接UART並釋放 
+                MyBlueRat.Disconnect();
+            }
+            UndoTemoparilyDisbleAllRCFunctionButtons();
         }
 
         //
@@ -557,7 +685,7 @@ namespace RedRatDatabaseViewer
             MyBlueRat.Disconnect();
         }
 
-        public RedRatDBViewer()
+        public BlueRatSimepleTest()
         {
             InitializeComponent();
         }
@@ -693,6 +821,7 @@ namespace RedRatDatabaseViewer
                             
                             RedRatDBViewer_Delay(rc_duration);
                         }
+                        break;
                     }
                 }
             }
@@ -1172,60 +1301,6 @@ namespace RedRatDatabaseViewer
             UndoTemoparilyDisbleAllRCFunctionButtons();
         }
 
-        private void btnLoadNewFirmware_Click(object sender, EventArgs e)
-        {
 
-        }
-
-        private void btnFWUpgrade_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void AutoRunAllRC_Click(object sender, EventArgs e)
-        {
-            TemoparilyDisbleAllRCFunctionButtons();
-
-            string com_port_name = lstBlueRatComPort.SelectedItem.ToString();
-            //示範現在如何聯接小藍鼠 -- 需傳入COM PORT名稱
-            if (MyBlueRat.Connect(com_port_name))
-            {
-                // 在第一次/或長時間未使用之後,要開始使用BlueRat跑Schedule之前,建議執行這一行,確保BlueRat的起始狀態一致 -- 正常情況下不執行並不影響BlueRat運行,但為了找問題方便,還是請務必執行
-                MyBlueRat.Force_Init_BlueRat();
-                string temp_string1, temp_string2, temp_string3;
-                //temp_string1 = MyBlueRat.Get_SW_Version();
-                temp_string1 = MyBlueRat.FW_VER.ToString();
-                //temp_string2 = MyBlueRat.Get_Command_Version();
-                temp_string2 = MyBlueRat.CMD_VER.ToString();
-                temp_string3 = MyBlueRat.BUILD_TIME;
-                Console.WriteLine("BlueRat at " + com_port_name + ":\n" + "SW: " + temp_string1 + "\n" + "CMD_API: " + temp_string2 + "\n" + "Build time: " + temp_string3 + "\n");
-
-                if ((RedRatData == null)||(RedRatData.SignalDB == null))
-                {
-                    // Load RedRat database - 載入資料庫
-                    if (!(RedRatData.RedRatLoadSignalDB(@"..\..\..\..\RC DB\DeviceDB - 複製.xml")))
-                    {
-                        return;     // return if loading RC fails
-                    }
-                    // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
-                    RedRatDBViewer_Delay(16);
-                }
-
-                if ((RedRatData != null) && (RedRatData.SignalDB != null))
-                {
-                   TEST_WalkThroughAllRCKeys();
-                 }
-
-                //示範現在如何結束聯接UART並釋放 
-                MyBlueRat.Disconnect();
-            }
-            UndoTemoparilyDisbleAllRCFunctionButtons();
-
-        }
     }
 }

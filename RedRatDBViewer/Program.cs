@@ -16,7 +16,7 @@ namespace RedRatDatabaseViewer
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new RedRatDBViewer());
+            Application.Run(new BlueRatSimepleTest());
         }
     }
 }
