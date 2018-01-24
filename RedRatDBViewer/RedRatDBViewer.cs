@@ -283,11 +283,11 @@ namespace RedRatDatabaseViewer
                 return;
             }
 
-            if ((Previous_Device < 0) || (Previous_Key < 0))
-            {
-                // return immediately when No Selected Device or no Selected Signal
-                return;
-            }
+            //if ((Previous_Device < 0) || (Previous_Key < 0))
+            //{
+            //    // return immediately when No Selected Device or no Selected Signal
+            //    return;
+            //}
 
             TemoparilyDisbleAllRCFunctionButtons();
 
