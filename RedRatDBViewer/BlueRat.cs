@@ -1221,12 +1221,12 @@ namespace RedRatDatabaseViewer
                 UInt16 period;
                 if (RC_ModutationFreq > max_freq)
                 {
-                    Console.WriteLine("Duty Cycle is out of range (> " + max_freq.ToString() + " Hz), using " + max_freq.ToString() + " instead.");
+                    Console.WriteLine("Carrier Frequency is out of range (> " + max_freq.ToString() + " Hz), using " + max_freq.ToString() + " instead.");
                     period = Convert.ToUInt16(8000000 / max_freq);
                 }
                 else if (RC_ModutationFreq >= min_freq)
                 {
-                    period = Convert.ToUInt16(8000000 / RC_ModutationFreq);
+                    period = Convert.ToUInt16(Math.Round(8000000 / RC_ModutationFreq));
                 }
                 else if (RC_ModutationFreq == 0)
                 {
@@ -1234,8 +1234,8 @@ namespace RedRatDatabaseViewer
                 }
                 else
                 {
-                    Console.WriteLine("Duty Cycle is out of range (< " + min_freq.ToString() + " Hz), using " + default_freq.ToString() + " instead.");
-                    period = Convert.ToUInt16(8000000 / default_freq);
+                    Console.WriteLine("Carrier Frequency is out of range (< " + min_freq.ToString() + " Hz), using " + default_freq.ToString() + " instead.");
+                    period = Convert.ToUInt16(Math.Round(8000000 / default_freq));
                 }
                 temp_byte = Convert.ToByte(period / 256);
                 data_to_sent.Add(temp_byte);
