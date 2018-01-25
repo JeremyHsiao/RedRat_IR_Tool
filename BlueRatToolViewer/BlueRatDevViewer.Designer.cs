@@ -323,7 +323,7 @@
             this.lbModulationType.Name = "lbModulationType";
             this.lbModulationType.Size = new System.Drawing.Size(285, 26);
             this.lbModulationType.TabIndex = 14;
-            this.lbModulationType.Text = "RedRat RC Modulation Type";
+            this.lbModulationType.Text = "RC Modulation Type";
             this.lbModulationType.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // btnFreshCOMNo
