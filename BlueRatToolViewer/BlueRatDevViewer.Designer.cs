@@ -17,6 +17,7 @@
             {
                 components.Dispose();
             }
+            MyBlueRat.Dispose();
             base.Dispose(disposing);
         }
 

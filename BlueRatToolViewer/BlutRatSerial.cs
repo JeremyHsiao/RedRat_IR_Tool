@@ -8,7 +8,7 @@ using Microsoft.Win32.SafeHandles;
 
 namespace BlueRatViewer
 {
-    class BlueRatSerial
+    class BlueRatSerial : IDisposable
     {
         // static member/function to shared aross all BlueRatSerial
         static private Dictionary<string, Object> BlueRatSerialDictionary = new Dictionary<string, Object>();
@@ -30,6 +30,23 @@ namespace BlueRatViewer
                 StopBits = Serial_StopBits
             };
         }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // dispose managed resources
+                _serialPort.Close();
+            }
+            // free native resources
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         public BlueRatSerial(string com_port) { _serialPort = new SerialPort(com_port, Serial_BaudRate, Serial_Parity, Serial_DataBits, Serial_StopBits); }
         public string GetPortName() { return _serialPort.PortName; }
         public void SetBlueRatVersion(UInt32 fw_ver, UInt32 cmd_ver) { BlueRatFWVersion = fw_ver; BlueRatCMDVersion = cmd_ver; }
