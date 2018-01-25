@@ -666,6 +666,7 @@ namespace BlueRatViewer
                 catch (Exception ex)
                 {
                     rtbDecodeRCSignal.Text = "RC data file data is corrupted!";
+                    Console.WriteLine("btnGetRCFile_Click - " + ex.ToString());
                     UpdateRCDataOnForm();
                     Previous_Device = -1;
                     Previous_Key = -1;
@@ -830,9 +831,8 @@ namespace BlueRatViewer
                 while ((GetTimeOutIndicator() == false) && (FormIsClosing == false))
                 {
                     bool cmd_ok_status;
-                    int temp_repeat_cnt;
 
-                    cmd_ok_status = my_blue_rat.Get_Remaining_Repeat_Count(out temp_repeat_cnt);
+                    cmd_ok_status = my_blue_rat.Get_Remaining_Repeat_Count(out int temp_repeat_cnt);
                     if (cmd_ok_status)
                     {
                         Console.WriteLine(temp_repeat_cnt.ToString());
@@ -845,8 +845,7 @@ namespace BlueRatViewer
                     BlueRatDevViewer_Delay(360);      // better >=360
 
                     if (FormIsClosing == true) break;
-                    bool temp_tx_status;
-                    cmd_ok_status = my_blue_rat.Get_Current_Tx_Status(out temp_tx_status);
+                    cmd_ok_status = my_blue_rat.Get_Current_Tx_Status(out bool temp_tx_status);
                     if (cmd_ok_status)
                     {
                         Console.WriteLine(temp_tx_status.ToString());

@@ -232,7 +232,6 @@ namespace BlueRatViewer
             bool bRet = false;
             
             int default_timeout_time = 30;
-            string in_str;
             ENUM_RETRY_RESULT result_status;
 
             if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
@@ -241,7 +240,7 @@ namespace BlueRatViewer
             }
 
             repeat_cnt = 0;
-            result_status = SendCmd_WaitReadLine((Prepare_Get_RC_Repeat_Count()), out in_str, default_timeout_time);
+            result_status = SendCmd_WaitReadLine((Prepare_Get_RC_Repeat_Count()), out string in_str, default_timeout_time);
             if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
                 if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
@@ -285,7 +284,6 @@ namespace BlueRatViewer
         {
             bool bRet = false;
             int default_timeout_time = 16;
-            string in_str;
             ENUM_RETRY_RESULT result_status;
 
             if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
@@ -294,7 +292,7 @@ namespace BlueRatViewer
             }
 
             return_tx_status = false;
-            result_status = SendCmd_WaitReadLine((Prepare_Get_RC_Current_Running_Status()), out in_str, default_timeout_time);
+            result_status = SendCmd_WaitReadLine((Prepare_Get_RC_Current_Running_Status()), out string in_str, default_timeout_time);
             if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
                 if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
@@ -341,11 +339,11 @@ namespace BlueRatViewer
         {
             bool bRet = false;
             const int default_timeout_time = 16;
-            string value_str = "0.01", in_str;
+            string value_str = "0.01";
             ENUM_RETRY_RESULT result_status;
 
             result_string = "0";
-            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_SW_VER)), out in_str, default_timeout_time);
+            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_SW_VER)), out string in_str, default_timeout_time);
             if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
                 if (in_str.Contains(_SW_VER_STRING_VER_01))         // Check latest version first -- currently 2 version
@@ -382,7 +380,6 @@ namespace BlueRatViewer
         {
             bool bRet = false;
             const int default_timeout_time = 40;
-            string in_str;
             ENUM_RETRY_RESULT result_status;
 
             // Workaround before v1.02
@@ -402,7 +399,7 @@ namespace BlueRatViewer
             else
             {
                 result_string = "0";
-                result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_BUILD_TIME)), out in_str, default_timeout_time);
+                result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_BUILD_TIME)), out string in_str, default_timeout_time);
                 if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
                 {
                     if (in_str.Contains(_CMD_BUILD_TIME_RETURN_HEADER_))
@@ -428,11 +425,10 @@ namespace BlueRatViewer
         {
             bool bRet = false;
             const int default_timeout_time = 30;
-            string in_str;
             ENUM_RETRY_RESULT result_status;
 
             result_string = "0";
-            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_CMD_VERSION)), out in_str, default_timeout_time);
+            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_CMD_VERSION)), out string in_str, default_timeout_time);
             if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
 
@@ -475,11 +471,10 @@ namespace BlueRatViewer
         {
             bool bRet = false;
             const int default_timeout_time = 16;
-            string in_str;
             ENUM_RETRY_RESULT result_status;
 
             GPIO_Read_Data = 0xffffffff;
-            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)), out in_str, default_timeout_time);
+            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)), out string in_str, default_timeout_time);
             if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
                 if (in_str.Contains(_CMD_GPIO_INPUT_RETURN_HEADER_))
@@ -521,11 +516,10 @@ namespace BlueRatViewer
         {
             bool bRet = false;
             const int default_timeout_time = 16;
-            string in_str;
             ENUM_RETRY_RESULT result_status;
 
             Sensor_Read_Data = 0xffffffff;
-            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_SENSOR_VALUE)), out in_str, default_timeout_time);
+            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_SENSOR_VALUE)), out string in_str, default_timeout_time);
             if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
                 if (in_str.Contains(_CMD_SENSOR_INPUT_RETURN_HEADER_))
@@ -606,8 +600,7 @@ namespace BlueRatViewer
             }
 
             List<byte> data_to_sent = new List<byte>();
-            int total_us;
-            data_to_sent = Prepare_RC_Data_CMD(RedRatData, default_repeat_cnt, out total_us);  // prepare RC-data packet for BlueRat
+            data_to_sent = Prepare_RC_Data_CMD(RedRatData, default_repeat_cnt, out int total_us);  // prepare RC-data packet for BlueRat
             MyBlueRatSerial.BlueRatSendToSerial(data_to_sent.ToArray());    // Send to BlueRat
 
             return total_us; // return total_rc_time_duration
@@ -928,7 +921,7 @@ namespace BlueRatViewer
         //
         static private List<byte> Convert_data_to_Byte(byte input_data)
         {
-            List<byte> data_to_sent = new List<byte>();
+            List<byte> data_to_sent = new List<byte> { };
             data_to_sent.Add(input_data);
             return data_to_sent;
         }
@@ -1503,8 +1496,7 @@ namespace BlueRatViewer
                     return;
                 }
 
-                UInt32 sensor_input_value;
-                Get_Sensor_Input(out sensor_input_value);
+                Get_Sensor_Input(out UInt32 sensor_input_value);
                 byte Sensor_Read_Data = Convert.ToByte(sensor_input_value & 0xff);
                 Console.WriteLine("Sendor_IN:" + Sensor_Read_Data.ToString());
                 HomeMade_Delay(delay_time);
