@@ -384,17 +384,32 @@ namespace BlueRatViewer
                 string devicename = listboxAVDeviceList.SelectedItem.ToString();
                 if (RedRatData.RedRatSelectDevice(devicename))
                 {
-                    listboxRCKey.Items.Clear();
-                    listboxRCKey.Items.AddRange(RedRatData.RedRatGetRCNameList().ToArray());
-                    listboxRCKey.SelectedIndex = 0;
-                    RedRatData.RedRatSelectRCSignal(0, RC_Select1stSignalForDoubleOrToggleSignal);
-                    Previous_Key = -1;
-                    this.listboxRCKey_SelectedIndexChanged(sender, ev);
+                    listboxAVDeviceList.Enabled = false;
                     Previous_Device = Current_Device;
+                    // Clear RC window
+                    ClearRCWindow();
+                    rtbSignalData.Text = "";
+
+                    // Update RC Window and set 0 as selected
+                    UpdateRCWindowAfterDeviceSelected();
+                    Previous_Key = -1;
+                    listboxRCKey.SelectedIndex = 0;
+                    RedRatData.RedRatSelectRCSignal(0);
+
+                    //
+                    // Update Form Display Data according to content of RedRatData.SelectedSignal
+                    //
+                    UpdateRCDataOnForm();
+                    listboxAVDeviceList.Enabled = true;
+                    listboxRCKey.Enabled = true;
+
+                    // Wait for data to refresh
+                    BlueRatDevViewer_Delay(16);
+                    listboxAVDeviceList.Enabled = true;
                 }
                 else
                 {
-                    Console.WriteLine("Select Device Error: " + devicename);
+                    Console.WriteLine("SelectDeviceError: " + devicename);
                 }
             }
         }
