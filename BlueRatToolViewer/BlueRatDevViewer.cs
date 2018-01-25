@@ -715,7 +715,7 @@ namespace BlueRatViewer
             }
         }
 
-        private void TEST_StressSendingAlreadySelectedRC()
+        private void TEST_StressSendingAlreadySelectedRC(BlueRat my_blue_rat)
         {
             // Testing: send "stress_cnt" times Single RC
             // 
@@ -734,7 +734,7 @@ namespace BlueRatViewer
             while (stress_cnt-- > 0)
             {
                 // Use UART to transmit RC signal
-                int rc_duration = MyBlueRat.SendOneRC(RedRatData) / 1000 + 1;
+                int rc_duration = my_blue_rat.SendOneRC(RedRatData) / 1000 + 1;
                 BlueRatDevViewer_Delay(rc_duration);
 
                 // Update 2nd Signal checkbox
@@ -751,7 +751,7 @@ namespace BlueRatViewer
             }
         }
 
-        private void TEST_StressSendingRepeatCount()
+        private void TEST_StressSendingRepeatCount(BlueRat my_blue_rat)
         {
             // Testing: send "repeat_cnt" times Single RC
             // Precondition
@@ -774,12 +774,12 @@ namespace BlueRatViewer
                 int rc_duration;
                 if (repeat_cnt >= repeat_count_threshold)
                 {
-                    rc_duration = MyBlueRat.SendOneRC(RedRatData, repeat_count_threshold - 1);
+                    rc_duration = my_blue_rat.SendOneRC(RedRatData, repeat_count_threshold - 1);
                     repeat_cnt -= repeat_count_threshold;
                 }
                 else
                 {
-                    rc_duration = MyBlueRat.SendOneRC(RedRatData, Convert.ToByte(repeat_cnt));
+                    rc_duration = my_blue_rat.SendOneRC(RedRatData, Convert.ToByte(repeat_cnt));
                     repeat_cnt = 0;
                 }
 
@@ -788,7 +788,7 @@ namespace BlueRatViewer
             }
         }
 
-        private void TEST_Return_Repeat_Count_and_Tx_Status()
+        private void TEST_Return_Repeat_Count_and_Tx_Status(BlueRat my_blue_rat)
         {
             int repeat = 300; // max value is 4,294,967,295 (0xffffffff)
             const byte recommended_first_repeat_cnt_value = 100;    // must be <= 0xff
@@ -811,11 +811,11 @@ namespace BlueRatViewer
             if (RedRatData.Signal_Type_Supported == true)
             {
                 // Use UART to transmit RC signal -- repeat (recommended_first_repeat_cnt_value-1) times == total transmit (recommended_first_repeat_cnt_value) times
-                int rc_duration = MyBlueRat.SendOneRC(RedRatData, recommended_first_repeat_cnt_value - 1) / 1000 + 1;
+                int rc_duration = my_blue_rat.SendOneRC(RedRatData, recommended_first_repeat_cnt_value - 1) / 1000 + 1;
                 // Delay to wait for RC Tx finished
                 BlueRatDevViewer_Delay(1);
                 // 將剩下的Repeat_Count輸出
-                MyBlueRat.Add_Repeat_Count(Convert.ToUInt32(repeat - recommended_first_repeat_cnt_value));
+                my_blue_rat.Add_Repeat_Count(Convert.ToUInt32(repeat - recommended_first_repeat_cnt_value));
                 rc_duration = ((rc_duration * repeat) / Convert.ToInt32(recommended_first_repeat_cnt_value)) - 1;
 
                 //BlueRatDevViewer_Delay(rc_duration-1);
@@ -832,7 +832,7 @@ namespace BlueRatViewer
                     bool cmd_ok_status;
                     int temp_repeat_cnt;
 
-                    cmd_ok_status = MyBlueRat.Get_Remaining_Repeat_Count(out temp_repeat_cnt);
+                    cmd_ok_status = my_blue_rat.Get_Remaining_Repeat_Count(out temp_repeat_cnt);
                     if (cmd_ok_status)
                     {
                         Console.WriteLine(temp_repeat_cnt.ToString());
@@ -846,7 +846,7 @@ namespace BlueRatViewer
 
                     if (FormIsClosing == true) break;
                     bool temp_tx_status;
-                    cmd_ok_status = MyBlueRat.Get_Current_Tx_Status(out temp_tx_status);
+                    cmd_ok_status = my_blue_rat.Get_Current_Tx_Status(out temp_tx_status);
                     if (cmd_ok_status)
                     {
                         Console.WriteLine(temp_tx_status.ToString());
@@ -869,7 +869,7 @@ namespace BlueRatViewer
         }
 
         // 發射一個信號的範例 - 在此不repeat,所以可以忽略傳入參數
-        private void Example_to_Send_RC_without_Repeat_Count()
+        private void Example_to_Send_RC_without_Repeat_Count(BlueRat my_blue_rat)
         {
             // Load RedRat database - 載入資料庫
             if (!(RedRatData.RedRatLoadSignalDB(@".\DeviceDB.xml")))
@@ -891,7 +891,7 @@ namespace BlueRatViewer
             if (RedRatData.Signal_Type_Supported == true)
             {
                 // Use UART to transmit RC signal -- repeat (SendOneRC_default_cnt) times == total transmit (SendOneRC_default_cnt+1) times
-                int rc_duration = MyBlueRat.SendOneRC(RedRatData) / 1000 + 1;
+                int rc_duration = my_blue_rat.SendOneRC(RedRatData) / 1000 + 1;
                 // Delay to wait for RC Tx finished
                 BlueRatDevViewer_Delay(rc_duration);
 
@@ -900,7 +900,7 @@ namespace BlueRatViewer
                 {
                     // Use UART to transmit RC signal -- repeat 10 times
                     RedRatData.RedRatSelectRCSignal("1", false);
-                    rc_duration = MyBlueRat.SendOneRC(RedRatData) / 1000 + 1;
+                    rc_duration = my_blue_rat.SendOneRC(RedRatData) / 1000 + 1;
                     // Delay to wait for RC Tx finished
                     BlueRatDevViewer_Delay(rc_duration);
                 }
@@ -908,7 +908,7 @@ namespace BlueRatViewer
         }
 
         // 如果一個RC要repeat不超過255次,可以使用一個byte來傳入repeat次數,就能夠直接傳入repeat次數
-        private void Example_to_Send_RC_with_Repeat_Count() // repeat count <= 0xff
+        private void Example_to_Send_RC_with_Repeat_Count(BlueRat my_blue_rat) // repeat count <= 0xff
         {
             const byte SendOneRC_default_cnt = 2;
             // Load RedRat database - 載入資料庫
@@ -931,7 +931,7 @@ namespace BlueRatViewer
             if (RedRatData.Signal_Type_Supported == true)
             {
                 // Use UART to transmit RC signal -- repeat (SendOneRC_default_cnt) times == total transmit (SendOneRC_default_cnt+1) times
-                int rc_duration = MyBlueRat.SendOneRC(RedRatData, SendOneRC_default_cnt) / 1000 + 1;
+                int rc_duration = my_blue_rat.SendOneRC(RedRatData, SendOneRC_default_cnt) / 1000 + 1;
                 // Delay to wait for RC Tx finished
                 BlueRatDevViewer_Delay(rc_duration);
 
@@ -942,7 +942,7 @@ namespace BlueRatViewer
                 {
                     // Use UART to transmit RC signal -- repeat 10 times
                     RedRatData.RedRatSelectRCSignal("1", false);
-                    rc_duration = MyBlueRat.SendOneRC(RedRatData, SendOneRC_default_cnt) / 1000 + 1;
+                    rc_duration = my_blue_rat.SendOneRC(RedRatData, SendOneRC_default_cnt) / 1000 + 1;
                     // Delay to wait for RC Tx finished
                     BlueRatDevViewer_Delay(rc_duration);
                 }
@@ -953,7 +953,7 @@ namespace BlueRatViewer
         // 就要在後面使用另一個指令,來追加要repeat的次數,
         // 該指令的傳入參數為4-byte (0~4,294,967,295 (0xffffffff))
         bool MyApplicationNeedToStopNow = false;
-        private void Example_to_Send_RC_with_Large_Repeat_Count()
+        private void Example_to_Send_RC_with_Large_Repeat_Count(BlueRat my_blue_rat)
         {
             int repeat = 300; // max value is 4,294,967,295 (0xffffffff)
             const byte recommended_first_repeat_cnt_value = 100;    // must be <= 0xff
@@ -977,11 +977,11 @@ namespace BlueRatViewer
             if (RedRatData.Signal_Type_Supported == true)
             {
                 // Use UART to transmit RC signal -- repeat (recommended_first_repeat_cnt_value-1) times == total transmit (recommended_first_repeat_cnt_value) times
-                int rc_duration = MyBlueRat.SendOneRC(RedRatData, recommended_first_repeat_cnt_value - 1) / 1000 + 1;
+                int rc_duration = my_blue_rat.SendOneRC(RedRatData, recommended_first_repeat_cnt_value - 1) / 1000 + 1;
                 // Delay to wait for RC Tx finished
                 BlueRatDevViewer_Delay(1);
                 // 將剩下的Repeat_Count輸出
-                MyBlueRat.Add_Repeat_Count(Convert.ToUInt32(repeat - recommended_first_repeat_cnt_value));
+                my_blue_rat.Add_Repeat_Count(Convert.ToUInt32(repeat - recommended_first_repeat_cnt_value));
                 rc_duration = ((rc_duration * repeat) / Convert.ToInt32(recommended_first_repeat_cnt_value)) - 1;
 
                 //BlueRatDevViewer_Delay(rc_duration-1);
@@ -1014,24 +1014,24 @@ namespace BlueRatViewer
                 {
                     // Use UART to transmit RC signal -- repeat 10 times
                     RedRatData.RedRatSelectRCSignal("1", false);
-                    rc_duration = MyBlueRat.SendOneRC(RedRatData, recommended_first_repeat_cnt_value - 1) / 1000 + 1;
+                    rc_duration = my_blue_rat.SendOneRC(RedRatData, recommended_first_repeat_cnt_value - 1) / 1000 + 1;
                     // Delay to wait for RC Tx finished
                     BlueRatDevViewer_Delay(1);
-                    MyBlueRat.Add_Repeat_Count(Convert.ToUInt32(repeat - recommended_first_repeat_cnt_value));
+                    my_blue_rat.Add_Repeat_Count(Convert.ToUInt32(repeat - recommended_first_repeat_cnt_value));
                     rc_duration = ((rc_duration * repeat) / Convert.ToInt32(recommended_first_repeat_cnt_value));
                     BlueRatDevViewer_Delay(rc_duration - 1);
                 }
             }
         }
 
-        private void Test_GPIO_Input()
+        private void Test_GPIO_Input(BlueRat my_blue_rat)
         {
             UInt32 GPIO_input_value, retry_cnt;
             bool bRet = false;
             retry_cnt = 3;
             do
             {
-                bRet = MyBlueRat.Get_GPIO_Input(out GPIO_input_value);
+                bRet = my_blue_rat.Get_GPIO_Input(out GPIO_input_value);
             }
             while ((bRet == false) && (--retry_cnt > 0) && (FormIsClosing == false));
             if (bRet)
@@ -1042,7 +1042,6 @@ namespace BlueRatViewer
             {
                 Console.WriteLine("GPIO_input fail after retry");
             }
-
         }
 
         private void btnRepeatRC_Click(object sender, EventArgs e)
@@ -1084,10 +1083,10 @@ namespace BlueRatViewer
                         Console.WriteLine("BlueRat at " + com_port_name + ":\n" + "SW: " + temp_string1 + "\n" + "CMD_API: " + temp_string2 + "\n" + "Build time: " + temp_string3 + "\n");
 
                         if (FormIsClosing == true) break;
-                        Test_GPIO_Input();
+                        Test_GPIO_Input(MyBlueRat);
 
                         if (FormIsClosing == true) break;
-                        TEST_Return_Repeat_Count_and_Tx_Status();
+                        TEST_Return_Repeat_Count_and_Tx_Status(MyBlueRat);
 
                         if (FormIsClosing == true) break;
                         MyBlueRat.Stop_Current_Tx();
@@ -1100,20 +1099,20 @@ namespace BlueRatViewer
 
                         if (FormIsClosing == false)
                         {
-                            Example_to_Send_RC_without_Repeat_Count();
+                            Example_to_Send_RC_without_Repeat_Count(MyBlueRat);
                             MyBlueRat.CheckConnection();
                             Console.WriteLine("DONE - Example_to_Send_RC_without_Repeat_Count");
                         }
 
                         if (FormIsClosing == false)
                         {
-                            Example_to_Send_RC_with_Repeat_Count();
+                            Example_to_Send_RC_with_Repeat_Count(MyBlueRat);
                             MyBlueRat.CheckConnection();
                             Console.WriteLine("DONE - Example_to_Send_RC_with_Repeat_Count");
                         }
                         if (FormIsClosing == false)
                         {
-                            Example_to_Send_RC_with_Large_Repeat_Count();
+                            Example_to_Send_RC_with_Large_Repeat_Count(MyBlueRat);
                             MyBlueRat.CheckConnection();
                             Console.WriteLine("DONE - Example_to_Send_RC_with_Large_Repeat_Count");
                         }
@@ -1128,7 +1127,7 @@ namespace BlueRatViewer
                             }
                             if (FormIsClosing == false)
                             {
-                                TEST_StressSendingRepeatCount();
+                                TEST_StressSendingRepeatCount(MyBlueRat);
                                 MyBlueRat.CheckConnection();
                                 Console.WriteLine("DONE - TEST_WalkThroughAllRCKeys");
                             }
