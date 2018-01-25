@@ -41,7 +41,7 @@ namespace BlueRatViewer
         }
     }
 
-    class BlueRat
+    class BlueRat : IDisposable
     {
         // Static private variable
         private static int BlueRatInstanceNumber = 0;
@@ -69,6 +69,22 @@ namespace BlueRatViewer
         public BlueRat() { MyBlueRatSerial = new BlueRatSerial(); BlueRatInstanceNumber++; }
         //public BlueRat(string com_port) { Connect(com_port); BlueRatInstanceNumber++; }
         ~BlueRat() { Disconnect(); MyBlueRatSerial = null; BlueRatInstanceNumber--; }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // dispose managed resources
+                MyBlueRatSerial.Dispose();
+            }
+            // free native resources
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         public bool Connect(string com_name)
         {
