@@ -715,7 +715,7 @@ namespace BlueRatViewer
             }
         }
 
-        private void TEST_StressSendingAlreadySelectedRC(BlueRat my_blue_rat)
+        private void TEST_StressSendingAlreadySelectedRC(BlueRat my_blue_rat, RedRatDBParser redrat_rc_db)
         {
             // Testing: send "stress_cnt" times Single RC
             // 
@@ -723,27 +723,27 @@ namespace BlueRatViewer
             //   1. Load RC Database by RedRatLoadSignalDB()
             //   2. Select Device by RedRatSelectDevice() using device_name or index_no
             //   3. Select RC Signal by RedRatSelectRCSignal() using rc_name or index_no --> specify false at 2nd input parameter if need to Tx 2nd signal of Double signal / Toggle Bits Signal
-            Contract.Requires(RedRatData != null);
-            Contract.Requires(RedRatData.SignalDB != null);
-            Contract.Requires(RedRatData.SelectedDevice != null);
-            Contract.Requires(RedRatData.SelectedSignal != null);
-            Contract.Requires(RedRatData.Signal_Type_Supported == true);
+            Contract.Requires(redrat_rc_db != null);
+            Contract.Requires(redrat_rc_db.SignalDB != null);
+            Contract.Requires(redrat_rc_db.SelectedDevice != null);
+            Contract.Requires(redrat_rc_db.SelectedSignal != null);
+            Contract.Requires(redrat_rc_db.Signal_Type_Supported == true);
 
             byte stress_cnt = 250;
 
             while (stress_cnt-- > 0)
             {
                 // Use UART to transmit RC signal
-                int rc_duration = my_blue_rat.SendOneRC(RedRatData) / 1000 + 1;
+                int rc_duration = my_blue_rat.SendOneRC(redrat_rc_db) / 1000 + 1;
                 BlueRatDevViewer_Delay(rc_duration);
 
                 // Update 2nd Signal checkbox
-                if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
+                if ((redrat_rc_db.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (redrat_rc_db.RC_ToggleData_Length_Value() > 0))
                 {
                     // Switch to the other signal in display
                     chkSelect2ndSignal.Enabled = false;
                     RC_Select1stSignalForDoubleOrToggleSignal = !RC_Select1stSignalForDoubleOrToggleSignal;
-                    //RedRatData.RedRatSelectRCSignal(listboxRCKey.SelectedIndex, RC_Select1stSignalForDoubleOrToggleSignal);
+                    //redrat_rc_db.RedRatSelectRCSignal(listboxRCKey.SelectedIndex, RC_Select1stSignalForDoubleOrToggleSignal);
                     ThisTimeDoNotUpdateMessageBox = true;
                     chkSelect2ndSignal.Checked = !RC_Select1stSignalForDoubleOrToggleSignal;
                     chkSelect2ndSignal.Enabled = true;
@@ -788,30 +788,30 @@ namespace BlueRatViewer
             }
         }
 
-        private void TEST_Return_Repeat_Count_and_Tx_Status(BlueRat my_blue_rat)
+        private void TEST_Return_Repeat_Count_and_Tx_Status(BlueRat my_blue_rat, RedRatDBParser redrat_rc_db)
         {
             int repeat = 300; // max value is 4,294,967,295 (0xffffffff)
             const byte recommended_first_repeat_cnt_value = 100;    // must be <= 0xff
             // Load RedRat database - 載入資料庫
-            if (!(RedRatData.RedRatLoadSignalDB(@".\DeviceDB.xml")))
+            if (!(redrat_rc_db.RedRatLoadSignalDB(@".\DeviceDB.xml")))
             {
                 return;     // return if loading RC fails
             }
-            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            // Let main program has time to refresh redrat_rc_db data content -- can be skiped if this code is not running in UI event call-back function
             BlueRatDevViewer_Delay(16);
             // Select Device  - 選擇RC Device
-            RedRatData.RedRatSelectDevice("HP-MCE");
-            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            redrat_rc_db.RedRatSelectDevice("HP-MCE");
+            // Let main program has time to refresh redrat_rc_db data content -- can be skiped if this code is not running in UI event call-back function
             //BlueRatDevViewer_Delay(16);
             // Select RC - 選擇RC (使用名稱或Index No)
-            RedRatData.RedRatSelectRCSignal("1", true);
-            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            redrat_rc_db.RedRatSelectRCSignal("1", true);
+            // Let main program has time to refresh redrat_rc_db data content -- can be skiped if this code is not running in UI event call-back function
             //BlueRatDevViewer_Delay(16);
             // Check if this RC code is supported -- 如果此訊號資料OK可以發射,就發射
-            if (RedRatData.Signal_Type_Supported == true)
+            if (redrat_rc_db.Signal_Type_Supported == true)
             {
                 // Use UART to transmit RC signal -- repeat (recommended_first_repeat_cnt_value-1) times == total transmit (recommended_first_repeat_cnt_value) times
-                int rc_duration = my_blue_rat.SendOneRC(RedRatData, recommended_first_repeat_cnt_value - 1) / 1000 + 1;
+                int rc_duration = my_blue_rat.SendOneRC(redrat_rc_db, recommended_first_repeat_cnt_value - 1) / 1000 + 1;
                 // Delay to wait for RC Tx finished
                 BlueRatDevViewer_Delay(1);
                 // 將剩下的Repeat_Count輸出
@@ -869,38 +869,38 @@ namespace BlueRatViewer
         }
 
         // 發射一個信號的範例 - 在此不repeat,所以可以忽略傳入參數
-        private void Example_to_Send_RC_without_Repeat_Count(BlueRat my_blue_rat)
+        private void Example_to_Send_RC_without_Repeat_Count(BlueRat my_blue_rat, RedRatDBParser redrat_rc_db)
         {
             // Load RedRat database - 載入資料庫
-            if (!(RedRatData.RedRatLoadSignalDB(@".\DeviceDB.xml")))
+            if (!(redrat_rc_db.RedRatLoadSignalDB(@".\DeviceDB.xml")))
             {
                 return;     // return if loading RC fails
             }
-            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            // Let main program has time to refresh redrat_rc_db data content -- can be skiped if this code is not running in UI event call-back function
             BlueRatDevViewer_Delay(16);
             //Application.DoEvents();
             // Select Device  - 選擇RC Device
-            RedRatData.RedRatSelectDevice("HP-MCE");
-            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            redrat_rc_db.RedRatSelectDevice("HP-MCE");
+            // Let main program has time to refresh redrat_rc_db data content -- can be skiped if this code is not running in UI event call-back function
             //BlueRatDevViewer_Delay(16);
             // Select RC - 選擇RC (使用名稱或Index No)
-            RedRatData.RedRatSelectRCSignal("1", true);
-            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            redrat_rc_db.RedRatSelectRCSignal("1", true);
+            // Let main program has time to refresh redrat_rc_db data content -- can be skiped if this code is not running in UI event call-back function
             //BlueRatDevViewer_Delay(16); 
             // Check if this RC code is supported -- 如果此訊號資料OK可以發射,就發射
-            if (RedRatData.Signal_Type_Supported == true)
+            if (redrat_rc_db.Signal_Type_Supported == true)
             {
                 // Use UART to transmit RC signal -- repeat (SendOneRC_default_cnt) times == total transmit (SendOneRC_default_cnt+1) times
-                int rc_duration = my_blue_rat.SendOneRC(RedRatData) / 1000 + 1;
+                int rc_duration = my_blue_rat.SendOneRC(redrat_rc_db) / 1000 + 1;
                 // Delay to wait for RC Tx finished
                 BlueRatDevViewer_Delay(rc_duration);
 
                 // If you need to send double signal or toggle bit signal at next IR transmission -- 這裡是示範如何發射Double Signal或Toggle Signal的第二個信號
-                if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
+                if ((redrat_rc_db.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (redrat_rc_db.RC_ToggleData_Length_Value() > 0))
                 {
                     // Use UART to transmit RC signal -- repeat 10 times
-                    RedRatData.RedRatSelectRCSignal("1", false);
-                    rc_duration = my_blue_rat.SendOneRC(RedRatData) / 1000 + 1;
+                    redrat_rc_db.RedRatSelectRCSignal("1", false);
+                    rc_duration = my_blue_rat.SendOneRC(redrat_rc_db) / 1000 + 1;
                     // Delay to wait for RC Tx finished
                     BlueRatDevViewer_Delay(rc_duration);
                 }
@@ -908,41 +908,41 @@ namespace BlueRatViewer
         }
 
         // 如果一個RC要repeat不超過255次,可以使用一個byte來傳入repeat次數,就能夠直接傳入repeat次數
-        private void Example_to_Send_RC_with_Repeat_Count(BlueRat my_blue_rat) // repeat count <= 0xff
+        private void Example_to_Send_RC_with_Repeat_Count(BlueRat my_blue_rat, RedRatDBParser redrat_rc_db) // repeat count <= 0xff
         {
             const byte SendOneRC_default_cnt = 2;
             // Load RedRat database - 載入資料庫
-            if (!(RedRatData.RedRatLoadSignalDB(@".\DeviceDB.xml")))
+            if (!(redrat_rc_db.RedRatLoadSignalDB(@".\DeviceDB.xml")))
             {
                 return;     // return if loading RC fails
             }
-            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            // Let main program has time to refresh redrat_rc_db data content -- can be skiped if this code is not running in UI event call-back function
             BlueRatDevViewer_Delay(16);
             //Application.DoEvents();
             // Select Device  - 選擇RC Device
-            RedRatData.RedRatSelectDevice("HP-MCE");
-            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            redrat_rc_db.RedRatSelectDevice("HP-MCE");
+            // Let main program has time to refresh redrat_rc_db data content -- can be skiped if this code is not running in UI event call-back function
             //BlueRatDevViewer_Delay(16);
             // Select RC - 選擇RC (使用名稱或Index No)
-            RedRatData.RedRatSelectRCSignal("1", true);
-            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            redrat_rc_db.RedRatSelectRCSignal("1", true);
+            // Let main program has time to refresh redrat_rc_db data content -- can be skiped if this code is not running in UI event call-back function
             //BlueRatDevViewer_Delay(16);
             // Check if this RC code is supported -- 如果此訊號資料OK可以發射,就發射
-            if (RedRatData.Signal_Type_Supported == true)
+            if (redrat_rc_db.Signal_Type_Supported == true)
             {
                 // Use UART to transmit RC signal -- repeat (SendOneRC_default_cnt) times == total transmit (SendOneRC_default_cnt+1) times
-                int rc_duration = my_blue_rat.SendOneRC(RedRatData, SendOneRC_default_cnt) / 1000 + 1;
+                int rc_duration = my_blue_rat.SendOneRC(redrat_rc_db, SendOneRC_default_cnt) / 1000 + 1;
                 // Delay to wait for RC Tx finished
                 BlueRatDevViewer_Delay(rc_duration);
 
                 Console.WriteLine("DONE FirstSignal");
 
                 // If you need to send double signal or toggle bit signal at next IR transmission -- 這裡是示範如何發射Double Signal或Toggle Signal的第二個信號
-                if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
+                if ((redrat_rc_db.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (redrat_rc_db.RC_ToggleData_Length_Value() > 0))
                 {
                     // Use UART to transmit RC signal -- repeat 10 times
-                    RedRatData.RedRatSelectRCSignal("1", false);
-                    rc_duration = my_blue_rat.SendOneRC(RedRatData, SendOneRC_default_cnt) / 1000 + 1;
+                    redrat_rc_db.RedRatSelectRCSignal("1", false);
+                    rc_duration = my_blue_rat.SendOneRC(redrat_rc_db, SendOneRC_default_cnt) / 1000 + 1;
                     // Delay to wait for RC Tx finished
                     BlueRatDevViewer_Delay(rc_duration);
                 }
@@ -953,31 +953,31 @@ namespace BlueRatViewer
         // 就要在後面使用另一個指令,來追加要repeat的次數,
         // 該指令的傳入參數為4-byte (0~4,294,967,295 (0xffffffff))
         bool MyApplicationNeedToStopNow = false;
-        private void Example_to_Send_RC_with_Large_Repeat_Count(BlueRat my_blue_rat)
+        private void Example_to_Send_RC_with_Large_Repeat_Count(BlueRat my_blue_rat, RedRatDBParser redrat_rc_db)
         {
             int repeat = 300; // max value is 4,294,967,295 (0xffffffff)
             const byte recommended_first_repeat_cnt_value = 100;    // must be <= 0xff
             // Load RedRat database - 載入資料庫
-            if (!(RedRatData.RedRatLoadSignalDB(@".\DeviceDB.xml")))
+            if (!(redrat_rc_db.RedRatLoadSignalDB(@".\DeviceDB.xml")))
             {
                 return;     // return if loading RC fails
             }
-            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            // Let main program has time to refresh redrat_rc_db data content -- can be skiped if this code is not running in UI event call-back function
             BlueRatDevViewer_Delay(16);
             //Application.DoEvents();
             // Select Device  - 選擇RC Device
-            RedRatData.RedRatSelectDevice("HP-MCE");
-            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            redrat_rc_db.RedRatSelectDevice("HP-MCE");
+            // Let main program has time to refresh redrat_rc_db data content -- can be skiped if this code is not running in UI event call-back function
             //BlueRatDevViewer_Delay(16);
             // Select RC - 選擇RC (使用名稱或Index No)
-            RedRatData.RedRatSelectRCSignal("1", true);
-            // Let main program has time to refresh RedRatData data content -- can be skiped if this code is not running in UI event call-back function
+            redrat_rc_db.RedRatSelectRCSignal("1", true);
+            // Let main program has time to refresh redrat_rc_db data content -- can be skiped if this code is not running in UI event call-back function
             //BlueRatDevViewer_Delay(16);
             // Check if this RC code is supported -- 如果此訊號資料OK可以發射,就發射
-            if (RedRatData.Signal_Type_Supported == true)
+            if (redrat_rc_db.Signal_Type_Supported == true)
             {
                 // Use UART to transmit RC signal -- repeat (recommended_first_repeat_cnt_value-1) times == total transmit (recommended_first_repeat_cnt_value) times
-                int rc_duration = my_blue_rat.SendOneRC(RedRatData, recommended_first_repeat_cnt_value - 1) / 1000 + 1;
+                int rc_duration = my_blue_rat.SendOneRC(redrat_rc_db, recommended_first_repeat_cnt_value - 1) / 1000 + 1;
                 // Delay to wait for RC Tx finished
                 BlueRatDevViewer_Delay(1);
                 // 將剩下的Repeat_Count輸出
@@ -1010,11 +1010,11 @@ namespace BlueRatViewer
                 Console.WriteLine("DONE FirstSignal");
 
                 // If you need to send double signal or toggle bit signal at next IR transmission -- 這裡是示範如何發射Double Signal或Toggle Signal的第二個信號
-                if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
+                if ((redrat_rc_db.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (redrat_rc_db.RC_ToggleData_Length_Value() > 0))
                 {
                     // Use UART to transmit RC signal -- repeat 10 times
-                    RedRatData.RedRatSelectRCSignal("1", false);
-                    rc_duration = my_blue_rat.SendOneRC(RedRatData, recommended_first_repeat_cnt_value - 1) / 1000 + 1;
+                    redrat_rc_db.RedRatSelectRCSignal("1", false);
+                    rc_duration = my_blue_rat.SendOneRC(redrat_rc_db, recommended_first_repeat_cnt_value - 1) / 1000 + 1;
                     // Delay to wait for RC Tx finished
                     BlueRatDevViewer_Delay(1);
                     my_blue_rat.Add_Repeat_Count(Convert.ToUInt32(repeat - recommended_first_repeat_cnt_value));
@@ -1086,7 +1086,7 @@ namespace BlueRatViewer
                         Test_GPIO_Input(MyBlueRat);
 
                         if (FormIsClosing == true) break;
-                        TEST_Return_Repeat_Count_and_Tx_Status(MyBlueRat);
+                        TEST_Return_Repeat_Count_and_Tx_Status(MyBlueRat, RedRatData);
 
                         if (FormIsClosing == true) break;
                         MyBlueRat.Stop_Current_Tx();
@@ -1099,20 +1099,20 @@ namespace BlueRatViewer
 
                         if (FormIsClosing == false)
                         {
-                            Example_to_Send_RC_without_Repeat_Count(MyBlueRat);
+                            Example_to_Send_RC_without_Repeat_Count(MyBlueRat, RedRatData);
                             MyBlueRat.CheckConnection();
                             Console.WriteLine("DONE - Example_to_Send_RC_without_Repeat_Count");
                         }
 
                         if (FormIsClosing == false)
                         {
-                            Example_to_Send_RC_with_Repeat_Count(MyBlueRat);
+                            Example_to_Send_RC_with_Repeat_Count(MyBlueRat, RedRatData);
                             MyBlueRat.CheckConnection();
                             Console.WriteLine("DONE - Example_to_Send_RC_with_Repeat_Count");
                         }
                         if (FormIsClosing == false)
                         {
-                            Example_to_Send_RC_with_Large_Repeat_Count(MyBlueRat);
+                            Example_to_Send_RC_with_Large_Repeat_Count(MyBlueRat, RedRatData);
                             MyBlueRat.CheckConnection();
                             Console.WriteLine("DONE - Example_to_Send_RC_with_Large_Repeat_Count");
                         }
@@ -1129,7 +1129,7 @@ namespace BlueRatViewer
                             {
                                 TEST_StressSendingRepeatCount(MyBlueRat);
                                 MyBlueRat.CheckConnection();
-                                Console.WriteLine("DONE - TEST_WalkThroughAllRCKeys");
+                                Console.WriteLine("DONE - TEST_StressSendingRepeatCount");
                             }
                         }
 
