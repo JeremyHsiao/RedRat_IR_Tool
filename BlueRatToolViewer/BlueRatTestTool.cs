@@ -306,10 +306,12 @@ namespace BlueRatViewer
             if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
             {
                 // Switch to the other signal in display
-                ThisTimeDoNotUpdateMessageBox = true;
+                chkSelect2ndSignal.Enabled = false;
                 RC_Select1stSignalForDoubleOrToggleSignal = !RC_Select1stSignalForDoubleOrToggleSignal;
-                RedRatData.RedRatSelectRCSignal(listboxRCKey.SelectedIndex, RC_Select1stSignalForDoubleOrToggleSignal);
-                chkSelect2ndSignal.Checked = RC_Select1stSignalForDoubleOrToggleSignal;
+                //RedRatData.RedRatSelectRCSignal(listboxRCKey.SelectedIndex, RC_Select1stSignalForDoubleOrToggleSignal);
+                //ThisTimeDoNotUpdateMessageBox = true;
+                chkSelect2ndSignal.Checked = !RC_Select1stSignalForDoubleOrToggleSignal;
+                chkSelect2ndSignal.Enabled = true;
             }
             //
             // End of Tx 
@@ -420,6 +422,7 @@ namespace BlueRatViewer
 
             if (Previous_Key != Current_Key)
             {
+                listboxRCKey.Enabled = false;
                 Previous_Key = Current_Key;
                 string rcname = listboxRCKey.SelectedItem.ToString();
                 if (RedRatData.RedRatSelectRCSignal(rcname, RC_Select1stSignalForDoubleOrToggleSignal))
@@ -468,8 +471,9 @@ namespace BlueRatViewer
                 }
                 else
                 {
-                    Console.WriteLine("Select RC Error: " + rcname);
+                    Console.WriteLine("SelectRCError: " + rcname);
                 }
+                listboxRCKey.Enabled = true;
             }
         }
 
@@ -521,7 +525,7 @@ namespace BlueRatViewer
 
         private void chkSelect2ndSignal_CheckedChanged(object sender, EventArgs e)
         {
-            RC_Select1stSignalForDoubleOrToggleSignal = chkSelect2ndSignal.Checked;
+            RC_Select1stSignalForDoubleOrToggleSignal = !chkSelect2ndSignal.Checked;
             RedRatData.RedRatSelectRCSignal(listboxRCKey.SelectedIndex, RC_Select1stSignalForDoubleOrToggleSignal);
 
             //double RC_ModutationFreq = RedRatData.RC_ModutationFreq();
@@ -736,10 +740,12 @@ namespace BlueRatViewer
                 if ((RedRatData.RedRatSelectedSignalType() == (typeof(DoubleSignal))) || (RedRatData.RC_ToggleData_Length_Value() > 0))
                 {
                     // Switch to the other signal in display
-                    ThisTimeDoNotUpdateMessageBox = true;
+                    chkSelect2ndSignal.Enabled = false;
                     RC_Select1stSignalForDoubleOrToggleSignal = !RC_Select1stSignalForDoubleOrToggleSignal;
-                    RedRatData.RedRatSelectRCSignal(listboxRCKey.SelectedIndex, RC_Select1stSignalForDoubleOrToggleSignal);
-                    chkSelect2ndSignal.Checked = RC_Select1stSignalForDoubleOrToggleSignal;
+                    //RedRatData.RedRatSelectRCSignal(listboxRCKey.SelectedIndex, RC_Select1stSignalForDoubleOrToggleSignal);
+                    ThisTimeDoNotUpdateMessageBox = true;
+                    chkSelect2ndSignal.Checked = !RC_Select1stSignalForDoubleOrToggleSignal;
+                    chkSelect2ndSignal.Enabled = true;
                 }
             }
         }
