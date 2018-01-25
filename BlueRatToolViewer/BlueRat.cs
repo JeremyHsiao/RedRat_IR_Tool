@@ -1488,67 +1488,6 @@ namespace BlueRatViewer
         }
 
         // For self testing purpose
-        public void TEST_GPIO_Output()
-        {
-            const int delay_time = 100;
-            // Testing: send GPIO output with byte parameter -- Set output port value at once
-            for (uint output_value = 0; output_value <= 0xff; output_value++)
-            {
-                Set_GPIO_Output(Convert.ToByte(output_value & 0xff));
-                HomeMade_Delay(delay_time / 2);
-                if (!MyBlueRatSerial.Serial_PortConnection())
-                {
-                    return;
-                }
-            }
-
-            int run_time = 10;
-            const UInt32 IO_value_mask = 0x0, reverse_IO_value_mask = 0x1;
-
-            Set_GPIO_Output(Convert.ToByte((~reverse_IO_value_mask) & 0xff));
-            HomeMade_Delay(delay_time);
-            if (!MyBlueRatSerial.Serial_PortConnection())
-            {
-                return;
-            }
-
-            while (run_time-- > 0)
-            {
-                for (Byte output_bit = 0; output_bit < 7;)
-                {
-                    //UInt32 temp_parameter = (output_bit << 8) | reverse_IO_value_mask;
-                    //MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
-                    Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(reverse_IO_value_mask));
-                    HomeMade_Delay(16);
-                    output_bit++;
-                    //temp_parameter = (((output_bit) << 8) | IO_value_mask);
-                    //MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
-                    Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(IO_value_mask));
-                    HomeMade_Delay(delay_time);
-                    if (!MyBlueRatSerial.Serial_PortConnection())
-                    {
-                        return;
-                    }
-                }
-                for (Byte output_bit = 7; output_bit > 0;)
-                {
-                    //UInt32 temp_parameter = (output_bit << 8) | reverse_IO_value_mask;
-                    //MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
-                    Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(reverse_IO_value_mask));
-                    HomeMade_Delay(16);
-                    output_bit--;
-                    //temp_parameter = (((output_bit) << 8) | IO_value_mask);
-                    //MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
-                    Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(IO_value_mask));
-                    HomeMade_Delay(delay_time);
-                    if (!MyBlueRatSerial.Serial_PortConnection())
-                    {
-                        return;
-                    }
-                }
-            }
-        }
-        
         public void TEST_SENSOR_Input()
         {
             const int delay_time = 500;

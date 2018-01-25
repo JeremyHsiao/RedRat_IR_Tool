@@ -1043,6 +1043,110 @@ namespace BlueRatViewer
             }
         }
 
+        private void TEST_GPIO_Output(BlueRat my_blue_rat)
+        {
+            const int delay_time = 100;
+            // Testing: send GPIO output with byte parameter -- Set output port value at once
+            for (uint output_value = 0; output_value <= 0xff; output_value++)
+            {
+                if (my_blue_rat.Set_GPIO_Output(Convert.ToByte(output_value & 0xff)))
+                {
+                    BlueRatDevViewer_Delay(delay_time / 2);
+                }
+                else
+                {
+                    Console.WriteLine("Set_GPIO_Output-err1");
+                }
+                if (FormIsClosing == true)
+                {
+                    return;
+                }
+            }
+
+            int run_time = 10;
+            const UInt32 IO_value_mask = 0x0, reverse_IO_value_mask = 0x1;
+
+            my_blue_rat.Set_GPIO_Output(Convert.ToByte((~reverse_IO_value_mask) & 0xff));
+            BlueRatDevViewer_Delay(delay_time);
+            if (FormIsClosing == true)
+            {
+                return;
+            }
+
+            while (run_time-- > 0)
+            {
+                for (Byte output_bit = 0; output_bit < 7;)
+                {
+                    //UInt32 temp_parameter = (output_bit << 8) | reverse_IO_value_mask;
+                    //MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
+                    if (my_blue_rat.Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(reverse_IO_value_mask)))
+                    {
+                        BlueRatDevViewer_Delay(16);
+                        output_bit++;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Set_GPIO_Output-err2");
+                        return;
+                    }
+                    if (FormIsClosing == true)
+                    {
+                        return;
+                    }
+                    //temp_parameter = (((output_bit) << 8) | IO_value_mask);
+                    //MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
+                    if (my_blue_rat.Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(IO_value_mask)))
+                    {
+                        BlueRatDevViewer_Delay(delay_time);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Set_GPIO_Output-err2");
+                        return;
+                    }
+
+                    if (FormIsClosing == true)
+                    {
+                        return;
+                    }
+                }
+                for (Byte output_bit = 7; output_bit > 0;)
+                {
+                    //UInt32 temp_parameter = (output_bit << 8) | reverse_IO_value_mask;
+                    //MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
+                    if (my_blue_rat.Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(reverse_IO_value_mask)))
+                    {
+                        BlueRatDevViewer_Delay(16);
+                        output_bit--;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Set_GPIO_Output-err3");
+                        return;
+                    }
+                    if (FormIsClosing == true)
+                    {
+                        return;
+                    }
+                    //temp_parameter = (((output_bit) << 8) | IO_value_mask);
+                    //MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
+                    if (my_blue_rat.Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(IO_value_mask)))
+                    {
+                        BlueRatDevViewer_Delay(delay_time);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Set_GPIO_Output-err3");
+                        return;
+                    }
+                    if (FormIsClosing == true)
+                    {
+                        return;
+                    }
+                }
+            }
+        }
+
         private void btnRepeatRC_Click(object sender, EventArgs e)
         {
             TemoparilyDisbleAllRCFunctionButtons();
@@ -1116,6 +1220,13 @@ namespace BlueRatViewer
                             Console.WriteLine("DONE - Example_to_Send_RC_with_Large_Repeat_Count");
                         }
 
+                        if (FormIsClosing == false)
+                        {
+                            TEST_GPIO_Output(MyBlueRat);
+                            MyBlueRat.CheckConnection();
+                            Console.WriteLine("DONE - TEST_GPIO_Output");
+                        }
+
                         if ((RedRatData != null) && (RedRatData.SignalDB != null))
                         {
                             if (FormIsClosing == false)
@@ -1146,12 +1257,6 @@ namespace BlueRatViewer
                             MyBlueRat.TEST_WalkThroughAllCMDwithData();
                             MyBlueRat.CheckConnection();
                             Console.WriteLine("DONE - TEST_WalkThroughAllCMDwithData");
-                        }
-                        if (FormIsClosing == false)
-                        {
-                            MyBlueRat.TEST_GPIO_Output();
-                            MyBlueRat.CheckConnection();
-                            Console.WriteLine("DONE - TEST_GPIO_Output");
                         }
 
                         if (FormIsClosing == false)
