@@ -15,7 +15,7 @@ using System.Timers;
 
 namespace BlueRatViewer
 {
-    public partial class BlueRatViewer : Form
+    public partial class BlueRatDevViewer : Form
     {
 
         private int Previous_Device = -1;
@@ -539,7 +539,7 @@ namespace BlueRatViewer
             }
         }
 
-        private void BlueRatViewer_Load(object sender, EventArgs e)
+        private void BlueRatDevViewer_Load(object sender, EventArgs e)
         {
             //_serialPort = new SerialPort();
             //Serial_InitialSetting();
@@ -547,9 +547,9 @@ namespace BlueRatViewer
             //MyBlueRat.UARTException += BlueRat_UARTException;
         }
 
-        private void BlueRatViewer_Closing(Object sender, FormClosingEventArgs e)
+        private void BlueRatDevViewer_Closing(Object sender, FormClosingEventArgs e)
         {
-            Console.WriteLine("BlueRatViewer_Closing");
+            Console.WriteLine("BlueRatDevViewer_Closing");
             MyApplicationNeedToStopNow = true;
             FormIsClosing = true;
             //MyBlueRat.Stop_Current_Tx();
@@ -557,7 +557,7 @@ namespace BlueRatViewer
             MyBlueRat.Disconnect();
         }
 
-        public BlueRatViewer()
+        public BlueRatDevViewer()
         {
             InitializeComponent();
         }

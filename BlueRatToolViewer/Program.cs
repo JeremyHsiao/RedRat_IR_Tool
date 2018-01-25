@@ -16,7 +16,7 @@ namespace BlueRatViewer
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new BlueRatViewer());
+            Application.Run(new BlueRatDevViewer());
         }
     }
 }

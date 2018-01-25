@@ -1,6 +1,6 @@
 ﻿namespace BlueRatViewer
 {
-    partial class BlueRatViewer
+    partial class BlueRatDevViewer
     {
         /// <summary>
         /// 設計工具所需的變數。
@@ -33,7 +33,7 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(BlueRatViewer));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(BlueRatDevViewer));
             this.btnGetRCFile = new System.Windows.Forms.Button();
             this.btnSingleRCPressed = new System.Windows.Forms.Button();
             this.listboxAVDeviceList = new System.Windows.Forms.ListBox();
@@ -427,7 +427,7 @@
             this.btnCheckHeartBeat.UseVisualStyleBackColor = true;
             this.btnCheckHeartBeat.Click += new System.EventHandler(this.btnCheckHeartBeat_Click);
             // 
-            // BlueRatViewer
+            // BlueRatDevViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -441,10 +441,10 @@
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
-            this.Name = "BlueRatViewer";
+            this.Name = "BlueRatDevViewer";
             this.Text = "BlueRat Test Tool";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.BlueRatViewer_Closing);
-            this.Load += new System.EventHandler(this.BlueRatViewer_Load);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.BlueRatDevViewer_Closing);
+            this.Load += new System.EventHandler(this.BlueRatDevViewer_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvPulseData)).EndInit();
             this.gbRC_File_Data.ResumeLayout(false);
             this.gbRC_File_Data.PerformLayout();
