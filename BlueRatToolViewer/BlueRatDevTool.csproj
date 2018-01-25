@@ -56,7 +56,9 @@
     <Compile Include="BlueRat.cs" />
     <Compile Include="BlutRatSerial.cs" />
     <Compile Include="RedRatDBParser.cs" />
-    <Compile Include="BlueRatDevViewer.cs" />
+    <Compile Include="BlueRatDevViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="BlueRatDevViewer.Designer.cs">
       <DependentUpon>BlueRatDevViewer.cs</DependentUpon>
     </Compile>
