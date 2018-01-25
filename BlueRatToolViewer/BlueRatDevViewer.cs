@@ -1188,18 +1188,14 @@ namespace BlueRatViewer
 
                         if (FormIsClosing == true) break;
                         Test_GPIO_Input(MyBlueRat);
+                        Console.WriteLine("DONE - Test_GPIO_Input");
 
                         if (FormIsClosing == true) break;
                         TEST_Return_Repeat_Count_and_Tx_Status(MyBlueRat, RedRatData);
+                        Console.WriteLine("DONE - TEST_Return_Repeat_Count_and_Tx_Status");
 
                         if (FormIsClosing == true) break;
                         MyBlueRat.Stop_Current_Tx();
-
-                        if (FormIsClosing == true) break;
-                        MyBlueRat.CheckConnection();
-
-                        if (FormIsClosing == true) break;
-                        MyBlueRat.CheckConnection();
 
                         if (FormIsClosing == false)
                         {
@@ -1247,12 +1243,6 @@ namespace BlueRatViewer
                         ////
                         // Self-testing code
                         //
-                        if (FormIsClosing == false)
-                        {
-                            //TEST_Return_Repeat_Count_and_Tx_Status();
-                            MyBlueRat.CheckConnection();
-                            //Console.WriteLine("DONE - TEST_Return_Repeat_Count_and_Tx_Status");
-                        }
                         if (FormIsClosing == false)
                         {
                             MyBlueRat.TEST_WalkThroughAllCMDwithData();
