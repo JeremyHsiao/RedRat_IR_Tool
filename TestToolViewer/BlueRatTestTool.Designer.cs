@@ -33,6 +33,7 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(BlueRatViewer));
             this.btnGetRCFile = new System.Windows.Forms.Button();
             this.btnSingleRCPressed = new System.Windows.Forms.Button();
             this.listboxAVDeviceList = new System.Windows.Forms.ListBox();
@@ -426,7 +427,7 @@
             this.btnCheckHeartBeat.UseVisualStyleBackColor = true;
             this.btnCheckHeartBeat.Click += new System.EventHandler(this.btnCheckHeartBeat_Click);
             // 
-            // RedRatDBViewer
+            // BlueRatViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -438,8 +439,9 @@
             this.Controls.Add(this.btnFreshCOMNo);
             this.Controls.Add(this.gbRC_File_Data);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
-            this.Name = "BlueRat Test Tool";
+            this.Name = "BlueRatViewer";
             this.Text = "BlueRat Test Tool";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.BlueRatViewer_Closing);
             this.Load += new System.EventHandler(this.BlueRatViewer_Load);
