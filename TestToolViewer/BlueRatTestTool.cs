@@ -15,7 +15,7 @@ using System.Timers;
 
 namespace RedRatDatabaseViewer
 {
-    public partial class RedRatDBViewer : Form
+    public partial class BlueRatViewer : Form
     {
 
         private int Previous_Device = -1;
@@ -539,7 +539,7 @@ namespace RedRatDatabaseViewer
             }
         }
 
-        private void RedRatDBViewer_Load(object sender, EventArgs e)
+        private void BlueRatViewer_Load(object sender, EventArgs e)
         {
             //_serialPort = new SerialPort();
             //Serial_InitialSetting();
@@ -547,9 +547,9 @@ namespace RedRatDatabaseViewer
             //MyBlueRat.UARTException += BlueRat_UARTException;
         }
 
-        private void RedRatDBViewer_Closing(Object sender, FormClosingEventArgs e)
+        private void BlueRatViewer_Closing(Object sender, FormClosingEventArgs e)
         {
-            Console.WriteLine("RedRatDBViewer_FormClosing");
+            Console.WriteLine("BlueRatViewer_Closing");
             MyApplicationNeedToStopNow = true;
             FormIsClosing = true;
             //MyBlueRat.Stop_Current_Tx();
@@ -557,7 +557,7 @@ namespace RedRatDatabaseViewer
             MyBlueRat.Disconnect();
         }
 
-        public RedRatDBViewer()
+        public BlueRatViewer()
         {
             InitializeComponent();
         }
@@ -567,7 +567,7 @@ namespace RedRatDatabaseViewer
             OpenFileDialog openFileDialog1 = new OpenFileDialog
             {
                 InitialDirectory = ".\\",
-                Filter = "RedRat Device files (*.xml)|*.xml|All files (*.*)|*.*",
+                Filter = "RC Device files (*.xml)|*.xml|All files (*.*)|*.*",
                 FilterIndex = 2,
                 RestoreDirectory = true
             };

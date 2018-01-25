@@ -1,6 +1,6 @@
 ﻿namespace RedRatDatabaseViewer
 {
-    partial class RedRatDBViewer
+    partial class BlueRatViewer
     {
         /// <summary>
         /// 設計工具所需的變數。
@@ -441,8 +441,8 @@
             this.MaximizeBox = false;
             this.Name = "BlueRat Test Tool";
             this.Text = "BlueRat Test Tool";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.RedRatDBViewer_Closing);
-            this.Load += new System.EventHandler(this.RedRatDBViewer_Load);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.BlueRatViewer_Closing);
+            this.Load += new System.EventHandler(this.BlueRatViewer_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvPulseData)).EndInit();
             this.gbRC_File_Data.ResumeLayout(false);
             this.gbRC_File_Data.PerformLayout();
