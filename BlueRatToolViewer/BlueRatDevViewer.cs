@@ -772,7 +772,7 @@ namespace BlueRatViewer
             int repeat = 300; // max value is 4,294,967,295 (0xffffffff)
             const byte recommended_first_repeat_cnt_value = 100;    // must be <= 0xff
             // Load RedRat database - 載入資料庫
-            if (!(RedRatData.RedRatLoadSignalDB(@"..\..\..\..\RC DB\DeviceDB - 複製.xml")))
+            if (!(RedRatData.RedRatLoadSignalDB(@".\DeviceDB.xml")))
             {
                 return;     // return if loading RC fails
             }
@@ -851,7 +851,7 @@ namespace BlueRatViewer
         private void Example_to_Send_RC_without_Repeat_Count()
         {
             // Load RedRat database - 載入資料庫
-            if (!(RedRatData.RedRatLoadSignalDB(@"..\..\..\..\RC DB\DeviceDB - 複製.xml")))
+            if (!(RedRatData.RedRatLoadSignalDB(@".\DeviceDB.xml")))
             {
                 return;     // return if loading RC fails
             }
@@ -891,7 +891,7 @@ namespace BlueRatViewer
         {
             const byte SendOneRC_default_cnt = 2;
             // Load RedRat database - 載入資料庫
-            if (!(RedRatData.RedRatLoadSignalDB(@"..\..\..\..\RC DB\DeviceDB - 複製.xml")))
+            if (!(RedRatData.RedRatLoadSignalDB(@".\DeviceDB.xml")))
             {
                 return;     // return if loading RC fails
             }
@@ -937,7 +937,7 @@ namespace BlueRatViewer
             int repeat = 300; // max value is 4,294,967,295 (0xffffffff)
             const byte recommended_first_repeat_cnt_value = 100;    // must be <= 0xff
             // Load RedRat database - 載入資料庫
-            if (!(RedRatData.RedRatLoadSignalDB(@"..\..\..\..\RC DB\DeviceDB - 複製.xml")))
+            if (!(RedRatData.RedRatLoadSignalDB(@".\DeviceDB.xml")))
             {
                 return;     // return if loading RC fails
             }
