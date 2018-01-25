@@ -10,7 +10,7 @@ using Microsoft.Win32.SafeHandles;
 using System.Management;
 using System.Linq;
 
-namespace RedRatDatabaseViewer
+namespace BlueRatViewer
 {
     class BlueRatCheckSum
     {

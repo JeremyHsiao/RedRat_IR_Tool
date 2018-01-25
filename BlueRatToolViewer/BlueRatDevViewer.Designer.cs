@@ -1,4 +1,4 @@
-﻿namespace RedRatDatabaseViewer
+﻿namespace BlueRatViewer
 {
     partial class RedRatDBViewer
     {
