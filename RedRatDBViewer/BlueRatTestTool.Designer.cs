@@ -48,19 +48,19 @@
             this.rtbDecodeRCSignal = new System.Windows.Forms.RichTextBox();
             this.btnStopRCButton = new System.Windows.Forms.Button();
             this.gbRC_File_Data = new System.Windows.Forms.GroupBox();
+            this.AutoRunAllRC = new System.Windows.Forms.Button();
+            this.btnRepeatRC = new System.Windows.Forms.Button();
+            this.btnGetFirmwareBinary = new System.Windows.Forms.Button();
             this.dgvToggleBits = new System.Windows.Forms.DataGridView();
             this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.label3 = new System.Windows.Forms.Label();
             this.lbModulationType = new System.Windows.Forms.Label();
+            this.btnFWUpgrade = new System.Windows.Forms.Button();
             this.btnFreshCOMNo = new System.Windows.Forms.Button();
             this.lstBlueRatComPort = new System.Windows.Forms.ListBox();
             this.btnConnectionControl = new System.Windows.Forms.Button();
             this.btnCheckHeartBeat = new System.Windows.Forms.Button();
-            this.btnRepeatRC = new System.Windows.Forms.Button();
-            this.btnGetFirmwareBinary = new System.Windows.Forms.Button();
-            this.btnFWUpgrade = new System.Windows.Forms.Button();
-            this.AutoRunAllRC = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvPulseData)).BeginInit();
             this.gbRC_File_Data.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvToggleBits)).BeginInit();
@@ -268,6 +268,37 @@
             this.gbRC_File_Data.TabIndex = 15;
             this.gbRC_File_Data.TabStop = false;
             // 
+            // AutoRunAllRC
+            // 
+            this.AutoRunAllRC.Location = new System.Drawing.Point(549, 16);
+            this.AutoRunAllRC.Name = "AutoRunAllRC";
+            this.AutoRunAllRC.Size = new System.Drawing.Size(53, 46);
+            this.AutoRunAllRC.TabIndex = 22;
+            this.AutoRunAllRC.Text = "Auto Run";
+            this.AutoRunAllRC.UseVisualStyleBackColor = true;
+            this.AutoRunAllRC.Click += new System.EventHandler(this.AutoRunAllRC_Click);
+            // 
+            // btnRepeatRC
+            // 
+            this.btnRepeatRC.Location = new System.Drawing.Point(437, 68);
+            this.btnRepeatRC.Name = "btnRepeatRC";
+            this.btnRepeatRC.Size = new System.Drawing.Size(53, 46);
+            this.btnRepeatRC.TabIndex = 19;
+            this.btnRepeatRC.Text = "Re-peat";
+            this.btnRepeatRC.UseVisualStyleBackColor = true;
+            this.btnRepeatRC.Click += new System.EventHandler(this.btnRepeatRC_Click);
+            // 
+            // btnGetFirmwareBinary
+            // 
+            this.btnGetFirmwareBinary.Location = new System.Drawing.Point(102, 278);
+            this.btnGetFirmwareBinary.Name = "btnGetFirmwareBinary";
+            this.btnGetFirmwareBinary.Size = new System.Drawing.Size(84, 46);
+            this.btnGetFirmwareBinary.TabIndex = 20;
+            this.btnGetFirmwareBinary.Text = "Load New FW";
+            this.btnGetFirmwareBinary.UseVisualStyleBackColor = true;
+            this.btnGetFirmwareBinary.Visible = false;
+            this.btnGetFirmwareBinary.Click += new System.EventHandler(this.btnLoadNewFirmware_Click);
+            // 
             // dgvToggleBits
             // 
             this.dgvToggleBits.AllowUserToAddRows = false;
@@ -337,9 +368,20 @@
             this.lbModulationType.Name = "lbModulationType";
             this.lbModulationType.Size = new System.Drawing.Size(285, 26);
             this.lbModulationType.TabIndex = 14;
-            this.lbModulationType.Text = "RedRat RC Modulation Type";
+            this.lbModulationType.Text = "RC Modulation Type";
             this.lbModulationType.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.lbModulationType.Visible = false;
+            // 
+            // btnFWUpgrade
+            // 
+            this.btnFWUpgrade.Location = new System.Drawing.Point(426, 278);
+            this.btnFWUpgrade.Name = "btnFWUpgrade";
+            this.btnFWUpgrade.Size = new System.Drawing.Size(84, 46);
+            this.btnFWUpgrade.TabIndex = 21;
+            this.btnFWUpgrade.Text = "Upgrade FW";
+            this.btnFWUpgrade.UseVisualStyleBackColor = true;
+            this.btnFWUpgrade.Visible = false;
+            this.btnFWUpgrade.Click += new System.EventHandler(this.btnFWUpgrade_Click);
             // 
             // btnFreshCOMNo
             // 
@@ -384,48 +426,6 @@
             this.btnCheckHeartBeat.UseVisualStyleBackColor = true;
             this.btnCheckHeartBeat.Click += new System.EventHandler(this.btnCheckHeartBeat_Click);
             // 
-            // btnRepeatRC
-            // 
-            this.btnRepeatRC.Location = new System.Drawing.Point(437, 68);
-            this.btnRepeatRC.Name = "btnRepeatRC";
-            this.btnRepeatRC.Size = new System.Drawing.Size(53, 46);
-            this.btnRepeatRC.TabIndex = 19;
-            this.btnRepeatRC.Text = "Re-peat";
-            this.btnRepeatRC.UseVisualStyleBackColor = true;
-            this.btnRepeatRC.Click += new System.EventHandler(this.btnRepeatRC_Click);
-            // 
-            // btnGetFirmwareBinary
-            // 
-            this.btnGetFirmwareBinary.Location = new System.Drawing.Point(102, 278);
-            this.btnGetFirmwareBinary.Name = "btnGetFirmwareBinary";
-            this.btnGetFirmwareBinary.Size = new System.Drawing.Size(84, 46);
-            this.btnGetFirmwareBinary.TabIndex = 20;
-            this.btnGetFirmwareBinary.Text = "Load New FW";
-            this.btnGetFirmwareBinary.UseVisualStyleBackColor = true;
-            this.btnGetFirmwareBinary.Visible = false;
-            this.btnGetFirmwareBinary.Click += new System.EventHandler(this.btnLoadNewFirmware_Click);
-            // 
-            // btnFWUpgrade
-            // 
-            this.btnFWUpgrade.Location = new System.Drawing.Point(426, 278);
-            this.btnFWUpgrade.Name = "btnFWUpgrade";
-            this.btnFWUpgrade.Size = new System.Drawing.Size(84, 46);
-            this.btnFWUpgrade.TabIndex = 21;
-            this.btnFWUpgrade.Text = "Upgrade FW";
-            this.btnFWUpgrade.UseVisualStyleBackColor = true;
-            this.btnFWUpgrade.Visible = false;
-            this.btnFWUpgrade.Click += new System.EventHandler(this.btnFWUpgrade_Click);
-            // 
-            // AutoRunAllRC
-            // 
-            this.AutoRunAllRC.Location = new System.Drawing.Point(549, 16);
-            this.AutoRunAllRC.Name = "AutoRunAllRC";
-            this.AutoRunAllRC.Size = new System.Drawing.Size(53, 46);
-            this.AutoRunAllRC.TabIndex = 22;
-            this.AutoRunAllRC.Text = "Auto Run";
-            this.AutoRunAllRC.UseVisualStyleBackColor = true;
-            this.AutoRunAllRC.Click += new System.EventHandler(this.AutoRunAllRC_Click);
-            // 
             // RedRatDBViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -439,8 +439,8 @@
             this.Controls.Add(this.gbRC_File_Data);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
             this.MaximizeBox = false;
-            this.Name = "RedRatDBViewer";
-            this.Text = "RedRat Database Viewer";
+            this.Name = "BlueRat Test Tool";
+            this.Text = "BlueRat Test Tool";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.RedRatDBViewer_Closing);
             this.Load += new System.EventHandler(this.RedRatDBViewer_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvPulseData)).EndInit();
