@@ -13,7 +13,7 @@ using System.Threading;
 using System.Windows.Forms;
 using System.Timers;
 
-namespace RedRatDatabaseViewer
+namespace BlueRatViewer
 {
     public partial class BlueRatViewer : Form
     {

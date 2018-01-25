@@ -9,7 +9,7 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Xml.Serialization;
 
-namespace RedRatDatabaseViewer
+namespace BlueRatViewer
 {
     public class RedRatDBParser
     {
