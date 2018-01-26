@@ -94,6 +94,7 @@ namespace BlueRatViewer
                 btnCheckHeartBeat.Enabled = true;
                 btnStopRCButton.Enabled = true;
                 btnRepeatRC.Enabled = true;
+                AutoRunAllRC.Enabled = true;
             }
         }
 
@@ -102,6 +103,8 @@ namespace BlueRatViewer
             btnSingleRCPressed.Enabled = false;
             btnCheckHeartBeat.Enabled = false;
             btnStopRCButton.Enabled = false;
+            btnRepeatRC.Enabled = true;
+            AutoRunAllRC.Enabled = false;
         }
 
         private void UndoTemoparilyDisbleAllRCFunctionButtons()
@@ -118,6 +121,7 @@ namespace BlueRatViewer
             btnStopRCButton.Enabled = true;
             btnRepeatRC.Enabled = true;
             btnConnectionControl.Enabled = true;
+            AutoRunAllRC.Enabled = true;
         }
 
         private void TemoparilyDisbleAllRCFunctionButtons()
@@ -127,6 +131,8 @@ namespace BlueRatViewer
             btnStopRCButton.Enabled = false;
             btnRepeatRC.Enabled = false;
             btnConnectionControl.Enabled = false;
+            AutoRunAllRC.Enabled = false;
+
         }
 
         private void EnableRefreshCOMButton()

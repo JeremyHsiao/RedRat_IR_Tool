@@ -272,6 +272,7 @@
             // 
             // AutoRunAllRC
             // 
+            this.AutoRunAllRC.Enabled = false;
             this.AutoRunAllRC.Location = new System.Drawing.Point(549, 16);
             this.AutoRunAllRC.Name = "AutoRunAllRC";
             this.AutoRunAllRC.Size = new System.Drawing.Size(53, 46);
@@ -282,11 +283,12 @@
             // 
             // btnRepeatRC
             // 
+            this.btnRepeatRC.Enabled = false;
             this.btnRepeatRC.Location = new System.Drawing.Point(437, 68);
             this.btnRepeatRC.Name = "btnRepeatRC";
             this.btnRepeatRC.Size = new System.Drawing.Size(53, 46);
             this.btnRepeatRC.TabIndex = 19;
-            this.btnRepeatRC.Text = "Re-peat";
+            this.btnRepeatRC.Text = "All Test";
             this.btnRepeatRC.UseVisualStyleBackColor = true;
             this.btnRepeatRC.Click += new System.EventHandler(this.btnRepeatRC_Click);
             // 
