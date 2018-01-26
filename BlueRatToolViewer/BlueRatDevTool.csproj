@@ -36,6 +36,9 @@
     <ApplicationIcon>blue_led.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BlueRatLibrary">
+      <HintPath>.\BlueRatLibrary.dll</HintPath>
+    </Reference>
     <Reference Include="RedRat, Version=4.15.6443.20094, Culture=neutral, PublicKeyToken=ae0a3380d5973a3c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>.\RedRat.dll</HintPath>
@@ -54,9 +57,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BlueRat.cs" />
-    <Compile Include="BlutRatSerial.cs" />
-    <Compile Include="RedRatDBParser.cs" />
     <Compile Include="BlueRatDevViewer.cs">
       <SubType>Form</SubType>
     </Compile>
