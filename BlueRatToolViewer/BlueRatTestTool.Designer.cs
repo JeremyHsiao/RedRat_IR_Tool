@@ -201,7 +201,7 @@
             this.rbDoubleSignalLED.AutoCheck = false;
             this.rbDoubleSignalLED.AutoSize = true;
             this.rbDoubleSignalLED.Font = new System.Drawing.Font("微軟正黑體", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.rbDoubleSignalLED.Location = new System.Drawing.Point(192, 275);
+            this.rbDoubleSignalLED.Location = new System.Drawing.Point(439, 183);
             this.rbDoubleSignalLED.Name = "rbDoubleSignalLED";
             this.rbDoubleSignalLED.Size = new System.Drawing.Size(165, 20);
             this.rbDoubleSignalLED.TabIndex = 11;
