@@ -1156,6 +1156,7 @@ namespace BlueRatViewer
         private void btnRepeatRC_Click(object sender, EventArgs e)
         {
             TemoparilyDisbleAllRCFunctionButtons();
+            btnGetRCFile.Enabled = false;
 
             if (lstBlueRatComPort.Items.Count == 0)
             {
@@ -1287,6 +1288,7 @@ namespace BlueRatViewer
                 EnableRefreshCOMButton();
                 UpdateRCFunctionButtonAfterDisconnection();
             }
+            btnGetRCFile.Enabled = true;
             UndoTemoparilyDisbleAllRCFunctionButtons();
         }
 
@@ -1308,6 +1310,7 @@ namespace BlueRatViewer
         private void AutoRunAllRC_Click(object sender, EventArgs e)
         {
             TemoparilyDisbleAllRCFunctionButtons();
+            btnGetRCFile.Enabled = false;
 
             string com_port_name = lstBlueRatComPort.SelectedItem.ToString();
             //示範現在如何聯接小藍鼠 -- 需傳入COM PORT名稱
@@ -1342,6 +1345,7 @@ namespace BlueRatViewer
                 //示範現在如何結束聯接UART並釋放 
                 MyBlueRat.Disconnect();
             }
+            btnGetRCFile.Enabled = true;
             UndoTemoparilyDisbleAllRCFunctionButtons();
 
         }
