@@ -41,7 +41,7 @@ namespace BlueRatViewer
         }
     }
 
-    class BlueRat : IDisposable
+    public class BlueRat : IDisposable
     {
         // Static private variable
         private static int BlueRatInstanceNumber = 0;
@@ -1285,7 +1285,7 @@ namespace BlueRatViewer
                 if (TimeOutTimerList.Contains(timer))        // still timer of this bluerat object is running?
                 {
                     TimeOutTimerList.Remove(timer);         // if yes, force it to expire
-                    Application.DoEvents();
+                    //Application.DoEvents();
                 }
             }
             MyOwnTimerList.Clear();                         // all timer expired, no need to keep record
@@ -1306,7 +1306,7 @@ namespace BlueRatViewer
             TimeOutTimerList.Add(aTimer);           // This list is to keep running timer until it reaches TimeOutEvent (as indicator of running timer)
             MyOwnTimerList.Add(aTimer);             // This list record all timer created in this bluerat object -- to be removed after timer expired
             aTimer.Enabled = true;
-            while ((MyBlueRatSerial.Serial_PortConnection() == true) && (TimeOutTimerList.Contains(aTimer) == true)) { Application.DoEvents(); Thread.Sleep(1); }
+            while ((MyBlueRatSerial.Serial_PortConnection() == true) && (TimeOutTimerList.Contains(aTimer) == true)) { /*Application.DoEvents();*/ Thread.Sleep(1); }
             MyOwnTimerList.Remove(aTimer);          // timer expired, so remove it from the list recording timer created.
             aTimer.Stop();
             aTimer.Dispose();
@@ -1341,7 +1341,8 @@ namespace BlueRatViewer
                 uint MyRetryTimes = Convert.ToUInt32(ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1) - 1;
                 do
                 {
-                    Application.DoEvents(); Thread.Sleep(4); Application.DoEvents();
+                    //Application.DoEvents(); Thread.Sleep(4); Application.DoEvents();
+                    Thread.Sleep(4);
                     if (bluerat_serial.ReadLine_Ready() == true)
                     {
                         String in_str = bluerat_serial.ReadLine_Result();
