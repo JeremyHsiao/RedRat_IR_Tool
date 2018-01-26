@@ -9,7 +9,7 @@ using Microsoft.Win32.SafeHandles;
 using System.Management;
 using System.Linq;
 
-namespace BlueRatViewer
+namespace BlueRatLibrary
 {
     class BlueRatCheckSum
     {
@@ -40,7 +40,7 @@ namespace BlueRatViewer
         }
     }
 
-    class BlueRat : IDisposable
+    public class BlueRat : IDisposable
     {
         // Static private variable
         private static int BlueRatInstanceNumber = 0;
