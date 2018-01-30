@@ -1172,8 +1172,9 @@ namespace BlueRatLibrary
             total_us = 0;
             foreach (var val in pulse_width)
             {
-                pulse_packet.AddRange(Convert_data_to_Byte_modified(Convert.ToUInt32(val)));
-                total_us += Convert.ToInt32(val);
+                double new_val = Math.Round(val);
+                pulse_packet.AddRange(Convert_data_to_Byte_modified(Convert.ToUInt32(new_val)));
+                total_us += Convert.ToInt32(new_val);
             }
 
             // Step 5
