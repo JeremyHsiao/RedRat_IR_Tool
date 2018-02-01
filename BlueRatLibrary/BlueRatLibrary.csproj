@@ -45,12 +45,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BlueRat.cs" />
-    <Compile Include="BlutRatSerial.cs" />
+    <Compile Include="BlueRatSerial.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RedRatDBParser.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetPath) debug_$(TargetFileName)</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>copy $(SolutionDir)BlueRatTool_DEV\BlueRat.cs $(ProjectDir)
+copy $(SolutionDir)BlueRatTool_DEV\BlueRatSerial.cs $(ProjectDir)
+copy $(SolutionDir)BlueRatTool_DEV\RedRatDBParser.cs $(ProjectDir)</PreBuildEvent>
   </PropertyGroup>
 </Project>
