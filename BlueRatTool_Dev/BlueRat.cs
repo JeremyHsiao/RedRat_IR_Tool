@@ -5,12 +5,11 @@ using System.IO.Ports;
 using System.Reflection;
 using System.Threading;
 using System.Timers;
-using System.Windows.Forms;
 using Microsoft.Win32.SafeHandles;
 using System.Management;
 using System.Linq;
 
-namespace BlueRatViewer
+namespace BlueRatLibrary
 {
     class BlueRatCheckSum
     {
