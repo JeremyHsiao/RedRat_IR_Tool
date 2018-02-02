@@ -5,12 +5,11 @@ using System.IO.Ports;
 using System.Reflection;
 using System.Threading;
 using System.Timers;
-using System.Windows.Forms;
 using Microsoft.Win32.SafeHandles;
 using System.Management;
 using System.Linq;
 
-namespace RedRatDatabaseViewer
+namespace BlueRatLibrary
 {
     class BlueRatCheckSum
     {
@@ -41,7 +40,7 @@ namespace RedRatDatabaseViewer
         }
     }
 
-    class BlueRat
+    public class BlueRat : IDisposable
     {
         // Static private variable
         private static int BlueRatInstanceNumber = 0;
@@ -69,6 +68,22 @@ namespace RedRatDatabaseViewer
         public BlueRat() { MyBlueRatSerial = new BlueRatSerial(); BlueRatInstanceNumber++; }
         //public BlueRat(string com_port) { Connect(com_port); BlueRatInstanceNumber++; }
         ~BlueRat() { Disconnect(); MyBlueRatSerial = null; BlueRatInstanceNumber--; }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // dispose managed resources
+                MyBlueRatSerial.Dispose();
+            }
+            // free native resources
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         public bool Connect(string com_name)
         {
@@ -232,7 +247,6 @@ namespace RedRatDatabaseViewer
             bool bRet = false;
             
             int default_timeout_time = 30;
-            string in_str;
             ENUM_RETRY_RESULT result_status;
 
             if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
@@ -241,7 +255,7 @@ namespace RedRatDatabaseViewer
             }
 
             repeat_cnt = 0;
-            result_status = SendCmd_WaitReadLine((Prepare_Get_RC_Repeat_Count()), out in_str, default_timeout_time);
+            result_status = SendCmd_WaitReadLine((Prepare_Get_RC_Repeat_Count()), out string in_str, default_timeout_time);
             if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
                 if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
@@ -285,7 +299,6 @@ namespace RedRatDatabaseViewer
         {
             bool bRet = false;
             int default_timeout_time = 16;
-            string in_str;
             ENUM_RETRY_RESULT result_status;
 
             if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
@@ -294,7 +307,7 @@ namespace RedRatDatabaseViewer
             }
 
             return_tx_status = false;
-            result_status = SendCmd_WaitReadLine((Prepare_Get_RC_Current_Running_Status()), out in_str, default_timeout_time);
+            result_status = SendCmd_WaitReadLine((Prepare_Get_RC_Current_Running_Status()), out string in_str, default_timeout_time);
             if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
                 if (BlueRatFWVersion < 102)     // This bug is identified and fixed on v1.02
@@ -341,11 +354,11 @@ namespace RedRatDatabaseViewer
         {
             bool bRet = false;
             const int default_timeout_time = 16;
-            string value_str = "0.01", in_str;
+            string value_str = "0.01";
             ENUM_RETRY_RESULT result_status;
 
             result_string = "0";
-            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_SW_VER)), out in_str, default_timeout_time);
+            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_SW_VER)), out string in_str, default_timeout_time);
             if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
                 if (in_str.Contains(_SW_VER_STRING_VER_01))         // Check latest version first -- currently 2 version
@@ -382,7 +395,6 @@ namespace RedRatDatabaseViewer
         {
             bool bRet = false;
             const int default_timeout_time = 40;
-            string in_str;
             ENUM_RETRY_RESULT result_status;
 
             // Workaround before v1.02
@@ -402,7 +414,7 @@ namespace RedRatDatabaseViewer
             else
             {
                 result_string = "0";
-                result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_BUILD_TIME)), out in_str, default_timeout_time);
+                result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_BUILD_TIME)), out string in_str, default_timeout_time);
                 if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
                 {
                     if (in_str.Contains(_CMD_BUILD_TIME_RETURN_HEADER_))
@@ -428,11 +440,10 @@ namespace RedRatDatabaseViewer
         {
             bool bRet = false;
             const int default_timeout_time = 30;
-            string in_str;
             ENUM_RETRY_RESULT result_status;
 
             result_string = "0";
-            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_CMD_VERSION)), out in_str, default_timeout_time);
+            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RETURN_CMD_VERSION)), out string in_str, default_timeout_time);
             if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
 
@@ -475,11 +486,10 @@ namespace RedRatDatabaseViewer
         {
             bool bRet = false;
             const int default_timeout_time = 16;
-            string in_str;
             ENUM_RETRY_RESULT result_status;
 
             GPIO_Read_Data = 0xffffffff;
-            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)), out in_str, default_timeout_time);
+            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)), out string in_str, default_timeout_time);
             if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
                 if (in_str.Contains(_CMD_GPIO_INPUT_RETURN_HEADER_))
@@ -521,11 +531,10 @@ namespace RedRatDatabaseViewer
         {
             bool bRet = false;
             const int default_timeout_time = 16;
-            string in_str;
             ENUM_RETRY_RESULT result_status;
 
             Sensor_Read_Data = 0xffffffff;
-            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_SENSOR_VALUE)), out in_str, default_timeout_time);
+            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_SENSOR_VALUE)), out string in_str, default_timeout_time);
             if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
                 if (in_str.Contains(_CMD_SENSOR_INPUT_RETURN_HEADER_))
@@ -606,8 +615,7 @@ namespace RedRatDatabaseViewer
             }
 
             List<byte> data_to_sent = new List<byte>();
-            int total_us;
-            data_to_sent = Prepare_RC_Data_CMD(RedRatData, default_repeat_cnt, out total_us);  // prepare RC-data packet for BlueRat
+            data_to_sent = Prepare_RC_Data_CMD(RedRatData, default_repeat_cnt, out int total_us);  // prepare RC-data packet for BlueRat
             MyBlueRatSerial.BlueRatSendToSerial(data_to_sent.ToArray());    // Send to BlueRat
 
             return total_us; // return total_rc_time_duration
@@ -928,7 +936,7 @@ namespace RedRatDatabaseViewer
         //
         static private List<byte> Convert_data_to_Byte(byte input_data)
         {
-            List<byte> data_to_sent = new List<byte>();
+            List<byte> data_to_sent = new List<byte> { };
             data_to_sent.Add(input_data);
             return data_to_sent;
         }
@@ -1164,8 +1172,9 @@ namespace RedRatDatabaseViewer
             total_us = 0;
             foreach (var val in pulse_width)
             {
-                pulse_packet.AddRange(Convert_data_to_Byte_modified(Convert.ToUInt32(val)));
-                total_us += Convert.ToInt32(val);
+                double new_val = Math.Round(val);
+                pulse_packet.AddRange(Convert_data_to_Byte_modified(Convert.ToUInt32(new_val)));
+                total_us += Convert.ToInt32(new_val);
             }
 
             // Step 5
@@ -1221,12 +1230,12 @@ namespace RedRatDatabaseViewer
                 UInt16 period;
                 if (RC_ModutationFreq > max_freq)
                 {
-                    Console.WriteLine("Duty Cycle is out of range (> " + max_freq.ToString() + " Hz), using " + max_freq.ToString() + " instead.");
+                    Console.WriteLine("Carrier Frequency is out of range (> " + max_freq.ToString() + " Hz), using " + max_freq.ToString() + " instead.");
                     period = Convert.ToUInt16(8000000 / max_freq);
                 }
                 else if (RC_ModutationFreq >= min_freq)
                 {
-                    period = Convert.ToUInt16(8000000 / RC_ModutationFreq);
+                    period = Convert.ToUInt16(Math.Round(8000000 / RC_ModutationFreq));
                 }
                 else if (RC_ModutationFreq == 0)
                 {
@@ -1234,8 +1243,8 @@ namespace RedRatDatabaseViewer
                 }
                 else
                 {
-                    Console.WriteLine("Duty Cycle is out of range (< " + min_freq.ToString() + " Hz), using " + default_freq.ToString() + " instead.");
-                    period = Convert.ToUInt16(8000000 / default_freq);
+                    Console.WriteLine("Carrier Frequency is out of range (< " + min_freq.ToString() + " Hz), using " + default_freq.ToString() + " instead.");
+                    period = Convert.ToUInt16(Math.Round(8000000 / default_freq));
                 }
                 temp_byte = Convert.ToByte(period / 256);
                 data_to_sent.Add(temp_byte);
@@ -1276,7 +1285,7 @@ namespace RedRatDatabaseViewer
                 if (TimeOutTimerList.Contains(timer))        // still timer of this bluerat object is running?
                 {
                     TimeOutTimerList.Remove(timer);         // if yes, force it to expire
-                    Application.DoEvents();
+                    //Application.DoEvents();
                 }
             }
             MyOwnTimerList.Clear();                         // all timer expired, no need to keep record
@@ -1297,7 +1306,7 @@ namespace RedRatDatabaseViewer
             TimeOutTimerList.Add(aTimer);           // This list is to keep running timer until it reaches TimeOutEvent (as indicator of running timer)
             MyOwnTimerList.Add(aTimer);             // This list record all timer created in this bluerat object -- to be removed after timer expired
             aTimer.Enabled = true;
-            while ((MyBlueRatSerial.Serial_PortConnection() == true) && (TimeOutTimerList.Contains(aTimer) == true)) { Application.DoEvents(); Thread.Sleep(1); }
+            while ((MyBlueRatSerial.Serial_PortConnection() == true) && (TimeOutTimerList.Contains(aTimer) == true)) { /*Application.DoEvents();*/ Thread.Sleep(1); }
             MyOwnTimerList.Remove(aTimer);          // timer expired, so remove it from the list recording timer created.
             aTimer.Stop();
             aTimer.Dispose();
@@ -1332,7 +1341,8 @@ namespace RedRatDatabaseViewer
                 uint MyRetryTimes = Convert.ToUInt32(ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1) - 1;
                 do
                 {
-                    Application.DoEvents(); Thread.Sleep(4); Application.DoEvents();
+                    //Application.DoEvents(); Thread.Sleep(4); Application.DoEvents();
+                    Thread.Sleep(4);
                     if (bluerat_serial.ReadLine_Ready() == true)
                     {
                         String in_str = bluerat_serial.ReadLine_Result();
@@ -1488,67 +1498,6 @@ namespace RedRatDatabaseViewer
         }
 
         // For self testing purpose
-        public void TEST_GPIO_Output()
-        {
-            const int delay_time = 100;
-            // Testing: send GPIO output with byte parameter -- Set output port value at once
-            for (uint output_value = 0; output_value <= 0xff; output_value++)
-            {
-                Set_GPIO_Output(Convert.ToByte(output_value & 0xff));
-                HomeMade_Delay(delay_time / 2);
-                if (!MyBlueRatSerial.Serial_PortConnection())
-                {
-                    return;
-                }
-            }
-
-            int run_time = 10;
-            const UInt32 IO_value_mask = 0x0, reverse_IO_value_mask = 0x1;
-
-            Set_GPIO_Output(Convert.ToByte((~reverse_IO_value_mask) & 0xff));
-            HomeMade_Delay(delay_time);
-            if (!MyBlueRatSerial.Serial_PortConnection())
-            {
-                return;
-            }
-
-            while (run_time-- > 0)
-            {
-                for (Byte output_bit = 0; output_bit < 7;)
-                {
-                    //UInt32 temp_parameter = (output_bit << 8) | reverse_IO_value_mask;
-                    //MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
-                    Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(reverse_IO_value_mask));
-                    HomeMade_Delay(16);
-                    output_bit++;
-                    //temp_parameter = (((output_bit) << 8) | IO_value_mask);
-                    //MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
-                    Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(IO_value_mask));
-                    HomeMade_Delay(delay_time);
-                    if (!MyBlueRatSerial.Serial_PortConnection())
-                    {
-                        return;
-                    }
-                }
-                for (Byte output_bit = 7; output_bit > 0;)
-                {
-                    //UInt32 temp_parameter = (output_bit << 8) | reverse_IO_value_mask;
-                    //MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
-                    Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(reverse_IO_value_mask));
-                    HomeMade_Delay(16);
-                    output_bit--;
-                    //temp_parameter = (((output_bit) << 8) | IO_value_mask);
-                    //MyBlueRatSerial.BlueRatSendToSeria(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray());
-                    Set_GPIO_Output_SinglePort(output_bit, Convert.ToByte(IO_value_mask));
-                    HomeMade_Delay(delay_time);
-                    if (!MyBlueRatSerial.Serial_PortConnection())
-                    {
-                        return;
-                    }
-                }
-            }
-        }
-        
         public void TEST_SENSOR_Input()
         {
             const int delay_time = 500;
@@ -1564,8 +1513,7 @@ namespace RedRatDatabaseViewer
                     return;
                 }
 
-                UInt32 sensor_input_value;
-                Get_Sensor_Input(out sensor_input_value);
+                Get_Sensor_Input(out UInt32 sensor_input_value);
                 byte Sensor_Read_Data = Convert.ToByte(sensor_input_value & 0xff);
                 Console.WriteLine("Sendor_IN:" + Sensor_Read_Data.ToString());
                 HomeMade_Delay(delay_time);

@@ -9,7 +9,7 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Xml.Serialization;
 
-namespace RedRatDatabaseViewer
+namespace BlueRatLibrary
 {
     public class RedRatDBParser
     {
@@ -493,7 +493,7 @@ namespace RedRatDatabaseViewer
                 double min_width = carrier_width * (min_carrier_width_ratio);
                 if ((signal_width + carrier_width) >= min_width)
                 {
-                    high_pulse_compensation = carrier_width;
+                    high_pulse_compensation = 0; // carrier_width;
                 }
                 else
                 {

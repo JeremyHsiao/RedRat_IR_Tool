@@ -1,6 +1,6 @@
-﻿namespace RedRatDatabaseViewer
+﻿namespace BlueRatViewer
 {
-    partial class RedRatDBViewer
+    partial class BlueRatDevViewer
     {
         /// <summary>
         /// 設計工具所需的變數。
@@ -17,6 +17,7 @@
             {
                 components.Dispose();
             }
+            MyBlueRat.Dispose();
             base.Dispose(disposing);
         }
 
@@ -33,6 +34,7 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(BlueRatDevViewer));
             this.btnGetRCFile = new System.Windows.Forms.Button();
             this.btnSingleRCPressed = new System.Windows.Forms.Button();
             this.listboxAVDeviceList = new System.Windows.Forms.ListBox();
@@ -322,7 +324,7 @@
             this.lbModulationType.Name = "lbModulationType";
             this.lbModulationType.Size = new System.Drawing.Size(285, 26);
             this.lbModulationType.TabIndex = 14;
-            this.lbModulationType.Text = "RedRat RC Modulation Type";
+            this.lbModulationType.Text = "RC Modulation Type";
             this.lbModulationType.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // btnFreshCOMNo
@@ -398,7 +400,7 @@
             this.btnFWUpgrade.UseVisualStyleBackColor = true;
             this.btnFWUpgrade.Click += new System.EventHandler(this.btnFWUpgrade_Click);
             // 
-            // RedRatDBViewer
+            // BlueRatDevViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -418,11 +420,12 @@
             this.Controls.Add(this.btnSingleRCPressed);
             this.Controls.Add(this.btnGetRCFile);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
-            this.Name = "RedRatDBViewer";
-            this.Text = "RedRat Database Viewer";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.RedRatDBViewer_Closing);
-            this.Load += new System.EventHandler(this.RedRatDBViewer_Load);
+            this.Name = "BlueRatDevViewer";
+            this.Text = "BlueRat Development Viewer";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.BlueRatDevViewer_Closing);
+            this.Load += new System.EventHandler(this.BlueRatDevViewer_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvPulseData)).EndInit();
             this.gbRC_File_Data.ResumeLayout(false);
             this.gbRC_File_Data.PerformLayout();

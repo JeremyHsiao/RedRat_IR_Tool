@@ -6,9 +6,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Win32.SafeHandles;
 
-namespace RedRatDatabaseViewer
+namespace BlueRatLibrary
 {
-    class BlueRatSerial
+    class BlueRatSerial : IDisposable
     {
         // static member/function to shared aross all BlueRatSerial
         static private Dictionary<string, Object> BlueRatSerialDictionary = new Dictionary<string, Object>();
@@ -21,7 +21,32 @@ namespace RedRatDatabaseViewer
         public const int Serial_DataBits = 8;
         public const StopBits Serial_StopBits = StopBits.One;
 
-        public BlueRatSerial() { _serialPort = new SerialPort(); _serialPort.BaudRate = Serial_BaudRate; _serialPort.Parity = Serial_Parity; _serialPort.DataBits = Serial_DataBits; _serialPort.StopBits = Serial_StopBits; }
+        public BlueRatSerial() {
+            _serialPort = new SerialPort
+            {
+                BaudRate = Serial_BaudRate,
+                Parity = Serial_Parity,
+                DataBits = Serial_DataBits,
+                StopBits = Serial_StopBits
+            };
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // dispose managed resources
+                _serialPort.Close();
+            }
+            // free native resources
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         public BlueRatSerial(string com_port) { _serialPort = new SerialPort(com_port, Serial_BaudRate, Serial_Parity, Serial_DataBits, Serial_StopBits); }
         public string GetPortName() { return _serialPort.PortName; }
         public void SetBlueRatVersion(UInt32 fw_ver, UInt32 cmd_ver) { BlueRatFWVersion = fw_ver; BlueRatCMDVersion = cmd_ver; }
@@ -168,8 +193,7 @@ namespace RedRatDatabaseViewer
         {
             // Find out which serial port --> which bluerat
             SerialPort sp = (SerialPort)sender;
-            Object bluerat_serial_obj;
-            BlueRatSerialDictionary.TryGetValue(sp.PortName, out bluerat_serial_obj);
+            BlueRatSerialDictionary.TryGetValue(sp.PortName, out Object bluerat_serial_obj);
             BlueRatSerial bluerat = (BlueRatSerial)bluerat_serial_obj;
             //Rx_char_buffer_QUEUE
             int buf_len = sp.BytesToRead;
@@ -319,11 +343,7 @@ namespace RedRatDatabaseViewer
         //
         protected virtual void OnUARTException(EventArgs e)
         {
-            EventHandler handler = UARTException;
-            if (handler != null)
-            {
-                handler(this, e);
-            }
+            UARTException?.Invoke(this, e);
         }
 
         public event EventHandler UARTException;

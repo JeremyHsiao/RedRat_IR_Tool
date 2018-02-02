@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace RedRatDatabaseViewer
+namespace BlueRatViewer
 {
     static class Program
     {
@@ -16,7 +16,7 @@ namespace RedRatDatabaseViewer
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new RedRatDBViewer());
+            Application.Run(new BlueRatDevViewer());
         }
     }
 }
