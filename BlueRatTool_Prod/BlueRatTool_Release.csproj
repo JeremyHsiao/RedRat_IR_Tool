@@ -102,4 +102,8 @@
     </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>copy $(SolutionDir)BlueRatLibrary\bin\Release\BlueRatLibrary.dll $(ProjectDir)
+</PreBuildEvent>
+  </PropertyGroup>
 </Project>

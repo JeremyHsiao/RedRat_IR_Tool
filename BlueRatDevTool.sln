@@ -8,6 +8,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlueRatLibrary", "BlueRatLibrary\BlueRatLibrary.csproj", "{B3373938-369A-42B3-8B89-AD87A5CB9BC8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlueRatTool_Release", "BlueRatTool_Prod\BlueRatTool_Release.csproj", "{EBBA40BE-C68B-4B94-9DA7-5ACBC89ABA2D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B3373938-369A-42B3-8B89-AD87A5CB9BC8} = {B3373938-369A-42B3-8B89-AD87A5CB9BC8}
+		{E1FC507F-1B45-4D87-816A-804F59F7AE19} = {E1FC507F-1B45-4D87-816A-804F59F7AE19}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
