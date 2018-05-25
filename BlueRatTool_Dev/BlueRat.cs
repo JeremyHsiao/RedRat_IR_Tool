@@ -117,7 +117,7 @@ namespace BlueRatLibrary
                     retry_cnt = 3;
                     string cmd_ver_str;
                     while ((Get_Command_Version(out cmd_ver_str) == false) && (--retry_cnt > 0)) ;
-                    BlueRatCMDVersion = Convert.ToUInt32(cmd_ver_str);
+                    BlueRatCMDVersion = Convert.ToUInt32(cmd_ver_str);      // Please note that enum is a hex-value originally
 
                     retry_cnt = 3;
                     while ((Get_SW_Build_Time(out BlueRatBuildTime) == false) && (--retry_cnt > 0)) ;
@@ -597,6 +597,51 @@ namespace BlueRatLibrary
             return bRet;
         }
 
+
+        //#define TMR1_PRESCALER      (1)     // minus 1 before writing to register
+        //#define TMR1_TICK_CNT       (2)
+        //#define TMR1_MS_CNT_VALUE   (16/(TMR1_TICK_CNT*TMR1_PRESCALER))   // current TMR1 software timer is 1/TMR1_MS_CNT_VALUE == 1/8 ms for every tick
+
+        const uint TMR1_MS_CNT_VALUE = (16 / (2 * 1));      // the unit of debounce function is 1/TMR1_MS_CNT_VALUE ms
+
+        public bool Set_Input_GPIO_Low_Debounce_Time_PB1(UInt16 PB1_debounce_time)
+        {
+            bool bRet = false;
+
+            // This function is supported since Command version 204
+            if (BlueRatCMDVersion >= 204)       // supported after command version 204
+            {
+                if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_INPUT_GPIO_DEBOUNCE_TIME_PB1), PB1_debounce_time * TMR1_MS_CNT_VALUE).ToArray()))
+                {
+                    bRet = true;
+                }
+            }
+            else
+            {
+                Console.WriteLine("Set_Input_GPIO_Low_Debounce_Time_PB1() is not supported in this library");
+            }
+            return bRet;
+        }
+
+        public bool Set_Input_GPIO_Low_Debounce_Time_PB7(UInt16 PB7_debounce_time)
+        {
+            bool bRet = false;
+
+            // This function is supported since Command version 204
+            if (BlueRatCMDVersion >= 204)     
+            {
+                if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_INPUT_GPIO_DEBOUNCE_TIME_PB7), PB7_debounce_time * TMR1_MS_CNT_VALUE).ToArray()))
+                {
+                    bRet = true;
+                }
+            }
+            else
+            {
+                Console.WriteLine("Set_Input_GPIO_Low_Debounce_Time_PB1() is not supported in this library");
+            }
+            return bRet;
+        }
+
         public int SendOneRC(RedRatDBParser RedRatData, byte default_repeat_cnt = 0)
         {
             // Precondition
@@ -704,8 +749,8 @@ namespace BlueRatLibrary
             ENUM_CMD_UNKNOWN_LAST = 0x7e,
             ENUM_CMD_INPUT_TX_SIGNAL = 0x7f,
             ENUM_CMD_ADD_REPEAT_COUNT = 0x80,
-            ENUM_CMD_CODE_0X81 = 0x81,
-            ENUM_CMD_CODE_0X82 = 0x82,
+            ENUM_CMD_SET_INPUT_GPIO_DEBOUNCE_TIME_PB1 = 0x81,
+            ENUM_CMD_SET_INPUT_GPIO_DEBOUNCE_TIME_PB7 = 0x82,
             ENUM_CMD_CODE_0X83 = 0x83,
             ENUM_CMD_CODE_0X84 = 0x84,
             ENUM_CMD_CODE_0X85 = 0x85,
@@ -835,6 +880,8 @@ namespace BlueRatLibrary
             ENUM_CMD_VERSION_V200 = 0x200,
             ENUM_CMD_VERSION_V201 = 0x201,
             ENUM_CMD_VERSION_V202 = 0x202,
+            ENUM_CMD_VERSION_V203 = 0x203,
+            ENUM_CMD_VERSION_V204 = 0x204,
             ENUM_CMD_VERSION_CURRENT_PLUS_1,
             ENUM_CMD_STATE_MAX
         };
