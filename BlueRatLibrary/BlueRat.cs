@@ -117,7 +117,7 @@ namespace BlueRatLibrary
                     retry_cnt = 3;
                     string cmd_ver_str;
                     while ((Get_Command_Version(out cmd_ver_str) == false) && (--retry_cnt > 0)) ;
-                    BlueRatCMDVersion = Convert.ToUInt32(cmd_ver_str);
+                    BlueRatCMDVersion = Convert.ToUInt32(cmd_ver_str);      // Please note that enum is a hex-value originally
 
                     retry_cnt = 3;
                     while ((Get_SW_Build_Time(out BlueRatBuildTime) == false) && (--retry_cnt > 0)) ;
@@ -608,7 +608,8 @@ namespace BlueRatLibrary
         {
             bool bRet = false;
 
-            if (BlueRatCMDVersion >= Convert.ToUInt32(ENUM_CMD_STATUS.ENUM_CMD_VERSION_V204))
+            // This function is supported since Command version 204
+            if (BlueRatCMDVersion >= 204)       // supported after command version 204
             {
                 if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_INPUT_GPIO_DEBOUNCE_TIME_PB1), PB1_debounce_time * TMR1_MS_CNT_VALUE).ToArray()))
                 {
@@ -627,7 +628,7 @@ namespace BlueRatLibrary
             bool bRet = false;
 
             // This function is supported since Command version 204
-            if (BlueRatCMDVersion >= Convert.ToUInt32(ENUM_CMD_STATUS.ENUM_CMD_VERSION_V204))
+            if (BlueRatCMDVersion >= 204)     
             {
                 if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_INPUT_GPIO_DEBOUNCE_TIME_PB7), PB7_debounce_time * TMR1_MS_CNT_VALUE).ToArray()))
                 {
