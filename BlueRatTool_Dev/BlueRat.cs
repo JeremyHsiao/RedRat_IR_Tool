@@ -603,8 +603,9 @@ namespace BlueRatLibrary
         //#define TMR1_MS_CNT_VALUE   (16/(TMR1_TICK_CNT*TMR1_PRESCALER))   // current TMR1 software timer is 1/TMR1_MS_CNT_VALUE == 1/8 ms for every tick
 
         const uint TMR1_MS_CNT_VALUE = (16 / (2 * 1));      // the unit of debounce function is 1/TMR1_MS_CNT_VALUE ms
+        const UInt16 TIMER1_DEFAULT_TIMEOUT_TIME = 1000;      // current default is 1000 ms    
 
-        public bool Set_Input_GPIO_Low_Debounce_Time_PB1(UInt16 PB1_debounce_time)
+        public bool Set_Input_GPIO_Low_Debounce_Time_PB1(UInt16 PB1_debounce_time = TIMER1_DEFAULT_TIMEOUT_TIME)
         {
             bool bRet = false;
 
@@ -623,7 +624,7 @@ namespace BlueRatLibrary
             return bRet;
         }
 
-        public bool Set_Input_GPIO_Low_Debounce_Time_PB7(UInt16 PB7_debounce_time)
+        public bool Set_Input_GPIO_Low_Debounce_Time_PB7(UInt16 PB7_debounce_time = TIMER1_DEFAULT_TIMEOUT_TIME)
         {
             bool bRet = false;
 
