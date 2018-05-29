@@ -1044,6 +1044,42 @@ namespace BlueRatViewer
             }
         }
 
+        private void Test_GPIO_Input_PB_Debounce(BlueRat my_blue_rat)
+        {
+            UInt16 PB1_time = 2000, PB7_time = 4000, retry_cnt;
+            bool bRet = false;
+            retry_cnt = 3;
+            do
+            {
+                bRet = my_blue_rat.Set_Input_GPIO_Low_Debounce_Time_PB1(PB1_time);
+            }
+            while ((bRet == false) && (--retry_cnt > 0) && (FormIsClosing == false));
+            if (bRet)
+            {
+                Console.WriteLine("Set_Input_GPIO_Low_Debounce_Time_PB1 is ok");
+            }
+            else
+            {
+                Console.WriteLine("Set_Input_GPIO_Low_Debounce_Time_PB1 failed after retry");
+            }
+
+            bRet = false;
+            retry_cnt = 3;
+            do
+            {
+                bRet = my_blue_rat.Set_Input_GPIO_Low_Debounce_Time_PB7(PB7_time);
+            }
+            while ((bRet == false) && (--retry_cnt > 0) && (FormIsClosing == false));
+            if (bRet)
+            {
+                Console.WriteLine("Set_Input_GPIO_Low_Debounce_Time_PB7 is ok");
+            }
+            else
+            {
+                Console.WriteLine("Set_Input_GPIO_Low_Debounce_Time_PB7 failed after retry");
+            }
+        }
+
         private void TEST_GPIO_Output(BlueRat my_blue_rat)
         {
             const int delay_time = 100;
@@ -1223,6 +1259,10 @@ namespace BlueRatViewer
                             MyBlueRat.CheckConnection();
                             Console.WriteLine("DONE - TEST_GPIO_Output");
                         }
+
+                        if (FormIsClosing == true) break;
+                        Test_GPIO_Input_PB_Debounce(MyBlueRat);
+                        Console.WriteLine("DONE - Test_GPIO_Input_PB_Debounce");
 
                         if ((RedRatData != null) && (RedRatData.SignalDB != null))
                         {
