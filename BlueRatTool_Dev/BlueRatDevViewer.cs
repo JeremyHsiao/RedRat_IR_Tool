@@ -1223,12 +1223,15 @@ namespace BlueRatViewer
                         Console.WriteLine("BlueRat at " + com_port_name + ":\n" + "SW: " + temp_string1 + "\n" + "CMD_API: " + temp_string2 + "\n" + "Build time: " + temp_string3 + "\n");
 
                         if (FormIsClosing == true) break;
-                        Test_GPIO_Input(MyBlueRat);
-                        Console.WriteLine("DONE - Test_GPIO_Input");
-
-                        if (FormIsClosing == true) break;
                         Test_GPIO_Input_PB_Debounce(MyBlueRat);
                         Console.WriteLine("DONE - Test_GPIO_Input_PB_Debounce");
+
+                        if (FormIsClosing == true) break;
+                        for (int myloop = 10; myloop-- > 0;)
+                        {
+                            Test_GPIO_Input(MyBlueRat);
+                        }
+                        Console.WriteLine("DONE - Test_GPIO_Input");
 
                         if (FormIsClosing == true) break;
                         TEST_Return_Repeat_Count_and_Tx_Status(MyBlueRat, RedRatData);
