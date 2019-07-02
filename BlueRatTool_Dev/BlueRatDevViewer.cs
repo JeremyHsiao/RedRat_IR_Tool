@@ -1024,6 +1024,62 @@ namespace BlueRatViewer
             }
         }
 
+        private void Test_SPI_Write_Word(BlueRat my_blue_rat)
+        {
+            UInt32 retry_cnt;
+            UInt16 SPI_Word_Value = 0x1300;
+            bool bRet = false; //Set_SPI_Pin_Enable
+
+            retry_cnt = 3;
+            do
+            {
+                bRet = my_blue_rat.Set_SPI_Pin_Enable(true);
+            }
+            while ((bRet == false) && (--retry_cnt > 0) && (FormIsClosing == false));
+            if (bRet)
+            {
+                Console.WriteLine("Set_SPI_Pin_Enable: true");
+            }
+            else
+            {
+                Console.WriteLine("Set_SPI_Pin_Enable(true) fail after retry");
+                return;
+            }
+
+            retry_cnt = 3;
+            do
+            {
+                bRet = my_blue_rat.Set_SPI_Output_Word(SPI_Word_Value);
+            }
+            while ((bRet == false) && (--retry_cnt > 0) && (FormIsClosing == false));
+            if (bRet)
+            {
+                Console.WriteLine("SPI_Write_Word: " + SPI_Word_Value.ToString());
+            }
+            else
+            {
+                Console.WriteLine("SPI_Write_Word fail after retry");
+                return;
+            }
+
+            retry_cnt = 3;
+            do
+            {
+                bRet = my_blue_rat.Set_SPI_Pin_Enable(false);
+            }
+            while ((bRet == false) && (--retry_cnt > 0) && (FormIsClosing == false));
+            if (bRet)
+            {
+                Console.WriteLine("Set_SPI_Pin_Enable: false");
+            }
+            else
+            {
+                Console.WriteLine("Set_SPI_Pin_Enable(false) fail after retry");
+                return;
+            }
+
+        }
+
         private void Test_GPIO_Input(BlueRat my_blue_rat)
         {
             UInt32 GPIO_input_value, retry_cnt;
