@@ -590,13 +590,37 @@ namespace BlueRatLibrary
             UInt32 temp_parameter;
             if (output_value != 0) { temp_parameter = 1; } else { temp_parameter = 0; }
             temp_parameter |= Convert.ToUInt32(port_no) << 8;
-            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_ALL_BIT), temp_parameter).ToArray()))
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SET_GPIO_SINGLE_BIT), temp_parameter).ToArray()))
             {
                 bRet = true;
             }
             return bRet;
         }
 
+        public bool Set_SPI_Output_Word(UInt16 word_value)
+        {
+            bool bRet = false;
+
+            UInt32 temp_parameter;
+            temp_parameter = word_value;
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SPI_WRITE_WORD_MODE_00), temp_parameter).ToArray()))
+            {
+                bRet = true;
+            }
+            return bRet;
+        }
+
+        public bool Set_SPI_Pin_Enable(bool enable)
+        {
+            bool bRet = false;
+
+            UInt32 temp_parameter = (enable)?(uint)1:(uint)0;
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SPI_ENABLE_PB_PORT), temp_parameter).ToArray()))
+            {
+                bRet = true;
+            }
+            return bRet;
+        }
 
         //#define TMR1_PRESCALER      (1)     // minus 1 before writing to register
         //#define TMR1_TICK_CNT       (2)
@@ -798,7 +822,7 @@ namespace BlueRatLibrary
             ENUM_CMD_CODE_0XAD = 0xad,
             ENUM_CMD_CODE_0XAE = 0xae,
             ENUM_CMD_CODE_0XAF = 0xaf,
-            ENUM_CMD_CODE_0XB0 = 0xb0,
+            ENUM_CMD_SPI_WRITE_WORD_MODE_00 = 0xb0,
             ENUM_CMD_CODE_0XB1 = 0xb1,
             ENUM_CMD_CODE_0XB2 = 0xb2,
             ENUM_CMD_CODE_0XB3 = 0xb3,
@@ -831,7 +855,7 @@ namespace BlueRatLibrary
             ENUM_CMD_CODE_0XCE = 0xce,
             ENUM_CMD_CODE_0XCF = 0xcf,
             ENUM_CMD_CODE_0XD0 = 0xd0,
-            ENUM_CMD_CODE_0XD1 = 0xd1,
+            ENUM_CMD_SPI_ENABLE_PB_PORT = 0xd1,
             ENUM_CMD_CODE_0XD2 = 0xd2,
             ENUM_CMD_CODE_0XD3 = 0xd3,
             ENUM_CMD_CODE_0XD4 = 0xd4,
