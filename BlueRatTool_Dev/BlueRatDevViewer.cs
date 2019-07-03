@@ -1027,7 +1027,6 @@ namespace BlueRatViewer
         private void Test_SPI_Write_Word(BlueRat my_blue_rat)
         {
             UInt32 retry_cnt;
-            UInt16 SPI_Word_Value = 0x1300;
             bool bRet = false; //Set_SPI_Pin_Enable
 
             retry_cnt = 3;
@@ -1046,20 +1045,49 @@ namespace BlueRatViewer
                 return;
             }
 
-            retry_cnt = 3;
-            do
+            // value going up
+            UInt16 SPI_Word_Value = 0x1300;
+            while ((SPI_Word_Value&0xff) < 0xff)
             {
-                bRet = my_blue_rat.Set_SPI_Output_Word(SPI_Word_Value);
+                retry_cnt = 3;
+                do
+                {
+                    bRet = my_blue_rat.Set_SPI_Output_Word(SPI_Word_Value);
+                }
+                while ((bRet == false) && (--retry_cnt > 0) && (FormIsClosing == false));
+                if (bRet)
+                {
+                    Console.WriteLine("SPI_Write_Word: " + SPI_Word_Value.ToString());
+                }
+                else
+                {
+                    Console.WriteLine("SPI_Write_Word fail after retry");
+                    return;
+                }
+                SPI_Word_Value++;
+                BlueRatDevViewer_Delay(100);
             }
-            while ((bRet == false) && (--retry_cnt > 0) && (FormIsClosing == false));
-            if (bRet)
+
+            // value going down
+            while ((SPI_Word_Value & 0xff) > 0 )
             {
-                Console.WriteLine("SPI_Write_Word: " + SPI_Word_Value.ToString());
-            }
-            else
-            {
-                Console.WriteLine("SPI_Write_Word fail after retry");
-                return;
+                retry_cnt = 3;
+                do
+                {
+                    bRet = my_blue_rat.Set_SPI_Output_Word(SPI_Word_Value);
+                }
+                while ((bRet == false) && (--retry_cnt > 0) && (FormIsClosing == false));
+                if (bRet)
+                {
+                    Console.WriteLine("SPI_Write_Word: " + SPI_Word_Value.ToString());
+                }
+                else
+                {
+                    Console.WriteLine("SPI_Write_Word fail after retry");
+                    return;
+                }
+                SPI_Word_Value--;
+                BlueRatDevViewer_Delay(100);
             }
 
             retry_cnt = 3;
@@ -1102,7 +1130,7 @@ namespace BlueRatViewer
 
         private void Test_GPIO_Input_PB_Debounce(BlueRat my_blue_rat)
         {
-            UInt16 PB1_time = 2000, PB7_time = 4000, retry_cnt;
+            UInt16 PB1_time = 8000, PB7_time = 4000, retry_cnt;
             bool bRet = false;
             retry_cnt = 3;
             do
@@ -1279,11 +1307,15 @@ namespace BlueRatViewer
                         Console.WriteLine("BlueRat at " + com_port_name + ":\n" + "SW: " + temp_string1 + "\n" + "CMD_API: " + temp_string2 + "\n" + "Build time: " + temp_string3 + "\n");
 
                         if (FormIsClosing == true) break;
+                        Test_SPI_Write_Word(MyBlueRat);
+                        Console.WriteLine("DONE - Test_SPI_Write_Word");
+
+                        if (FormIsClosing == true) break;
                         Test_GPIO_Input_PB_Debounce(MyBlueRat);
                         Console.WriteLine("DONE - Test_GPIO_Input_PB_Debounce");
 
                         if (FormIsClosing == true) break;
-                        for (int myloop = 10; myloop-- > 0;)
+                        for (int myloop = 10000; myloop-- > 0;)
                         {
                             Test_GPIO_Input(MyBlueRat);
                         }
