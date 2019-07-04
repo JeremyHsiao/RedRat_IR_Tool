@@ -1024,6 +1024,39 @@ namespace BlueRatViewer
             }
         }
 
+        private void Test_I2C_Write_Word(BlueRat my_blue_rat)
+        {
+            UInt32 retry_cnt;
+            bool bRet = false;
+            UInt16 I2C_Word=0x1000;
+
+            // value going down
+            {
+                retry_cnt = 3;
+                do  
+                {
+                        bRet = my_blue_rat.Set_I2C_Output_SlaveAdr_Word((0x3E << 1),0x0E00);
+                        bRet = my_blue_rat.Set_I2C_Output_SlaveAdr_Word((0x3E << 1),0x0F00);
+                        bRet = my_blue_rat.Set_I2C_Output_SlaveAdr_Word((0x3E << 1),0x1055);
+                        bRet = my_blue_rat.Set_I2C_Output_SlaveAdr_Word((0x3E << 1),0x1155);
+                    //    bRet = my_blue_rat.Set_I2C_Output_Word(0x0E00);
+                    //    bRet = my_blue_rat.Set_I2C_Output_Word(0x0F00);
+                    //    bRet = my_blue_rat.Set_I2C_Output_Word(0x10AA);
+                    //    bRet = my_blue_rat.Set_I2C_Output_Word(0x11AA);
+                }
+                while ((bRet == false) && (--retry_cnt > 0) && (FormIsClosing == false));
+                if (bRet)
+                {
+                    Console.WriteLine("Set_I2C_Output_Word: " + I2C_Word.ToString());
+                }
+                else
+                {
+                    Console.WriteLine("Set_I2C_Output_Word fail after retry");
+                    return;
+                }
+            }
+         }
+
         private void Test_SPI_Write_Word(BlueRat my_blue_rat)
         {
             UInt32 retry_cnt;
@@ -1305,6 +1338,10 @@ namespace BlueRatViewer
                         temp_string2 = MyBlueRat.CMD_VER.ToString();
                         temp_string3 = MyBlueRat.BUILD_TIME;
                         Console.WriteLine("BlueRat at " + com_port_name + ":\n" + "SW: " + temp_string1 + "\n" + "CMD_API: " + temp_string2 + "\n" + "Build time: " + temp_string3 + "\n");
+
+                        if (FormIsClosing == true) break;
+                        Test_I2C_Write_Word(MyBlueRat);
+                        Console.WriteLine("DONE - Test_I2C_Write_Word");
 
                         if (FormIsClosing == true) break;
                         Test_SPI_Write_Word(MyBlueRat);
