@@ -572,6 +572,51 @@ namespace BlueRatLibrary
             return bRet;
         }
 
+        public bool Get_SX1509_Exist(out byte SX_1509_status)
+        {
+            bool bRet = false;
+            const int default_timeout_time = 16;
+            ENUM_RETRY_RESULT result_status;
+
+            SX_1509_status = 0;
+            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_DETECT_SX1509)), out string in_str, default_timeout_time);
+            if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
+            {
+                if (in_str.Contains(_CMD_IO_EXTEND_DETECT_RETURN_HEADER_))
+                {
+                    in_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                }
+                else if (_CMD_IO_EXTEND_DETECT_RETURN_HEADER_ == "")
+                {
+                    // do nothing here
+                }
+                else
+                {
+                    in_str = "ERR:" + in_str;
+                    // not correct result - intentionally set in_str="ERR"
+                }
+
+                try
+                {
+                    UInt32 temp = Convert.ToUInt32(in_str, 16);      // only for testing conversion.
+                    SX_1509_status = (byte)temp;
+                    bRet = true;
+                }
+                catch (System.FormatException)
+                {
+                    result_status = ENUM_RETRY_RESULT.ENUM_ERROR_AT_COMPARE;
+                }
+            }
+
+            // Debug purpose
+            if (result_status >= ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
+            {
+                Console.WriteLine("Get_SW_Version Error: " + result_status.ToString() + " -- " + in_str);
+            }
+
+            return bRet;
+        }
+
         public bool Set_GPIO_Output(byte output_value)
         {
             bool bRet = false;
@@ -982,7 +1027,7 @@ namespace BlueRatLibrary
             ENUM_CMD_CODE_0XED = 0xed,
             ENUM_CMD_CODE_0XEE = 0xee,
             ENUM_CMD_CODE_0XEF = 0xef,
-            ENUM_CMD_CODE_0XF0 = 0xf0,
+            ENUM_CMD_DETECT_SX1509 = 0xf0,
             ENUM_CMD_CODE_0XF1 = 0xf1,
             ENUM_CMD_CODE_0XF2 = 0xf2,
             ENUM_CMD_CODE_0XF3 = 0xf3,
@@ -1033,6 +1078,8 @@ namespace BlueRatLibrary
         string _CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ = "";
         string _CMD_GPIO_INPUT_RETURN_HEADER_ = "";
         string _CMD_SENSOR_INPUT_RETURN_HEADER_ = "";
+        string _CMD_IO_EXTEND_DETECT_RETURN_HEADER_ = "";
+        string _CMD_IO_EXTEND_INPUT_RETURN_HEADER_ = "";
 
         static private void Update_Header_String_by_SW_Version(BlueRat blue_rat, uint fw_ver)
         {
@@ -1046,6 +1093,8 @@ namespace BlueRatLibrary
                 blue_rat._CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ = "CNT:";
                 blue_rat._CMD_GPIO_INPUT_RETURN_HEADER_ = "IN:";
                 blue_rat._CMD_SENSOR_INPUT_RETURN_HEADER_ = "SS:";
+                blue_rat._CMD_IO_EXTEND_DETECT_RETURN_HEADER_ = "IO:";
+                blue_rat._CMD_IO_EXTEND_INPUT_RETURN_HEADER_ = "EI:";
             }
             else
             {
@@ -1057,6 +1106,8 @@ namespace BlueRatLibrary
                 blue_rat._CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ = "";
                 blue_rat._CMD_GPIO_INPUT_RETURN_HEADER_ = "";
                 blue_rat._CMD_SENSOR_INPUT_RETURN_HEADER_ = "";
+                blue_rat._CMD_IO_EXTEND_DETECT_RETURN_HEADER_ = "";
+                blue_rat._CMD_IO_EXTEND_INPUT_RETURN_HEADER_ = "";
             }
         }
 
@@ -1689,7 +1740,29 @@ namespace BlueRatLibrary
             }
         }
 
+        public void TEST_Detect_SX1509()
+        {
+            const int delay_time = 500;
+            //byte SX1509_status;
+            //byte GPIO_Read_Data = 0;
 
+            // For reading an UART input, please make sure previous return data has been already received
+
+            int run_time = 1;
+            while (run_time-- > 0)
+            {
+                if (!MyBlueRatSerial.Serial_PortConnection())
+                {
+                    return;
+                }
+
+                Get_SX1509_Exist(out byte SX1509_status);
+                Console.WriteLine("SX1509_status:" + SX1509_status.ToString());
+                HomeMade_Delay(delay_time);
+            }
+        }
+
+        //Get_SX1509_Exist();
         ///
         ///
     }

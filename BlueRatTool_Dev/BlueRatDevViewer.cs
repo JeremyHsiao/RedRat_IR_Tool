@@ -1388,6 +1388,8 @@ namespace BlueRatViewer
                         temp_string3 = MyBlueRat.BUILD_TIME;
                         Console.WriteLine("BlueRat at " + com_port_name + ":\n" + "SW: " + temp_string1 + "\n" + "CMD_API: " + temp_string2 + "\n" + "Build time: " + temp_string3 + "\n");
 
+                        MyBlueRat.TEST_Detect_SX1509();
+
                         if (FormIsClosing == true) break;
                         Test_IO_Extend_Function(MyBlueRat);
                         Console.WriteLine("DONE - Test_IO_Extend_Function");
