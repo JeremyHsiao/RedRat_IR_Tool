@@ -597,6 +597,59 @@ namespace BlueRatLibrary
             return bRet;
         }
         //
+        public bool Set_IO_Extend_Set_HighByte(UInt16 word_value)
+        {
+            bool bRet = false;
+
+            UInt32 temp_parameter;
+            temp_parameter = word_value;
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SX1509_HIGHBYTE_SET), temp_parameter).ToArray()))
+            {
+                bRet = true;
+            }
+            return bRet;
+        }
+
+        public bool Set_IO_Extend_Set_LowByte(UInt16 word_value)
+        {
+            bool bRet = false;
+
+            UInt32 temp_parameter;
+            temp_parameter = word_value;
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SX1509_LOWBYTE_SET), temp_parameter).ToArray()))
+            {
+                bRet = true;
+            }
+            return bRet;
+        }
+
+        public bool Set_IO_Extend_Set_Pin(byte pin_no, byte pin_value)
+        {
+            bool bRet = false;
+
+            UInt32 temp_parameter;
+            temp_parameter = pin_no;
+            temp_parameter = (temp_parameter << 8) | pin_value;
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SX1509_WRITE_BIT), temp_parameter).ToArray()))
+            {
+                bRet = true;
+            }
+            return bRet;
+        }
+         
+        public bool Set_IO_Extend_Toggle_Pin(byte pin_no)
+        {
+            bool bRet = false;
+
+            UInt32 temp_parameter;
+            temp_parameter = pin_no;
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SX1509_TOGGLE_BIT), temp_parameter).ToArray()))
+            {
+                bRet = true;
+            }
+            return bRet;
+        }
+
         public bool Set_I2C_Output_SlaveAdr_Word(Byte SlaveAdr, UInt16 word_value)
         {
             bool bRet = false;
@@ -867,9 +920,9 @@ namespace BlueRatLibrary
             ENUM_CMD_CODE_0XAF = 0xaf,
             ENUM_CMD_SPI_WRITE_WORD_MODE_00 = 0xb0,
             ENUM_CMD_I2C_WRITE_SLAVEADR_BYTE = 0xb1,
-            ENUM_CMD_CODE_0XB2 = 0xb2,
-            ENUM_CMD_CODE_0XB3 = 0xb3,
-            ENUM_CMD_CODE_0XB4 = 0xb4,
+            ENUM_CMD_SX1509_LOWBYTE_SET = 0xb2,
+            ENUM_CMD_SX1509_HIGHBYTE_SET = 0xb3,
+            ENUM_CMD_SX1509_WRITE_BIT = 0xb4,
             ENUM_CMD_CODE_0XB5 = 0xb5,
             ENUM_CMD_CODE_0XB6 = 0xb6,
             ENUM_CMD_CODE_0XB7 = 0xb7,
@@ -902,7 +955,7 @@ namespace BlueRatLibrary
             ENUM_CMD_CODE_0XD2 = 0xd2,
             ENUM_CMD_CODE_0XD3 = 0xd3,
             ENUM_CMD_CODE_0XD4 = 0xd4,
-            ENUM_CMD_CODE_0XD5 = 0xd5,
+            ENUM_CMD_SX1509_TOGGLE_BIT = 0xd5,
             ENUM_CMD_CODE_0XD6 = 0xd6,
             ENUM_CMD_CODE_0XD7 = 0xd7,
             ENUM_CMD_CODE_0XD8 = 0xd8,

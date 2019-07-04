@@ -1024,6 +1024,50 @@ namespace BlueRatViewer
             }
         }
 
+        //Test_IO_Extend_Function
+        private void Test_IO_Extend_Function(BlueRat my_blue_rat)
+        {
+            UInt32 retry_cnt;
+            bool bRet = false;
+            UInt16 I2C_Word = 0x1000;
+
+            // value going down
+            {
+                retry_cnt = 3;
+                do
+                {
+                    bRet = my_blue_rat.Set_IO_Extend_Set_HighByte(0xff00);
+                    bRet = my_blue_rat.Set_IO_Extend_Set_LowByte(0x00ff);
+                    bRet = my_blue_rat.Set_IO_Extend_Set_Pin(28, 0);
+                    bRet = my_blue_rat.Set_IO_Extend_Set_Pin(24, 0);
+                    bRet = my_blue_rat.Set_IO_Extend_Set_Pin(20, 1);
+                    bRet = my_blue_rat.Set_IO_Extend_Set_Pin(16, 1);
+                    bRet = my_blue_rat.Set_IO_Extend_Set_Pin(12, 1);
+                    bRet = my_blue_rat.Set_IO_Extend_Set_Pin( 8, 1);
+                    bRet = my_blue_rat.Set_IO_Extend_Set_Pin( 4, 0);
+                    bRet = my_blue_rat.Set_IO_Extend_Set_Pin( 0, 0);
+                    bRet = my_blue_rat.Set_IO_Extend_Toggle_Pin(2);
+                    bRet = my_blue_rat.Set_IO_Extend_Toggle_Pin(6);
+                    bRet = my_blue_rat.Set_IO_Extend_Toggle_Pin(10);
+                    bRet = my_blue_rat.Set_IO_Extend_Toggle_Pin(14);
+                    bRet = my_blue_rat.Set_IO_Extend_Toggle_Pin(18);
+                    bRet = my_blue_rat.Set_IO_Extend_Toggle_Pin(22);
+                    bRet = my_blue_rat.Set_IO_Extend_Toggle_Pin(26);
+                    bRet = my_blue_rat.Set_IO_Extend_Toggle_Pin(30);
+                }
+                while ((bRet == false) && (--retry_cnt > 0) && (FormIsClosing == false));
+                if (bRet)
+                {
+                    Console.WriteLine("Set_I2C_Output_Word: " + I2C_Word.ToString());
+                }
+                else
+                {
+                    Console.WriteLine("Set_I2C_Output_Word fail after retry");
+                    return;
+                }
+            }
+        }
+
         private void Test_I2C_Write_Word(BlueRat my_blue_rat)
         {
             UInt32 retry_cnt;
@@ -1343,6 +1387,10 @@ namespace BlueRatViewer
                         temp_string2 = MyBlueRat.CMD_VER.ToString();
                         temp_string3 = MyBlueRat.BUILD_TIME;
                         Console.WriteLine("BlueRat at " + com_port_name + ":\n" + "SW: " + temp_string1 + "\n" + "CMD_API: " + temp_string2 + "\n" + "Build time: " + temp_string3 + "\n");
+
+                        if (FormIsClosing == true) break;
+                        Test_IO_Extend_Function(MyBlueRat);
+                        Console.WriteLine("DONE - Test_IO_Extend_Function");
 
                         if (FormIsClosing == true) break;
                         Test_I2C_Write_Word(MyBlueRat);
