@@ -1037,8 +1037,9 @@ namespace BlueRatViewer
                 {
                         bRet = my_blue_rat.Set_I2C_Output_SlaveAdr_Word((0x3E << 1),0x0E00);
                         bRet = my_blue_rat.Set_I2C_Output_SlaveAdr_Word((0x3E << 1),0x0F00);
-                        bRet = my_blue_rat.Set_I2C_Output_SlaveAdr_Word((0x3E << 1),0x1055);
-                        bRet = my_blue_rat.Set_I2C_Output_SlaveAdr_Word((0x3E << 1),0x1155);
+                        bRet = my_blue_rat.Set_I2C_Output_SlaveAdr_Word((0x3E << 1),0x10aa);
+                        bRet = my_blue_rat.Set_I2C_Output_SlaveAdr_Word((0x3E << 1),0x11bb);
+                        bRet = my_blue_rat.Set_I2C_Input_N_Byte((0x3E << 1), 0x0E, 4);
                     //    bRet = my_blue_rat.Set_I2C_Output_Word(0x0E00);
                     //    bRet = my_blue_rat.Set_I2C_Output_Word(0x0F00);
                     //    bRet = my_blue_rat.Set_I2C_Output_Word(0x10AA);

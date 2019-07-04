@@ -611,6 +611,21 @@ namespace BlueRatLibrary
             return bRet;
         }
 
+        public bool Set_I2C_Input_N_Byte(Byte SlaveAdr, Byte RegAdr, Byte n_byte)
+        {
+            bool bRet = false;
+
+            UInt32 temp_parameter;
+            temp_parameter = SlaveAdr;
+            temp_parameter = (temp_parameter << 8) | RegAdr;
+            temp_parameter = (temp_parameter << 8) | n_byte;
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_I2C_READ_N_BYTE), temp_parameter).ToArray()))
+            {
+                bRet = true;
+            }
+            return bRet;
+        }
+
         public bool Set_I2C_Output_SlaveAdr_Byte(Byte SlaveAdr, byte byte_value)
         {
             bool bRet = false;
@@ -820,7 +835,7 @@ namespace BlueRatLibrary
             ENUM_CMD_CODE_0X8F = 0x8f,
             ENUM_CMD_CODE_0X90 = 0x90,
             ENUM_CMD_I2C_WRITE_SLAVEADR_WORD = 0x91,
-            ENUM_CMD_CODE_0X92 = 0x92,
+            ENUM_CMD_I2C_READ_N_BYTE = 0x92,
             ENUM_CMD_CODE_0X93 = 0x93,
             ENUM_CMD_CODE_0X94 = 0x94,
             ENUM_CMD_CODE_0X95 = 0x95,
