@@ -611,7 +611,7 @@ namespace BlueRatLibrary
             // Debug purpose
             if (result_status >= ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
-                Console.WriteLine("Get_SW_Version Error: " + result_status.ToString() + " -- " + in_str);
+                Console.WriteLine("Get_SX1509_Exist() Error: " + result_status.ToString() + " -- " + in_str);
             }
 
             return bRet;
@@ -1740,12 +1740,9 @@ namespace BlueRatLibrary
             }
         }
 
-        public void TEST_Detect_SX1509()
+        public byte TEST_Detect_SX1509()
         {
             const int delay_time = 500;
-            //byte SX1509_status;
-            //byte GPIO_Read_Data = 0;
-
             // For reading an UART input, please make sure previous return data has been already received
 
             int run_time = 1;
@@ -1753,13 +1750,15 @@ namespace BlueRatLibrary
             {
                 if (!MyBlueRatSerial.Serial_PortConnection())
                 {
-                    return;
+                    return 0xff ;
                 }
 
                 Get_SX1509_Exist(out byte SX1509_status);
                 Console.WriteLine("SX1509_status:" + SX1509_status.ToString());
                 HomeMade_Delay(delay_time);
+                return SX1509_status;
             }
+            return 0xff;
         }
 
         //Get_SX1509_Exist();

@@ -572,6 +572,51 @@ namespace BlueRatLibrary
             return bRet;
         }
 
+        public bool Get_SX1509_Exist(out byte SX_1509_status)
+        {
+            bool bRet = false;
+            const int default_timeout_time = 16;
+            ENUM_RETRY_RESULT result_status;
+
+            SX_1509_status = 0;
+            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_DETECT_SX1509)), out string in_str, default_timeout_time);
+            if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
+            {
+                if (in_str.Contains(_CMD_IO_EXTEND_DETECT_RETURN_HEADER_))
+                {
+                    in_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                }
+                else if (_CMD_IO_EXTEND_DETECT_RETURN_HEADER_ == "")
+                {
+                    // do nothing here
+                }
+                else
+                {
+                    in_str = "ERR:" + in_str;
+                    // not correct result - intentionally set in_str="ERR"
+                }
+
+                try
+                {
+                    UInt32 temp = Convert.ToUInt32(in_str, 16);      // only for testing conversion.
+                    SX_1509_status = (byte)temp;
+                    bRet = true;
+                }
+                catch (System.FormatException)
+                {
+                    result_status = ENUM_RETRY_RESULT.ENUM_ERROR_AT_COMPARE;
+                }
+            }
+
+            // Debug purpose
+            if (result_status >= ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
+            {
+                Console.WriteLine("Get_SX1509_Exist() Error: " + result_status.ToString() + " -- " + in_str);
+            }
+
+            return bRet;
+        }
+
         public bool Set_GPIO_Output(byte output_value)
         {
             bool bRet = false;
@@ -597,6 +642,59 @@ namespace BlueRatLibrary
             return bRet;
         }
         //
+        public bool Set_IO_Extend_Set_HighByte(UInt16 word_value)
+        {
+            bool bRet = false;
+
+            UInt32 temp_parameter;
+            temp_parameter = word_value;
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SX1509_HIGHBYTE_SET), temp_parameter).ToArray()))
+            {
+                bRet = true;
+            }
+            return bRet;
+        }
+
+        public bool Set_IO_Extend_Set_LowByte(UInt16 word_value)
+        {
+            bool bRet = false;
+
+            UInt32 temp_parameter;
+            temp_parameter = word_value;
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SX1509_LOWBYTE_SET), temp_parameter).ToArray()))
+            {
+                bRet = true;
+            }
+            return bRet;
+        }
+
+        public bool Set_IO_Extend_Set_Pin(byte pin_no, byte pin_value)
+        {
+            bool bRet = false;
+
+            UInt32 temp_parameter;
+            temp_parameter = pin_no;
+            temp_parameter = (temp_parameter << 8) | pin_value;
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SX1509_WRITE_BIT), temp_parameter).ToArray()))
+            {
+                bRet = true;
+            }
+            return bRet;
+        }
+         
+        public bool Set_IO_Extend_Toggle_Pin(byte pin_no)
+        {
+            bool bRet = false;
+
+            UInt32 temp_parameter;
+            temp_parameter = pin_no;
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SX1509_TOGGLE_BIT), temp_parameter).ToArray()))
+            {
+                bRet = true;
+            }
+            return bRet;
+        }
+
         public bool Set_I2C_Output_SlaveAdr_Word(Byte SlaveAdr, UInt16 word_value)
         {
             bool bRet = false;
@@ -605,6 +703,21 @@ namespace BlueRatLibrary
             temp_parameter = SlaveAdr;
             temp_parameter = (temp_parameter<<16) | word_value;
             if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_I2C_WRITE_SLAVEADR_WORD), temp_parameter).ToArray()))
+            {
+                bRet = true;
+            }
+            return bRet;
+        }
+
+        public bool Set_I2C_Input_N_Byte(Byte SlaveAdr, Byte RegAdr, Byte n_byte)
+        {
+            bool bRet = false;
+
+            UInt32 temp_parameter;
+            temp_parameter = SlaveAdr;
+            temp_parameter = (temp_parameter << 8) | RegAdr;
+            temp_parameter = (temp_parameter << 8) | n_byte;
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_I2C_READ_N_BYTE), temp_parameter).ToArray()))
             {
                 bRet = true;
             }
@@ -820,7 +933,7 @@ namespace BlueRatLibrary
             ENUM_CMD_CODE_0X8F = 0x8f,
             ENUM_CMD_CODE_0X90 = 0x90,
             ENUM_CMD_I2C_WRITE_SLAVEADR_WORD = 0x91,
-            ENUM_CMD_CODE_0X92 = 0x92,
+            ENUM_CMD_I2C_READ_N_BYTE = 0x92,
             ENUM_CMD_CODE_0X93 = 0x93,
             ENUM_CMD_CODE_0X94 = 0x94,
             ENUM_CMD_CODE_0X95 = 0x95,
@@ -852,9 +965,9 @@ namespace BlueRatLibrary
             ENUM_CMD_CODE_0XAF = 0xaf,
             ENUM_CMD_SPI_WRITE_WORD_MODE_00 = 0xb0,
             ENUM_CMD_I2C_WRITE_SLAVEADR_BYTE = 0xb1,
-            ENUM_CMD_CODE_0XB2 = 0xb2,
-            ENUM_CMD_CODE_0XB3 = 0xb3,
-            ENUM_CMD_CODE_0XB4 = 0xb4,
+            ENUM_CMD_SX1509_LOWBYTE_SET = 0xb2,
+            ENUM_CMD_SX1509_HIGHBYTE_SET = 0xb3,
+            ENUM_CMD_SX1509_WRITE_BIT = 0xb4,
             ENUM_CMD_CODE_0XB5 = 0xb5,
             ENUM_CMD_CODE_0XB6 = 0xb6,
             ENUM_CMD_CODE_0XB7 = 0xb7,
@@ -887,7 +1000,7 @@ namespace BlueRatLibrary
             ENUM_CMD_CODE_0XD2 = 0xd2,
             ENUM_CMD_CODE_0XD3 = 0xd3,
             ENUM_CMD_CODE_0XD4 = 0xd4,
-            ENUM_CMD_CODE_0XD5 = 0xd5,
+            ENUM_CMD_SX1509_TOGGLE_BIT = 0xd5,
             ENUM_CMD_CODE_0XD6 = 0xd6,
             ENUM_CMD_CODE_0XD7 = 0xd7,
             ENUM_CMD_CODE_0XD8 = 0xd8,
@@ -914,7 +1027,7 @@ namespace BlueRatLibrary
             ENUM_CMD_CODE_0XED = 0xed,
             ENUM_CMD_CODE_0XEE = 0xee,
             ENUM_CMD_CODE_0XEF = 0xef,
-            ENUM_CMD_CODE_0XF0 = 0xf0,
+            ENUM_CMD_DETECT_SX1509 = 0xf0,
             ENUM_CMD_CODE_0XF1 = 0xf1,
             ENUM_CMD_CODE_0XF2 = 0xf2,
             ENUM_CMD_CODE_0XF3 = 0xf3,
@@ -965,6 +1078,8 @@ namespace BlueRatLibrary
         string _CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ = "";
         string _CMD_GPIO_INPUT_RETURN_HEADER_ = "";
         string _CMD_SENSOR_INPUT_RETURN_HEADER_ = "";
+        string _CMD_IO_EXTEND_DETECT_RETURN_HEADER_ = "";
+        string _CMD_IO_EXTEND_INPUT_RETURN_HEADER_ = "";
 
         static private void Update_Header_String_by_SW_Version(BlueRat blue_rat, uint fw_ver)
         {
@@ -978,6 +1093,8 @@ namespace BlueRatLibrary
                 blue_rat._CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ = "CNT:";
                 blue_rat._CMD_GPIO_INPUT_RETURN_HEADER_ = "IN:";
                 blue_rat._CMD_SENSOR_INPUT_RETURN_HEADER_ = "SS:";
+                blue_rat._CMD_IO_EXTEND_DETECT_RETURN_HEADER_ = "IO:";
+                blue_rat._CMD_IO_EXTEND_INPUT_RETURN_HEADER_ = "EI:";
             }
             else
             {
@@ -989,6 +1106,8 @@ namespace BlueRatLibrary
                 blue_rat._CMD_GET_TX_CURRENT_REPEAT_COUNT_RETURN_HEADER_ = "";
                 blue_rat._CMD_GPIO_INPUT_RETURN_HEADER_ = "";
                 blue_rat._CMD_SENSOR_INPUT_RETURN_HEADER_ = "";
+                blue_rat._CMD_IO_EXTEND_DETECT_RETURN_HEADER_ = "";
+                blue_rat._CMD_IO_EXTEND_INPUT_RETURN_HEADER_ = "";
             }
         }
 
@@ -1621,7 +1740,28 @@ namespace BlueRatLibrary
             }
         }
 
+        public byte TEST_Detect_SX1509()
+        {
+            const int delay_time = 500;
+            // For reading an UART input, please make sure previous return data has been already received
 
+            int run_time = 1;
+            while (run_time-- > 0)
+            {
+                if (!MyBlueRatSerial.Serial_PortConnection())
+                {
+                    return 0xff ;
+                }
+
+                Get_SX1509_Exist(out byte SX1509_status);
+                Console.WriteLine("SX1509_status:" + SX1509_status.ToString());
+                HomeMade_Delay(delay_time);
+                return SX1509_status;
+            }
+            return 0xff;
+        }
+
+        //Get_SX1509_Exist();
         ///
         ///
     }
