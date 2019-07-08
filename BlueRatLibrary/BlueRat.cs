@@ -805,6 +805,19 @@ namespace BlueRatLibrary
             return bRet;
         }
 
+        public bool Set_MCP42xxx(byte  byte_value)
+        {
+            bool bRet = false;
+
+            UInt32 temp_parameter;
+            temp_parameter = 0x1300 | ((UInt32) byte_value);
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_SPI_WRITE_WORD_MODE_00), temp_parameter).ToArray()))
+            {
+                bRet = true;
+            }
+            return bRet;
+        }
+
         public bool Set_SPI_Output_Word(UInt16 word_value)
         {
             bool bRet = false;

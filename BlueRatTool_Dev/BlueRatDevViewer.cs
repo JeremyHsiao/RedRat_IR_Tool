@@ -1113,8 +1113,59 @@ namespace BlueRatViewer
                 }
             }
          }
-
+        // Set_MCP41xxx by extended IO
         private void Test_SPI_Write_Word(BlueRat my_blue_rat)
+        {
+            UInt32 retry_cnt;
+            bool bRet = false; //Set_SPI_Pin_Enable
+
+            // value going up
+            byte Byte_Data = 0x00;
+            while (Byte_Data < 0xff)
+            {
+                retry_cnt = 3;
+                do
+                {
+                    bRet = my_blue_rat.Set_MCP42xxx(Byte_Data);
+                }
+                while ((bRet == false) && (--retry_cnt > 0) && (FormIsClosing == false));
+                if (bRet)
+                {
+                    Console.WriteLine("MCP42xxx " + Byte_Data.ToString());
+                }
+                else
+                {
+                    Console.WriteLine("MCP42xxx output fail after retry");
+                    return;
+                }
+                Byte_Data++;
+                BlueRatDevViewer_Delay(150);
+            }
+
+            // value going down
+            while (Byte_Data > 0)
+            {
+                retry_cnt = 3;
+                do
+                {
+                    bRet = my_blue_rat.Set_MCP42xxx(Byte_Data);
+                }
+                while ((bRet == false) && (--retry_cnt > 0) && (FormIsClosing == false));
+                if (bRet)
+                {
+                    Console.WriteLine("MCP42xxx " + Byte_Data.ToString());
+                }
+                else
+                {
+                    Console.WriteLine("MCP42xxx output fail after retry");
+                    return;
+                }
+                Byte_Data--;
+                BlueRatDevViewer_Delay(150);
+            }
+        }
+        // Set_MCP41xxx by GPIO input as SPI    
+        private void Test_SPI_Write_Word_v0(BlueRat my_blue_rat)        // Using input GPIO pin as SPI bus
         {
             UInt32 retry_cnt;
             bool bRet = false; //Set_SPI_Pin_Enable
