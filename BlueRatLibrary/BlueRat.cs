@@ -571,6 +571,51 @@ namespace BlueRatLibrary
 
             return bRet;
         }
+        //
+        public bool Get_IO_Extented_Input_Value(out UInt32 IO_Read_Data)
+        {
+            bool bRet = false;
+            const int default_timeout_time = 16;
+            ENUM_RETRY_RESULT result_status;
+
+            IO_Read_Data = 0xffffffff;
+            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_SENSOR_VALUE)), out string in_str, default_timeout_time);
+            if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
+            {
+                if (in_str.Contains(_CMD_IO_EXTEND_INPUT_RETURN_HEADER_))
+                {
+                    in_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                }
+                else if (_CMD_IO_EXTEND_INPUT_RETURN_HEADER_ == "")
+                {
+                    // do nothing here
+                }
+                else
+                {
+                    in_str = "ERR:" + in_str;
+                    // not correct result - intentionally set in_str="ERR"
+                }
+
+                try
+                {
+                    UInt32 temp = Convert.ToUInt32(in_str, 16);      // only for testing conversion.
+                    IO_Read_Data = temp;
+                    bRet = true;
+                }
+                catch (System.FormatException)
+                {
+                    result_status = ENUM_RETRY_RESULT.ENUM_ERROR_AT_COMPARE;
+                }
+            }
+
+            // Debug purpose
+            if (result_status >= ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
+            {
+                Console.WriteLine("Get_IO_Extented_Input_Value Error: " + result_status.ToString() + " -- " + in_str);
+            }
+
+            return bRet;
+        }
 
         public bool Get_SX1509_Exist(out byte SX_1509_status)
         {
@@ -642,7 +687,29 @@ namespace BlueRatLibrary
             return bRet;
         }
         //
-        public bool Set_IO_Extend_Set_HighByte(UInt16 word_value)
+
+        public bool Init_IO_Extend_with_Value(UInt32 uint32bit_value)
+        {
+            bool bRet = false;
+            byte SX1509_status = 0;
+
+            bRet = Get_SX1509_Exist(out SX1509_status); // SX1509_status will be written with status value
+            if (SX1509_status != 0x03)
+            {
+                // try again
+                bRet = Get_SX1509_Exist(out SX1509_status); // SX1509_status will be written with status value
+                if (SX1509_status != 0x03)
+                {
+                    return false;
+                }
+            }
+            bRet |= Set_IO_Extend_Set_HighWord((UInt16)((uint32bit_value >> 16) & 0xffff));
+            bRet |= Set_IO_Extend_Set_LowWord((UInt16)((uint32bit_value) & 0xffff));
+
+            return bRet;
+        }
+
+        public bool Set_IO_Extend_Set_HighWord(UInt16 word_value)
         {
             bool bRet = false;
 
@@ -655,7 +722,7 @@ namespace BlueRatLibrary
             return bRet;
         }
 
-        public bool Set_IO_Extend_Set_LowByte(UInt16 word_value)
+        public bool Set_IO_Extend_Set_LowWord(UInt16 word_value)
         {
             bool bRet = false;
 
@@ -1028,7 +1095,7 @@ namespace BlueRatLibrary
             ENUM_CMD_CODE_0XEE = 0xee,
             ENUM_CMD_CODE_0XEF = 0xef,
             ENUM_CMD_DETECT_SX1509 = 0xf0,
-            ENUM_CMD_CODE_0XF1 = 0xf1,
+            ENUM_CMD_GET_SX1509_INPUT = 0xf1,
             ENUM_CMD_CODE_0XF2 = 0xf2,
             ENUM_CMD_CODE_0XF3 = 0xf3,
             ENUM_CMD_CODE_0XF4 = 0xf4,

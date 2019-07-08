@@ -1033,11 +1033,12 @@ namespace BlueRatViewer
 
             // value going down
             {
-                retry_cnt = 3;
+                retry_cnt = 1;
                 do
                 {
-                    bRet = my_blue_rat.Set_IO_Extend_Set_HighByte(0xff00);
-                    bRet = my_blue_rat.Set_IO_Extend_Set_LowByte(0x00ff);
+                    bRet = my_blue_rat.Init_IO_Extend_with_Value(0xaaaa5555);
+                    bRet = my_blue_rat.Set_IO_Extend_Set_HighWord(0xff00);
+                    bRet = my_blue_rat.Set_IO_Extend_Set_LowWord(0xffff);
                     bRet = my_blue_rat.Set_IO_Extend_Set_Pin(28, 0);
                     bRet = my_blue_rat.Set_IO_Extend_Set_Pin(24, 0);
                     bRet = my_blue_rat.Set_IO_Extend_Set_Pin(20, 1);
@@ -1054,6 +1055,13 @@ namespace BlueRatViewer
                     bRet = my_blue_rat.Set_IO_Extend_Toggle_Pin(22);
                     bRet = my_blue_rat.Set_IO_Extend_Toggle_Pin(26);
                     bRet = my_blue_rat.Set_IO_Extend_Toggle_Pin(30);
+                    bRet = my_blue_rat.Set_IO_Extend_Toggle_Pin(15);
+                    bRet = my_blue_rat.Set_IO_Extend_Toggle_Pin(15);
+                    bRet = my_blue_rat.Set_IO_Extend_Toggle_Pin(14);
+                    bRet = my_blue_rat.Set_IO_Extend_Toggle_Pin(14);
+                    bRet = my_blue_rat.Set_IO_Extend_Toggle_Pin(13);
+                    bRet = my_blue_rat.Set_IO_Extend_Toggle_Pin(13);
+                    bRet = my_blue_rat.Set_IO_Extend_Set_LowWord(0x8000);
                 }
                 while ((bRet == false) && (--retry_cnt > 0) && (FormIsClosing == false));
                 if (bRet)
@@ -1147,7 +1155,7 @@ namespace BlueRatViewer
                     return;
                 }
                 SPI_Word_Value++;
-                BlueRatDevViewer_Delay(100);
+                BlueRatDevViewer_Delay(150);
             }
 
             // value going down
@@ -1169,7 +1177,7 @@ namespace BlueRatViewer
                     return;
                 }
                 SPI_Word_Value--;
-                BlueRatDevViewer_Delay(100);
+                BlueRatDevViewer_Delay(150);
             }
 
             retry_cnt = 3;
@@ -1393,12 +1401,12 @@ namespace BlueRatViewer
                         Console.WriteLine("DONE - TEST_Detect_SX1509 - status: " + SX1509_detect_status.ToString());
 
                         if (FormIsClosing == true) break;
-                        Test_IO_Extend_Function(MyBlueRat);
-                        Console.WriteLine("DONE - Test_IO_Extend_Function");
-
-                        if (FormIsClosing == true) break;
                         Test_I2C_Write_Word(MyBlueRat);
                         Console.WriteLine("DONE - Test_I2C_Write_Word");
+
+                        if (FormIsClosing == true) break;
+                        Test_IO_Extend_Function(MyBlueRat);
+                        Console.WriteLine("DONE - Test_IO_Extend_Function");
 
                         if (FormIsClosing == true) break;
                         Test_SPI_Write_Word(MyBlueRat);

@@ -642,7 +642,29 @@ namespace BlueRatLibrary
             return bRet;
         }
         //
-        public bool Set_IO_Extend_Set_HighByte(UInt16 word_value)
+
+        public bool Init_IO_Extend_with_Value(UInt32 uint32bit_value)
+        {
+            bool bRet = false;
+            byte SX1509_status = 0;
+
+            bRet = Get_SX1509_Exist(out SX1509_status); // SX1509_status will be written with status value
+            if (SX1509_status != 0x03)
+            {
+                // try again
+                bRet = Get_SX1509_Exist(out SX1509_status); // SX1509_status will be written with status value
+                if (SX1509_status != 0x03)
+                {
+                    return false;
+                }
+            }
+            bRet |= Set_IO_Extend_Set_HighWord((UInt16)((uint32bit_value >> 16) & 0xffff));
+            bRet |= Set_IO_Extend_Set_LowWord((UInt16)((uint32bit_value) & 0xffff));
+
+            return bRet;
+        }
+
+        public bool Set_IO_Extend_Set_HighWord(UInt16 word_value)
         {
             bool bRet = false;
 
@@ -655,7 +677,7 @@ namespace BlueRatLibrary
             return bRet;
         }
 
-        public bool Set_IO_Extend_Set_LowByte(UInt16 word_value)
+        public bool Set_IO_Extend_Set_LowWord(UInt16 word_value)
         {
             bool bRet = false;
 
