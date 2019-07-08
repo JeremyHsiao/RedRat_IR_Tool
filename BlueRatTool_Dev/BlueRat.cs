@@ -571,6 +571,51 @@ namespace BlueRatLibrary
 
             return bRet;
         }
+        //ENUM_CMD_READ_SX1509
+        public bool Read_SX1509_Input(out UInt32 SX_1509_input)
+        {
+            bool bRet = false;
+            const int default_timeout_time = 16;
+            ENUM_RETRY_RESULT result_status;
+
+            SX_1509_input = 0;
+            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_READ_SX1509)), out string in_str, default_timeout_time);
+            if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
+            {
+                if (in_str.Contains(_CMD_IO_EXTEND_INPUT_RETURN_HEADER_))
+                {
+                    in_str = in_str.Substring(in_str.IndexOf(":") + 1);
+                }
+                else if (_CMD_IO_EXTEND_INPUT_RETURN_HEADER_ == "")
+                {
+                    // do nothing here
+                }
+                else
+                {
+                    in_str = "ERR:" + in_str;
+                    // not correct result - intentionally set in_str="ERR"
+                }
+
+                try
+                {
+                    UInt32 temp = Convert.ToUInt32(in_str, 16);      // only for testing conversion.
+                    SX_1509_input = (UInt32)temp;
+                    bRet = true;
+                }
+                catch (System.FormatException)
+                {
+                    result_status = ENUM_RETRY_RESULT.ENUM_ERROR_AT_COMPARE;
+                }
+            }
+
+            // Debug purpose
+            if (result_status >= ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
+            {
+                Console.WriteLine("Read_SX1509_Input() Error: " + result_status.ToString() + " -- " + in_str);
+            }
+
+            return bRet;
+        }
 
         public bool Get_SX1509_Exist(out byte SX_1509_status)
         {
@@ -1050,7 +1095,7 @@ namespace BlueRatLibrary
             ENUM_CMD_CODE_0XEE = 0xee,
             ENUM_CMD_CODE_0XEF = 0xef,
             ENUM_CMD_DETECT_SX1509 = 0xf0,
-            ENUM_CMD_CODE_0XF1 = 0xf1,
+            ENUM_CMD_READ_SX1509 = 0xf1,
             ENUM_CMD_CODE_0XF2 = 0xf2,
             ENUM_CMD_CODE_0XF3 = 0xf3,
             ENUM_CMD_CODE_0XF4 = 0xf4,
@@ -1783,6 +1828,28 @@ namespace BlueRatLibrary
             return 0xff;
         }
 
+        public UInt32 TEST_Read_SX1509_Input()
+        {
+            const int delay_time = 500;
+            // For reading an UART input, please make sure previous return data has been already received
+
+            int run_time = 1;
+            while (run_time-- > 0)
+            {
+                if (!MyBlueRatSerial.Serial_PortConnection())
+                {
+                    return 0xff;
+                }
+
+                Read_SX1509_Input(out UInt32 SX1509_value);
+                Console.WriteLine("SX1509_status:" + SX1509_value.ToString());
+                HomeMade_Delay(delay_time);
+                return SX1509_value;
+            }
+            return 0xff;
+        }
+
+        
         //Get_SX1509_Exist();
         ///
         ///
