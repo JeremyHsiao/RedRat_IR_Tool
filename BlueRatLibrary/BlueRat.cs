@@ -599,7 +599,7 @@ namespace BlueRatLibrary
                 try
                 {
                     UInt32 temp = Convert.ToUInt32(in_str, 16);      // only for testing conversion.
-                    SX_1509_input = (byte)temp;
+                    SX_1509_input = (UInt32)temp;
                     bRet = true;
                 }
                 catch (System.FormatException)
