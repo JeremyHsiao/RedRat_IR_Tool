@@ -1114,7 +1114,7 @@ namespace BlueRatViewer
             }
          }
         // Set_MCP41xxx by extended IO
-        private void Test_SPI_Write_Word(BlueRat my_blue_rat)
+        private void Test_Write_MCP42xxx(BlueRat my_blue_rat)
         {
             UInt32 retry_cnt;
             bool bRet = false; //Set_SPI_Pin_Enable
@@ -1466,8 +1466,8 @@ namespace BlueRatViewer
                         Console.WriteLine("DONE - Test_IO_Extend_Function");
 
                         if (FormIsClosing == true) break;
-                        Test_SPI_Write_Word(MyBlueRat);
-                        Console.WriteLine("DONE - Test_SPI_Write_Word");
+                        Test_Write_MCP42xxx(MyBlueRat);
+                        Console.WriteLine("DONE - Test_Write_MCP42xxx");
 
                         if (FormIsClosing == true) break;
                         Test_GPIO_Input_PB_Debounce(MyBlueRat);
