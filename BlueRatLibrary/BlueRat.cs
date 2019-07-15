@@ -662,6 +662,17 @@ namespace BlueRatLibrary
             return bRet;
         }
 
+        public bool Reset_SX1509()
+        {
+            bool bRet = false;
+
+            if (MyBlueRatSerial.BlueRatSendToSerial(Prepare_Send_Input_CMD_without_Parameter(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_RESET_SX1509)).ToArray()))
+            {
+                bRet = true;
+            }
+            return bRet;
+        }
+
         public bool Set_GPIO_Output(byte output_value)
         {
             bool bRet = false;
@@ -1109,7 +1120,7 @@ namespace BlueRatLibrary
             ENUM_CMD_CODE_0XEF = 0xef,
             ENUM_CMD_DETECT_SX1509 = 0xf0,
             ENUM_CMD_READ_SX1509 = 0xf1,
-            ENUM_CMD_CODE_0XF2 = 0xf2,
+            ENUM_CMD_RESET_SX1509 = 0xf2,
             ENUM_CMD_CODE_0XF3 = 0xf3,
             ENUM_CMD_CODE_0XF4 = 0xf4,
             ENUM_CMD_CODE_0XF5 = 0xf5,

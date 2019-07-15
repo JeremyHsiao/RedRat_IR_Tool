@@ -1453,6 +1453,15 @@ namespace BlueRatViewer
                         Console.WriteLine("DONE - TEST_Detect_SX1509 - status: " + SX1509_detect_status.ToString());
 
                         if (FormIsClosing == true) break;
+                        Test_IO_Extend_Function(MyBlueRat);
+                        Console.WriteLine("DONE - Test_IO_Extend_Function");
+
+                        if (FormIsClosing == true) break;
+                        MyBlueRat.Reset_SX1509();
+                        Test_Write_MCP42xxx(MyBlueRat);
+                        Console.WriteLine("DONE - Test_Write_MCP42xxx");
+
+                        if (FormIsClosing == true) break;
                         UInt32 SX1509_value;
                         SX1509_value = MyBlueRat.TEST_Read_SX1509_Input();
                         Console.WriteLine("DONE - TEST_Read_SX1509_Input - status: " + SX1509_value.ToString());
@@ -1460,14 +1469,6 @@ namespace BlueRatViewer
                         if (FormIsClosing == true) break;
                         Test_I2C_Write_Word(MyBlueRat);
                         Console.WriteLine("DONE - Test_I2C_Write_Word");
-
-                        if (FormIsClosing == true) break;
-                        Test_IO_Extend_Function(MyBlueRat);
-                        Console.WriteLine("DONE - Test_IO_Extend_Function");
-
-                        if (FormIsClosing == true) break;
-                        Test_Write_MCP42xxx(MyBlueRat);
-                        Console.WriteLine("DONE - Test_Write_MCP42xxx");
 
                         if (FormIsClosing == true) break;
                         Test_GPIO_Input_PB_Debounce(MyBlueRat);
