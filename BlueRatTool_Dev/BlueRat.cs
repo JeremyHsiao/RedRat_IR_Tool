@@ -476,7 +476,7 @@ namespace BlueRatLibrary
             // Debug purpose
             if (result_status >= ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
-                Console.WriteLine("Get_SW_Version Error: " + result_status.ToString() + " -- " + in_str);
+                Console.WriteLine("Get_Command_Version Error: " + result_status.ToString() + " -- " + in_str);
             }
 
             return bRet;
@@ -485,11 +485,11 @@ namespace BlueRatLibrary
         public bool Get_GPIO_Input(out UInt32 GPIO_Read_Data)
         {
             bool bRet = false;
-            const int default_timeout_time = 16;
+            const int default_timeout_time_Get_GPIO_Input = 40;
             ENUM_RETRY_RESULT result_status;
 
             GPIO_Read_Data = 0xffffffff;
-            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)), out string in_str, default_timeout_time);
+            result_status = SendCmd_WaitReadLine(Prepare_Send_Input_CMD(Convert.ToByte(ENUM_CMD_STATUS.ENUM_CMD_GET_GPIO_INPUT)), out string in_str, default_timeout_time_Get_GPIO_Input);
             if (result_status < ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
                 if (in_str.Contains(_CMD_GPIO_INPUT_RETURN_HEADER_))
@@ -521,7 +521,7 @@ namespace BlueRatLibrary
             // Debug purpose
             if (result_status >= ENUM_RETRY_RESULT.ENUM_MAX_RETRY_PLUS_1)
             {
-                Console.WriteLine("Get_SW_Version Error: " + result_status.ToString() + " -- " + in_str);
+                Console.WriteLine("Get_GPIO_Input Error: " + result_status.ToString() + " -- " + in_str);
             }
 
             return bRet;
