@@ -213,8 +213,14 @@ namespace BlueRatLibrary
 
         private ENUM_RETRY_RESULT SendCmd_WaitReadLine(List<byte> cmd_list, out string result_string, int timeout_time = 16)
         {
-            ENUM_RETRY_RESULT result_status;
+            ENUM_RETRY_RESULT result_status = ENUM_RETRY_RESULT.ENUM_ERROR_BLUERAT_IS_CLOSED;
             result_string = "";
+
+            // Exit immediately when serial port is closed
+            if (MyBlueRatSerial.Serial_PortConnection() == true)
+            {
+                return ENUM_RETRY_RESULT.ENUM_ERROR_BLUERAT_IS_CLOSED;
+            }
 
             MyBlueRatSerial.Start_ReadLine();
             if (MyBlueRatSerial.BlueRatSendToSerial(cmd_list.ToArray()) == false)
@@ -229,6 +235,11 @@ namespace BlueRatLibrary
                 if (each_delay_time < 1) each_delay_time = 1;
                 do
                 {
+                    if (MyBlueRatSerial.Serial_PortConnection() == true)
+                    {
+                        return ENUM_RETRY_RESULT.ENUM_ERROR_BLUERAT_IS_CLOSED;
+                    }
+
                     HomeMade_Delay(each_delay_time);
                     if (MyBlueRatSerial.ReadLine_Ready() == true)
                     {
@@ -1634,6 +1645,7 @@ namespace BlueRatLibrary
             ENUM_ERROR_AT_READLINE = 0x100,
             ENUM_ERROR_AT_COMPARE,
             ENUM_ERROR_AT_SEND_COMMAND,
+            ENUM_ERROR_BLUERAT_IS_CLOSED,
         };
 
         // 單純回應"HI"的指令,可用來試試看系統是否還有在接受指令 -- 目前不對外開放
