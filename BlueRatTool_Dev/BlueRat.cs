@@ -217,7 +217,7 @@ namespace BlueRatLibrary
             result_string = "";
 
             // Exit immediately when serial port is closed
-            if (MyBlueRatSerial.Serial_PortConnection() == true)
+            if (MyBlueRatSerial.Serial_PortConnection() == false)
             {
                 return ENUM_RETRY_RESULT.ENUM_ERROR_BLUERAT_IS_CLOSED;
             }
@@ -235,7 +235,7 @@ namespace BlueRatLibrary
                 if (each_delay_time < 1) each_delay_time = 1;
                 do
                 {
-                    if (MyBlueRatSerial.Serial_PortConnection() == true)
+                    if (MyBlueRatSerial.Serial_PortConnection() == false)
                     {
                         return ENUM_RETRY_RESULT.ENUM_ERROR_BLUERAT_IS_CLOSED;
                     }
